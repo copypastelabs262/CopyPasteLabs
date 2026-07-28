@@ -1,6 +1,6 @@
 # BuilderOS
 
-- **Status:** Active
+- **Status:** Stable v0.1 baseline — supporting infrastructure, feature-frozen
 - **Started:** 2026-07-28
 - **Owner:** CopyPasteLabs
 - **Repo / location:** `E:\CopyPasteLabs` (charter: `CLAUDE.md`, base: `AI-Memory/`)
@@ -28,9 +28,12 @@ but are not part of this project. Tooling to enforce or validate the format is c
 of scope — see Known weaknesses.
 
 ## Current state
-v1.0 bootstrapped. Structure created, charter written to `CLAUDE.md`, `builderos` skill
-saved. Zero learnings, prompts, snippets, or mistakes captured yet — the base is empty by
-design and fills from real work.
+v0.1 baseline reached (2026-07-28): structure, charter, single-writer collaboration model,
+and auto-save hook all in place. **Declared feature-frozen** — reclassified from primary
+project to supporting infrastructure. Improved only when real capstone work exposes a
+genuine, blocking gap; non-blocking ideas go to `roadmap.md` instead of being built. Zero
+learnings, prompts, snippets, or mistakes captured yet — the base is empty by design and
+fills from real work.
 
 ## How to run it
 - The charter in `CLAUDE.md` auto-loads at the repository root.

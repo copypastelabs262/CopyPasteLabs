@@ -7,6 +7,41 @@ If a decision here would apply to a future unrelated project, it belongs in
 
 ---
 
+## 2026-07-28 — BuilderOS reaches v0.1 baseline; freeze features, prioritize the capstone
+
+**Decision:** BuilderOS (charter, `AI-Memory/` structure, hooks, `.knowledge` scaffold) is
+declared a stable v0.1 baseline and reclassified from primary project to supporting
+infrastructure. No further BuilderOS features are added speculatively. It is only touched
+when real capstone development reveals a genuine gap, and even then, only if the gap blocks
+progress — otherwise the improvement is logged to this project's `roadmap.md` and deferred.
+Capturing decisions, learnings, patterns, prompts, and mistakes continues unchanged; only
+*building BuilderOS itself* is paused.
+
+**Reason:** The 2026-07-28 (later) progress entry already named the risk directly: "the
+collaboration machinery is currently ahead of the thing it exists to support." Every session
+so far has built process (single-writer model, hooks, `.gitignore` hardening, `TEAM.md`) and
+none has produced product. A capstone is graded on the product shipped, not on the
+sophistication of the tooling used to build it — continued investment here has negative
+marginal value until real work exposes what's actually missing.
+
+**Alternatives Considered:**
+- *Keep iterating on BuilderOS until it feels "done"* — there is no such point; tooling can
+  always be improved, so this is an open-ended time sink with no natural stopping condition.
+  Rejected.
+- *Freeze BuilderOS entirely, including gap-driven fixes* — too rigid. A hook that's
+  genuinely broken (e.g., silently failing pushes) blocks the read-only co-founders from
+  seeing current state, which is a real cost, not a hypothetical one. Rejected in favor of
+  allowing blocking-gap fixes.
+
+**Trade-offs:**
+- Known rough edges (the not-yet-verified auto-push hook, `<Project Name>` placeholders in
+  `.knowledge` templates) stay as-is unless they block product work — they are accepted debt,
+  not forgotten debt, and are tracked in `roadmap.md`.
+- Discipline is required to tell "genuine gap" apart from "interesting idea." Default to the
+  roadmap, not the editor, when in doubt.
+
+---
+
 ## 2026-07-28 — Single-writer repository model
 
 **Decision:** Only Shyam's machine writes to the repository. Shiv and Darsh have read access

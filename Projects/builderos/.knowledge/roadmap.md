@@ -2,12 +2,22 @@
 
 - **Updated:** 2026-07-28
 
+## Status: v0.1 baseline — feature-frozen, supporting infrastructure only
+
+BuilderOS is no longer the primary project. Nothing below is worked on speculatively — an
+item moves off this list only when real capstone development hits it as a genuine, blocking
+gap. See the 2026-07-28 "reaches v0.1 baseline" decision in `decisions.md`.
+
 ## Now
 - [x] Bootstrap structure, charter, and skill (v1.0)
+- [x] Establish single-writer collaboration model and auto-save hook (v0.1)
 
-## Next
-- [ ] Use it on one real project end-to-end before changing anything — the first genuine
-      session is the only real test of whether the format survives contact with work.
+## Next (gap-driven only — do not pull these forward speculatively)
+- [ ] Verify the auto-push hook actually fires end-to-end (blocked on a Claude Code session
+      restart to pick up `.claude/settings.json`) — worth fixing promptly since a silently
+      broken push leaves the read-only co-founders on a stale repo.
+- [ ] Replace the `<Project Name>` placeholders in `.knowledge` templates once the capstone
+      project scaffold is actually created and filled in.
 
 ## Later
 - [ ] Lint script: validate frontmatter, flag files missing from `INDEX.md`, detect
@@ -23,3 +33,5 @@
 
 ## Done
 - 2026-07-28 — v1.0 bootstrapped: `AI-Memory` tree, project template, charter, skill.
+- 2026-07-28 — v0.1 baseline: single-writer model, auto-save hook, hardened `.gitignore`,
+  `TEAM.md`. Declared feature-frozen; focus shifts to the capstone product.
