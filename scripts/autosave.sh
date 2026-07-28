@@ -48,7 +48,13 @@ fi
 # The "Auto-save:" prefix marks these as unreviewed. A human-written message is
 # always better; this is what you get when nobody wrote one.
 COUNT=$(git diff --cached --name-only | wc -l | tr -d ' ')
-FILES=$(git diff --cached --name-only | head -3 | sed 's|.*/||' | paste -sd ', ' -)
+# Joining a list with ", " is fiddlier than it looks:
+#   `paste -sd ', '` treats the argument as a LIST of delimiters and cycles
+#     through them, giving "a,b c".
+#   `tr '\n' '\x01'` fails because tr has no \xNN hex escape — it reads a
+#     literal 'x'. (Octal \001 would work; awk is clearer.)
+FILES=$(git diff --cached --name-only | head -3 | sed 's|.*/||' \
+        | awk '{printf "%s%s", (NR>1 ? ", " : ""), $0}')
 if [ "$COUNT" -gt 3 ]; then
   MSG="Auto-save: ${FILES} +$((COUNT - 3)) more (${COUNT} files)"
 else
