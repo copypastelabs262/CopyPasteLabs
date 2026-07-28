@@ -31,17 +31,39 @@ E:\CopyPasteLabs\
 
 ---
 
+## Who writes
+
+**This machine is the only writer.** Shyam commits and pushes from here; Shiv and Darsh read
+the repository and send proposals back as GitHub Issues. They never push.
+
+Two consequences that shape how sessions must be run:
+
+- **The repo is the team's only communication channel.** `progress.md`, session logs, and
+  commit messages are not documentation *about* the work — for two of the three founders,
+  they *are* the work. Write them for someone who wasn't in the room.
+- **Stale beats absent, but current beats both.** `scripts/autosave.sh` commits and pushes
+  after every edit. If it reports a failure, stop and fix it — a silent push failure means
+  two co-founders are designing against a version that no longer exists.
+
+Full rationale and the conditions for revisiting this in `TEAM.md` §0.
+
+---
+
 ## Start of every session
 
 Before any work:
 
 1. Read `AI-Memory/INDEX.md`, then `01_Principles/PRINCIPLES.md`.
 2. If a project is in play, read its entire `.knowledge/` directory.
-3. Establish: current state · pending tasks · open blockers · previous decisions · recent learnings.
+3. Check open GitHub Issues — that is where Shiv's and Darsh's proposals arrive.
+4. Establish: current state · pending tasks · open blockers · previous decisions · recent learnings.
 
 These are the source of truth. Never ask a question already answered there. Never contradict
 a previous decision without recording a new one that supersedes it. Always continue from
 previous work rather than restarting.
+
+`scripts/session-start.sh` pulls automatically. If it reports a problem, resolve it before
+working — never start a session on a copy that failed to update.
 
 ---
 
@@ -122,6 +144,12 @@ Projects/<name>
 ```
 
 Update `AI-Memory/INDEX.md` whenever a file is added or its status changes. Never duplicate.
+
+**Then commit with a real message.** `scripts/autosave.sh` is a safety net, not the historian
+— commits it writes are prefixed `Auto-save:` and describe nothing. Before ending a session,
+make one intentional commit whose message explains *why* the change was made. Shiv and Darsh
+read that log to understand what happened; a wall of `Auto-save:` entries tells them nothing.
+Confirm the push succeeded.
 
 ---
 

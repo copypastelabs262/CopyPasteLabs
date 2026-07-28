@@ -8,6 +8,43 @@ This is a living document. If a rule stops making sense, change it here — don'
 
 ---
 
+## 0. Who Writes — read this before anything else
+
+**One writer, two readers.**
+
+- **Shyam's machine is the only one that writes to this repository.** All commits and pushes
+  originate there.
+- **Shiv and Darsh read only.** They pull or browse the repo for context, think about
+  architecture and design, and send proposals back as **GitHub Issues**. They never commit
+  and never push.
+- Proposals get implemented from Shyam's machine, and the issue is closed with a reference to
+  the change.
+
+**Why:** with a single writer there are no merge conflicts, no simultaneous edits to the same
+file, and no way for one person's work to silently overwrite another's. Those are the
+expensive failures, and this removes all of them at once.
+
+**What it costs:** Shyam is a bottleneck. Nothing ships while he's unavailable, and two
+founders' throughput is capped by one person's typing. That's an acceptable trade for a
+three-person capstone and a bad one for a growing team.
+
+**Revisit this when** any of these becomes true — they are the signals that the trade has
+flipped:
+
+- Someone is regularly blocked waiting on Shyam to implement their idea.
+- Two projects are being worked on at once.
+- A fourth person joins.
+- The repo has enough real code that reviewing a change matters more than avoiding conflicts.
+
+At that point, move to branches and pull requests. Don't drift into multi-writer by accident
+— make it a decision and record it in `Projects/builderos/.knowledge/decisions.md`.
+
+**Ideas belong in Issues, not chat.** A design discussed on WhatsApp and never written down
+is lost, which is precisely what this repository exists to prevent. If it's worth building,
+it's worth an issue.
+
+---
+
 ## 1. Daily Workflow
 
 - **Pull before you start.** Always `git pull` at the start of a session, before making any
@@ -76,11 +113,33 @@ everyone is expected to:
   shared infrastructure — as important as the code itself. Don't let it go stale, and don't
   let it duplicate.
 
-| Founder | Primary domain | Notes |
-|---|---|---|
-| _TBD_ | _TBD_ | _Fill in as roles solidify_ |
-| _TBD_ | _TBD_ | _Fill in as roles solidify_ |
-| _TBD_ | _TBD_ | _Fill in as roles solidify_ |
+| Founder | Primary domain | Repo access | Notes |
+|---|---|---|---|
+| Shyam | _TBD_ | **Write** — the only writer | Implements from this machine; closes issues |
+| Shiv | _TBD_ | Read | Proposes via GitHub Issues |
+| Darsh | _TBD_ | Read | Proposes via GitHub Issues |
+
+_Fill in primary domains as roles solidify._
+
+---
+
+## 5. Known Gap: Shared Account
+
+All three of us use the same GitHub and Claude account. Two consequences worth naming:
+
+- **No attribution.** Every commit is authored by `copypastelabs262`. The repository cannot
+  show who contributed what. Fine for a capstone; a real problem for a startup, where
+  contribution history feeds equity conversations, IP questions, and anything involving
+  investors or an accelerator. Reconstructing it later is far harder than recording it now.
+- **No enforcement of the single-writer rule.** With separate accounts, GitHub itself would
+  block an accidental push from Shiv or Darsh by giving them Read permission. Sharing one
+  account means single-writer is a convention we keep by agreement, not a rule the system
+  enforces. Conventions are only as strong as the memory of the last person to break one.
+
+**Fix when convenient:** each founder creates their own GitHub account; Shyam adds Shiv and
+Darsh as collaborators with **Read** access. Costs nothing, takes ten minutes, and both
+problems disappear. Anthropic's Team plan is the equivalent path for Claude accounts, which
+would also stop three people sharing one usage limit.
 
 ---
 

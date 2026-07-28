@@ -2,7 +2,24 @@
 
 Reverse-chronological. Newest at the top.
 
-## 2026-07-28
+## 2026-07-28 (later) — Collaboration model
+**Done:** Established the single-writer model — Shyam's machine writes, Shiv and Darsh read
+and propose via GitHub Issues. Rewrote the auto-save hook as `scripts/autosave.sh` (secret
+guard, portable paths, loud failures, real commit messages) after finding it hardcoded to one
+path and silencing all errors. Added `scripts/session-start.sh` to pull on start. Hardened
+`.gitignore` from one line to a full secret ruleset. Wrote `README.md` as human orientation
+for the two readers. Extended `TEAM.md` with who-writes and the shared-account gap.
+
+**In progress:** Nothing.
+
+**Blocked:** Push not verified end-to-end — the environment had no network route to GitHub.
+Commits are queued locally and should land on the next real edit.
+
+**Next:** Confirm the push landed, then define the actual product. Every `.knowledge` file
+still reads `<Project Name>` — the collaboration machinery is currently ahead of the thing it
+exists to support.
+
+## 2026-07-28 (bootstrap)
 **Done:** Bootstrapped BuilderOS v1.0 from an empty `E:\CopyPasteLabs`. Created the
 `AI-Memory` tree (10 categories + INDEX), seeded Principles, the knowledge-compounding-loop
 Pattern, the adoption Decision, canonical entry FORMATS, Tools register, and Glossary. Built
