@@ -82,3 +82,4 @@ _(empty)_
 - Run `Memory audit` periodically — it reports duplicates, conflicts, and stale entries before changing anything.
 - This INDEX is the map. If a file exists and is not listed here, the index is broken.
 hook test 1785231352
+hook test 2 1785231473
