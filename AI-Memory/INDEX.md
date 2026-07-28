@@ -81,3 +81,4 @@ _(empty)_
 - **Never grow for the sake of growing.** A merge that shortens the base is a win.
 - Run `Memory audit` periodically — it reports duplicates, conflicts, and stale entries before changing anything.
 - This INDEX is the map. If a file exists and is not listed here, the index is broken.
+hook test 1785231352
