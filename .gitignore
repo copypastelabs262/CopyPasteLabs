@@ -1,1 +1,104 @@
+# ─────────────────────────────────────────────────────────────
+# SECRETS — never commit these.
+# Everything pushed to GitHub should be assumed permanent. If a key ever
+# lands here by accident, rotate it immediately — deleting the file is NOT
+# enough, because it stays in the repository history forever.
+# ─────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+*.jks
+credentials.json
+secrets.json
+service-account*.json
+*-credentials.*
+*_secret*
+*.secret
+
+# Cloud / service credentials
+.aws/
+.gcloud/
+.firebaserc
+firebase-debug.log
+
+# ─────────────────────────────────────────────────────────────
+# Claude Code — machine-local settings only
+# ─────────────────────────────────────────────────────────────
 .claude/settings.local.json
+
+# ─────────────────────────────────────────────────────────────
+# Dependencies — reinstallable, huge, never committed
+# ─────────────────────────────────────────────────────────────
+node_modules/
+bower_components/
+vendor/
+.pnp
+.pnp.js
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+pip-log.txt
+
+# ─────────────────────────────────────────────────────────────
+# Build output — regenerated, not source
+# ─────────────────────────────────────────────────────────────
+dist/
+build/
+out/
+.next/
+.nuxt/
+.output/
+*.tsbuildinfo
+
+# ─────────────────────────────────────────────────────────────
+# Logs and caches
+# ─────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.cache/
+.parcel-cache/
+.eslintcache
+coverage/
+.pytest_cache/
+.mypy_cache/
+
+# ─────────────────────────────────────────────────────────────
+# Databases — local dev data, not source
+# ─────────────────────────────────────────────────────────────
+*.sqlite
+*.sqlite3
+*.db
+
+# ─────────────────────────────────────────────────────────────
+# Editor and OS junk
+# ─────────────────────────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─────────────────────────────────────────────────────────────
+# Temporary
+# ─────────────────────────────────────────────────────────────
+tmp/
+temp/
+*.tmp
+*.bak
+.knowledge-bootstrap/

@@ -1,5 +1,18 @@
 {
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/session-start.sh\"",
+            "timeout": 20,
+            "statusMessage": "Pulling latest from GitHub..."
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Write|Edit",
@@ -7,10 +20,10 @@
           {
             "type": "command",
             "shell": "bash",
-            "command": "cd \"E:/CopyPasteLabs\" && git add -A && (git diff --cached --quiet || (git commit -m \"Auto-commit: $(date -u +%Y-%m-%dT%H:%M:%SZ)\" -q && git push origin master -q)) 2>/dev/null || echo \"[auto-push] skipped/failed - check git status\" 1>&2",
-            "timeout": 30,
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/autosave.sh\"",
+            "timeout": 45,
             "async": true,
-            "statusMessage": "Auto-committing to GitHub..."
+            "statusMessage": "Saving to GitHub..."
           }
         ]
       }
