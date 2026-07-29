@@ -18,4 +18,5 @@ that improvement then reaches every future project for free.
 
 | Project | Status | Started | Summary |
 |---|---|---|---|
-| `builderos` | Active | 2026-07-28 | The knowledge system itself, tracked as a project |
+| `builderos` | Supporting | 2026-07-28 | The knowledge system itself, tracked as a project. Feature-frozen. |
+| `classmind` | Planning | 2026-07-29 | Extracts assignments, deadlines and exam topics from code-switched Indian lecture speech — the capstone product |

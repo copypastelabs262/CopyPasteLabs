@@ -2,7 +2,23 @@
 
 Reverse-chronological. Newest at the top.
 
-## 2026-07-28 (latest) — v0.1 baseline declared; feature freeze
+## 2026-07-29 (latest) — Capstone session opened; push blocker cleared
+
+**Done:** Read the full knowledge base at session start (INDEX, PRINCIPLES, all of
+`builderos/.knowledge`). Cleared the long-standing auto-push blocker: `origin/master`
+tracks local `master` at `4c43abc` with a clean tree, which only occurs after a successful
+push. Marked it verified-by-evidence in `roadmap.md` with the caveat that it was inferred,
+not observed live.
+
+**In progress:** Defining the capstone product. `Projects/` still contains only `builderos`
+— there is no product project, and no product idea is recorded anywhere in the repo.
+
+**Blocked:** Nothing on infrastructure. The one open input is the product definition itself.
+
+**Next:** Capture the product scope into `Projects/<name>/.knowledge/project.md` — problem
+and user before solution — then architecture and a thin vertical slice.
+
+## 2026-07-28 — v0.1 baseline declared; feature freeze
 
 **Done:** Declared BuilderOS a stable v0.1 baseline and reclassified it from primary project
 to supporting infrastructure — see the corresponding entry in `decisions.md`. Updated

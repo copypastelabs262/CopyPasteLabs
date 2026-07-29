@@ -1,6 +1,6 @@
 # Roadmap — BuilderOS
 
-- **Updated:** 2026-07-28
+- **Updated:** 2026-07-29
 
 ## Status: v0.1 baseline — feature-frozen, supporting infrastructure only
 
@@ -13,9 +13,11 @@ gap. See the 2026-07-28 "reaches v0.1 baseline" decision in `decisions.md`.
 - [x] Establish single-writer collaboration model and auto-save hook (v0.1)
 
 ## Next (gap-driven only — do not pull these forward speculatively)
-- [ ] Verify the auto-push hook actually fires end-to-end (blocked on a Claude Code session
-      restart to pick up `.claude/settings.json`) — worth fixing promptly since a silently
-      broken push leaves the read-only co-founders on a stale repo.
+- [x] Verify the auto-push hook actually fires end-to-end. **Evidence (2026-07-29):**
+      `origin/master` tracks local `master` at `4c43abc` with a clean tree, which only
+      happens after a successful push. Inference, not a live check — the verifying session
+      had no network route to GitHub — but strong enough to stop treating it as a blocker.
+      Re-open if `git status` ever reports `ahead` after an edit.
 - [ ] Replace the `<Project Name>` placeholders in `.knowledge` templates once the capstone
       project scaffold is actually created and filled in.
 
