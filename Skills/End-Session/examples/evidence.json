@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "generated_by": "End-Session/1.0.0",
+  "generated_at": "2026-07-29T14:32:07Z",
+  "producer": "claude",
+  "author": null,
+
+  "session": {
+    "id": "2026-07-29T1432Z-asr-model-selection",
+    "topic_slug": "asr-model-selection",
+    "started_at": "2026-07-29T12:05:00Z",
+    "ended_at": "2026-07-29T14:32:07Z",
+    "duration_known": true,
+    "duration_minutes": 147,
+    "duration_source": "session_start_marker",
+    "context_completeness": "complete",
+    "operator_note": null
+  },
+
+  "project": {
+    "primary": "classmind",
+    "primary_detection": "changed_path_attribution",
+    "secondary": ["_platform"],
+    "secondary_reason": "scripts/ and CLAUDE.md touched alongside project work"
+  },
+
+  "repo": {
+    "name": "CopyPasteLabs",
+    "remote": "https://github.com/copypastelabs262/CopyPasteLabs.git",
+    "branch": "master",
+    "upstream": "origin/master",
+    "ahead": 0,
+    "behind": 0
+  },
+
+  "session_boundary": {
+    "base": "4c43abcf1e2d9a7b3c5e8f0a1b2c3d4e5f607182",
+    "base_short": "4c43abc",
+    "base_strategy": "previous_inbox_entry",
+    "base_source": "AI-Memory/Inbox/classmind/2026-07-28T0915Z-project-definition/evidence.json",
+    "head": "a126882d4f3e1c9b8a7d6e5f4c3b2a1908172635",
+    "head_short": "a126882"
+  },
+
+  "commits": [
+    {
+      "sha": "a126882d4f3e1c9b8a7d6e5f4c3b2a1908172635",
+      "short": "a126882",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-07-29T14:28:11Z",
+      "subject": "Select Whisper large-v3 over IndicWhisper for code-switched audio",
+      "body": "IndicWhisper scores better on pure Hindi but degrades sharply on\nintra-sentential code-switching, which is the dominant case in our\nrecordings. Benchmark on 40 minutes of real lecture audio.",
+      "is_auto_save": false
+    },
+    {
+      "sha": "77f3c1a8b9d0e2f4a6c8b0d2e4f6a8c0b2d4e6f8",
+      "short": "77f3c1a",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-07-29T13:44:52Z",
+      "subject": "Auto-save: architecture.md, decisions.md",
+      "body": "",
+      "is_auto_save": true
+    }
+  ],
+
+  "changes": {
+    "summary": {
+      "modified": 3,
+      "added": 2,
+      "deleted": 1,
+      "renamed": 1,
+      "copied": 0,
+      "total_files": 7,
+      "insertions": 412,
+      "deletions": 87
+    },
+    "files": [
+      {
+        "path": "Projects/classmind/.knowledge/architecture.md",
+        "change_type": "modified",
+        "insertions": 188,
+        "deletions": 41,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/.knowledge/decisions.md",
+        "change_type": "modified",
+        "insertions": 96,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/.knowledge/benchmarks/asr-comparison.md",
+        "change_type": "added",
+        "insertions": 74,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/.knowledge/benchmarks/README.md",
+        "change_type": "added",
+        "insertions": 12,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/.knowledge/scratch-asr-notes.md",
+        "change_type": "deleted",
+        "insertions": 0,
+        "deletions": 46,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/.knowledge/domain-model.md",
+        "change_type": "renamed",
+        "renamed_from": "Projects/classmind/.knowledge/domain.md",
+        "similarity": 97,
+        "insertions": 4,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "CLAUDE.md",
+        "change_type": "modified",
+        "insertions": 38,
+        "deletions": 0,
+        "binary": false
+      }
+    ]
+  },
+
+  "working_tree": {
+    "clean": true,
+    "uncommitted": [],
+    "staged": [],
+    "untracked": []
+  },
+
+  "diff": {
+    "stored": true,
+    "path": "changes.patch",
+    "size_bytes": 24817,
+    "omitted_reason": null,
+    "binary_files": [],
+    "regenerate_command": "git diff 4c43abc..a126882"
+  },
+
+  "repo_field_reserved_for_multirepo": null,
+  "related_sessions": [
+    "AI-Memory/Inbox/classmind/2026-07-28T0915Z-project-definition"
+  ]
+}

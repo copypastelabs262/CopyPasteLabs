@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "generated_by": "End-Session/1.0.0",
+  "generated_at": "2026-07-29T14:32:07Z",
+  "session_id": "2026-07-29T1432Z-asr-model-selection",
+  "project": "classmind",
+
+  "extraction_meta": {
+    "context_completeness": "complete",
+    "candidates_emitted": 3,
+    "candidates_discarded_no_basis": 2,
+    "note": "Two further observations were discarded under the fabrication guard: a general claim about 'multilingual models being harder to fine-tune' and one about 'benchmarks needing real data'. Both are true and both are generic — neither traced to anything specific that happened this session."
+  },
+
+  "candidates": [
+    {
+      "id": "cand-001",
+      "type": "learning",
+      "title": "Language-specific ASR models can score worse than general ones on code-switched speech",
+      "body": "IndicWhisper outperforms Whisper large-v3 on monolingual Hindi by a clear margin, and that is what its published benchmarks measure. On intra-sentential code-switching — a Hindi sentence containing English technical terms — it degrades sharply, because the fine-tuning that specialised it toward Hindi also narrowed its English handling.\n\nThe general lesson: a model specialised for language X may be worse than a general model when the real input is X mixed with Y. Published benchmarks rarely measure the mixed case, so the specialised model looks strictly better on paper and is not.\n\nCheck what the benchmark actually measured before trusting a comparison.",
+      "confidence": "high",
+      "basis": "Benchmarked both models on 40 minutes of real recorded lecture audio. Results recorded in Projects/classmind/.knowledge/benchmarks/asr-comparison.md. IndicWhisper won on the monolingual segments and lost on every code-switched segment.",
+      "evidence_refs": [
+        "Projects/classmind/.knowledge/benchmarks/asr-comparison.md",
+        "a126882"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-002",
+      "type": "decision",
+      "title": "Use Whisper large-v3 as the ASR baseline for ClassMind",
+      "body": "Decision: Whisper large-v3, not IndicWhisper.\n\nReason: code-switched audio is the dominant case in our recordings, and large-v3 handles it materially better.\n\nAlternatives: IndicWhisper (better on pure Hindi, worse on the case we actually have); commercial APIs (better accuracy, per-minute cost incompatible with a student-facing free tier).\n\nTrade-offs: large-v3 is slower and needs more VRAM, which constrains our deployment target and may force batch rather than near-real-time processing. Accepted for now; revisit if latency becomes a product requirement.",
+      "confidence": "high",
+      "basis": "Explicit decision taken during this session and already written into Projects/classmind/.knowledge/decisions.md.",
+      "evidence_refs": [
+        "Projects/classmind/.knowledge/decisions.md",
+        "a126882"
+      ],
+      "proposed_scope": "project",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-003",
+      "type": "open_question",
+      "title": "Does the code-switching penalty hold across speakers, or is it an artefact of our sample?",
+      "body": "The 40-minute benchmark came from three lecturers in one department. Code-switching density varies a lot by individual, subject and institution. If our sample happens to be unusually dense, the measured gap may not generalise — and the model choice rests on it.\n\nResolving this needs audio from a wider set of lecturers before the decision in cand-002 can be treated as settled rather than provisional.",
+      "confidence": "medium",
+      "basis": "Raised explicitly during the session while reviewing the benchmark's composition; not resolved before the session ended.",
+      "evidence_refs": [
+        "Projects/classmind/.knowledge/benchmarks/asr-comparison.md"
+      ],
+      "proposed_scope": "project",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    }
+  ]
+}

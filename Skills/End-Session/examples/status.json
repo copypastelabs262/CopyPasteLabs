@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "session_id": "2026-07-29T1432Z-asr-model-selection",
+  "project": "classmind",
+
+  "state": "pending",
+  "state_set_at": "2026-07-29T14:32:07Z",
+  "state_set_by": "End-Session/1.0.0",
+
+  "review": {
+    "reviewed_at": null,
+    "reviewed_by": null,
+    "candidate_outcomes": [],
+    "notes": ""
+  },
+
+  "_comment": "This is the ONLY mutable file in an Inbox entry. End-Session writes it once with state 'pending' and never touches it again, including on re-runs. Knowledge-Promoter owns it thereafter. Valid states: pending | in_review | promoted | partially_promoted | rejected | superseded. After review, candidate_outcomes holds one record per candidate id, e.g. { \"id\": \"cand-001\", \"outcome\": \"promoted\", \"destination\": \"AI-Memory/02_Learnings/asr-code-switching.md\" }."
+}
