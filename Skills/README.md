@@ -28,10 +28,29 @@ bump its version, then update the prompt to match.
 
 ## Registry
 
-| Skill | Status | Purpose |
-|---|---|---|
-| `End-Session/` | Specified — not implemented | Capture the state and evidence of a work session into `AI-Memory/Inbox/`. |
-| `Knowledge-Promoter/` | Not specified | Review Inbox entries and decide what earns a place in permanent `AI-Memory/`. |
+| Skill | Status | Invoke | Purpose |
+|---|---|---|---|
+| `End-Session/` | Implemented — spec 1.0.0, prompt 1.0.0 | `/end-session` | Capture the state and evidence of a work session into `AI-Memory/Inbox/`. |
+| `Knowledge-Promoter/` | Not specified | — | Review Inbox entries and decide what earns a place in permanent `AI-Memory/`. |
+
+### How `/end-session` is wired
+
+Claude Desktop exposes slash commands as **skills**, registered per-account rather than
+per-repository. There is no `.claude/commands/` mechanism here, and the on-disk skill cache is
+read-only — a skill can only be registered through the app, never by committing a file.
+
+So `/end-session` is a **thin loader** held in the account. It does three things: confirms the
+open folder is CopyPasteLabs, reads `Skills/End-Session/prompt.md`, and executes it verbatim.
+
+The implementation is **not** duplicated into the loader. `prompt.md` in this repository stays
+the single source of truth — edit it and the next `/end-session` picks the change up
+immediately, with nothing to re-register. Paths resolve through `$CLAUDE_PROJECT_DIR`, matching
+the convention in `scripts/autosave.sh` and `scripts/session-start.sh`.
+
+One consequence worth knowing: because registration is account-scoped, `/end-session` is
+visible in every Cowork session, including ones with a different folder open. The loader's
+first step exists for exactly that case — it refuses to run and says why, rather than writing
+into the wrong repository.
 
 ---
 
