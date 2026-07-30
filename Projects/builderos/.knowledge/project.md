@@ -1,3 +1,7 @@
+---
+slug: builderos
+---
+
 # BuilderOS
 
 - **Status:** Stable v0.1 baseline — supporting infrastructure, feature-frozen

@@ -1,3 +1,12 @@
+---
+# REPLACE THIS. The slug is the project's permanent identifier — lowercase,
+# hyphenated, ASCII, max 30 chars. It is declared here, never inferred from the
+# directory name, so renaming the directory or rebranding the product does not
+# orphan the project's history. Once chosen it does not change, ever, even if
+# the product name does. Slugs starting with `_` are reserved for system use.
+slug: REPLACE-ME
+---
+
 # <Project Name>
 
 - **Status:** Planning | Active | Paused | Shipped | Archived

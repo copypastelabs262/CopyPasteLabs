@@ -1,3 +1,12 @@
+---
+# Permanent identifier. Note this project's own Codename entry below: "ClassMind"
+# is a working name and is expected to change. The slug does not change with it.
+# Renaming the product is a display concern; renaming the identifier would orphan
+# every session log, Inbox entry, and decision recorded against it. This is
+# exactly why slugs are declared rather than inferred from the directory name.
+slug: classmind
+---
+
 # ClassMind
 
 - **Status:** Planning — scope defined, architecture not yet signed off

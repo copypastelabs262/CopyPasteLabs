@@ -27,9 +27,15 @@ service-account*.json
 firebase-debug.log
 
 # ─────────────────────────────────────────────────────────────
-# Claude Code — machine-local settings only
+# Claude Code — machine-local state only
 # ─────────────────────────────────────────────────────────────
 .claude/settings.local.json
+
+# Session start marker, written by scripts/session-start.sh and read by
+# End-Session to compute session duration. Describes one machine's current
+# session, not the repository's state — committing it would be meaningless to
+# anyone else and would churn on every session.
+.claude/.session-start
 
 # ─────────────────────────────────────────────────────────────
 # Dependencies — reinstallable, huge, never committed

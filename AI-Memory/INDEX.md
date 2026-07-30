@@ -27,6 +27,31 @@ All entry formats are defined in `08_Templates/FORMATS.md`.
 
 ---
 
+## Inbox — deliberately not indexed
+
+`AI-Memory/Inbox/` also exists, and is **intentionally excluded from this index.**
+
+The Inbox is **staging, not knowledge.** It holds session captures — evidence of what
+happened, plus *candidates*: proposed learnings, patterns, decisions and open questions that
+have been recorded but not yet reviewed. Nothing in it is permanent, curated, or safe to cite.
+Its contents are transient by design.
+
+Indexing it would defeat the purpose of the split. This index is a map of what CopyPasteLabs
+*knows*; the Inbox is a queue of what a session *claimed*. Listing both here would blur that
+line, which is the one distinction the whole pipeline exists to preserve.
+
+**`Knowledge-Promoter` is responsible for promoting Inbox entries into permanent AI-Memory** —
+and for updating this index when it does. Sessions capture into the Inbox and never write to
+the numbered folders above or to this file. That restriction is what makes everything listed
+in this index trustworthy: it has all been reviewed.
+
+The failure mode to watch for is a growing backlog of unpromoted entries. An Inbox that is
+never drained is a landfill, and knowledge sitting in it is knowledge nobody can find.
+
+See `CLAUDE.md` § "The knowledge pipeline" and `Skills/End-Session/specification.md`.
+
+---
+
 ## Quality ladder
 
 Every knowledge item carries a status in its frontmatter:
@@ -80,4 +105,5 @@ _(empty)_
 - **Never duplicate.** Search before creating. Update the existing file instead.
 - **Never grow for the sake of growing.** A merge that shortens the base is a win.
 - Run `Memory audit` periodically — it reports duplicates, conflicts, and stale entries before changing anything.
-- This INDEX is the map. If a file exists and is not listed here, the index is broken.
+- This INDEX is the map of **permanent** knowledge. If a file exists in `01_`–`10_` and is not
+  listed here, the index is broken. `Inbox/` is the one deliberate exception — see above.
