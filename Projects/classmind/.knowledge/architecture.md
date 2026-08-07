@@ -3,6 +3,13 @@
 - **Updated:** 2026-07-29
 - **Status:** v0.1 — signed off in principle, not yet validated by code
 
+> **Scope (2026-07-30):** this is the **Product Platform's** design — the system colleges use.
+> It is **not built until the concepts are validated** (Stage C in [roadmap.md](roadmap.md);
+> see the 2026-07-30 platform-separation entry in [decisions.md](decisions.md)). The
+> disposable Experiment Platform that comes first does not follow this document. It also
+> predates [domain-model.md](domain-model.md); where the two disagree on what a concept means,
+> the domain model wins, and this file will be reconciled when Stage C begins.
+
 ## Overview
 
 An audio file goes in, a queue of proposed academic events comes out, a human approves them,

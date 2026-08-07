@@ -111,12 +111,18 @@ Two things follow from phrasing it this way, and both matter:
 
 ## Current state
 
-Scope defined and research archived (2026-07-29). No code. Architecture is drafted but
-**blocked on founder sign-off** for six deviations from the technology stack proposed in the
-synopsis — see [decisions.md](decisions.md) and the session log.
+Concepts defined, not yet validated (2026-07-30). Research archived; the Engineering
+Constitution, the domain model, the Capture Contract, and a frozen Walkthrough Protocol are
+all written. The six architecture deviations were signed off. No code.
 
-Nothing has been built, no data has been collected, and no college partnership exists yet.
-The last of those is the real schedule risk.
+Development follows a **two-platform strategy** (see [decisions.md](decisions.md), 2026-07-30):
+a disposable **Experiment Platform** generates evidence to validate the domain model, and only
+then is the **Product Platform** — the system colleges use — designed from that evidence. The
+chain is Experiment → Evidence → Validated Concepts → Product, and each step gates the next.
+
+The immediate next step needs no software: the manual walkthrough in
+[walkthrough-protocol.md](walkthrough-protocol.md). Still no college partnership and no consent
+position — those remain the real schedule risks.
 
 ## Team context
 
@@ -151,17 +157,21 @@ Nothing to run yet.
 | Path | Purpose |
 |---|---|
 | `.knowledge/constitution.md` | **The nine articles every design decision must obey** |
-| `.knowledge/research/` | Frozen pre-build research and synopsis drafts |
-| `.knowledge/architecture.md` | System design (pending sign-off) |
-| `.knowledge/requirements.md` | What must be true for this to be done |
+| `.knowledge/domain-model.md` | The ubiquitous language — what every concept means |
+| `.knowledge/capture-contract.md` | Facts the Product Platform must never lose |
+| `.knowledge/walkthrough-protocol.md` | Frozen, pre-registered domain-model validation — **the next step** |
 | `.knowledge/decisions.md` | Choices made and what they cost |
-| `.knowledge/roadmap.md` | Sequenced plan |
+| `.knowledge/roadmap.md` | Sequenced plan (Experiment → Evidence → Concepts → Product) |
+| `.knowledge/architecture.md` | The **Product Platform's** design — not built until concepts are validated |
+| `.knowledge/requirements.md` | What must be true for this to be done |
+| `.knowledge/research/` | Frozen pre-build research and synopsis drafts |
 
 ## Open blockers
 
-1. **Architecture sign-off.** Six proposed deviations from the synopsis stack are awaiting a
-   decision. No code should be written before this resolves, because two of them change the
-   data model.
+1. **Concepts unvalidated.** The domain model is designed but has not survived contact with
+   real lectures. The manual walkthrough is the gate — no platform, experiment or product,
+   should be built on the concepts until it passes. See
+   [walkthrough-protocol.md](walkthrough-protocol.md).
 2. **No college partnership.** The evaluation dataset needs 15+ real lectures with faculty
    and student consent. This has the longest lead time of anything in the project and has not
    started.

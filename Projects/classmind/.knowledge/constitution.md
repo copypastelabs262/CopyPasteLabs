@@ -20,6 +20,13 @@ otherwise checked against the domain model article by article and no contradicti
 the one genuine tension, between Article I's erasure right and Article II's append-only rule,
 is resolved in the domain model's Challenge 10.
 
+**Scope note (2026-07-30):** these articles bind ClassMind's two platforms differently. The
+production-data articles (I, II, III, V, VI) bind the **Product Platform**. The
+research-validity articles (IV, VII, VIII, IX) bind the disposable **Experiment Platform** as
+well, because they protect the graded research claims. Article 0 is why the split is safe: the
+experiment's *code* is disposable, its *evidence* is not. Full rationale in the 2026-07-30
+platform-separation entry in `decisions.md`.
+
 **Ordered by cost of violation, most expensive first.** Each article states what a violating
 change looks like, what obeying it costs, and whether it may be suspended. An article whose
 cost you cannot name is one nobody has thought about.

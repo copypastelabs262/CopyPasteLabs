@@ -3,6 +3,35 @@
 Reverse-chronological. Newest at the top. Each entry is what changed and what it unblocked —
 not a commit log, which git already provides.
 
+## 2026-07-30 — Experiment/Product platform split encoded
+
+**Done:** Recorded the decision to build ClassMind as two distinct systems — a disposable
+**Experiment Platform** that generates evidence, and a **Product Platform** built only after the
+concepts are validated. Encoded it across five documents from each one's own angle, without
+duplicating rationale: `decisions.md` holds the full reasoning (source of truth); `roadmap.md`
+was re-sequenced into the gated pipeline Experiment → Evidence → Validated Concepts → Product;
+`capture-contract.md` and `constitution.md` each gained a short scope note; `project.md` and
+`architecture.md` got orientation and a guardrail banner. Also refreshed `project.md`'s stale
+current-state and key-files (they still said "blocked on founder sign-off").
+
+The one sharpening added beyond the brief: **disposable in code, not in evidence.** The
+Experiment Platform's software is throwaway, but the numbers and their provenance are the
+capstone contribution and are not — so the Constitution splits by platform (production-data
+articles bind the product; research-validity articles IV/VII/VIII/IX bind the experiment too)
+rather than exempting the experiment wholesale. Also flagged, and recorded in the decision: the
+*first* walkthrough needs no Experiment Platform at all — it is manual.
+
+`walkthrough-protocol.md` was deliberately **not** touched — it is frozen and pre-registered,
+and the split does not materially change it.
+
+**In progress:** Nothing.
+
+**Blocked:** Git remains uncommitted/unpushed in this environment (push hits a proxy 403). The
+knowledge base is 5+ commits ahead of `origin/master`, and `capture-contract.md` and
+`walkthrough-protocol.md` have never been committed at all — Shiv and Darsh cannot see them yet.
+
+**Next:** Run the manual walkthrough (Stage A). It needs no software.
+
 ## 2026-07-29 (later) — Domain model defined
 
 **Done:** Wrote `domain-model.md`, the ubiquitous language for the product. It is organised

@@ -5,15 +5,93 @@ Project-scoped choices. Newest at the top.
 If a decision here would apply to a future unrelated project, it belongs in
 `AI-Memory/07_Decisions/` instead — say "Promote this" to move it.
 
-All six decisions below were taken together on 2026-07-29, before any code existed. Each one
-deviates from `research/2026-07-24-synopsis-full.md`. The synopsis is not wrong so much as
-written before we had to build it — these are the corrections that come from planning the
-build rather than describing it.
+The **six 2026-07-29 decisions** were taken together, before any code existed. Each deviates
+from `research/2026-07-24-synopsis-full.md`. The synopsis is not wrong so much as written
+before we had to build it — these are the corrections that come from planning the build rather
+than describing it. The **2026-07-30 platform-separation decision** at the top is separate and
+later; it is a development-strategy choice, not a synopsis deviation.
 
 **If the synopsis has already been formally submitted and graded, these deviations need to be
 explained to the guide, not hidden.** A capstone that says "we changed approach X for reason
 Y and here is the evidence" reads as engineering maturity. A capstone that quietly ships
 something different from its synopsis reads as scope drift.
+
+---
+
+## 2026-07-30 — Separate the Experiment Platform from the Product Platform
+
+**Decision:** ClassMind is built as two distinct systems, not one that evolves into the other.
+
+- **The Experiment Platform** exists only to generate evidence and validate the domain model.
+  It contains the minimum needed to run experiments: audio in, storage, speech-to-text,
+  transcript storage, LLM extraction, a bare attestation/review screen, export. No auth, no
+  student or faculty dashboards, no analytics, no notifications, no production architecture.
+  It is **disposable** — if the evidence invalidates the domain model, we rebuild it without
+  regret.
+- **The Product Platform** is the production system colleges use. Its architecture, schema,
+  dashboards, APIs and backend are designed *only after* the concepts are validated, and are
+  informed by the evidence the Experiment Platform produced.
+
+The pipeline is **Experiment Platform → Evidence → Validated Concepts → Product Platform.**
+Each arrow is a gate: the next stage does not begin until the previous one has produced its
+output.
+
+**Two clarifications without which this decision is dangerous:**
+
+1. **Disposable in code, not in evidence.** The Experiment Platform's *software* is throwaway.
+   The *evidence it produces* — the numbers, and the provenance of those numbers — is the
+   capstone contribution and is not throwaway. So the Constitution splits by platform rather
+   than exempting the experiment wholesale: the production-data articles (I consent,
+   II raw/derived, III human checkpoint, V append-only, VI seams) bind the **Product
+   Platform** and do not burden the disposable experiment; the research-validity articles
+   (IV provenance, VII regenerable numbers, VIII eval quarantine, IX confidence naming) bind
+   the **Experiment Platform too**, because they protect the graded claims. A "disposable"
+   platform that emits unreproducible numbers has thrown away the one thing it existed to
+   make. Correspondingly, the Capture Contract binds the Product Platform; the Experiment
+   Platform's only capture obligation is that its evidence be reproducible (Article VII), not
+   production-grade consent, tenancy, or audit.
+
+2. **The first walkthrough needs no Experiment Platform at all.** The immediate next step —
+   the frozen [walkthrough-protocol.md](walkthrough-protocol.md) — is manual annotation by two
+   people over public lecture transcripts. Zero software. The Experiment Platform earns its
+   existence only for the *volume* experiments that come after the manual walkthrough shows the
+   concepts are legible enough to automate — running extraction across many lectures to produce
+   precision/recall numbers. Building the Experiment Platform before the manual walkthrough
+   would repeat the mistake this project already made once with BuilderOS: infrastructure built
+   ahead of the thing it exists to serve.
+
+**Reason:** We were treating one system as if it had one purpose, when it has two that pull in
+opposite directions. A research spike wants to be quick, throwaway, and free to be wrong. A
+product wants to be durable, careful, and correct. Force both roles onto one codebase and
+either the spike inherits production ceremony it does not need — slowing the research — or the
+product inherits the spike's shortcuts and fossilises unvalidated assumptions into its schema.
+The walkthrough exists precisely to test whether the domain model is right; building the
+product on that model *before* the test would harden into the schema exactly the assumptions
+the test might overturn.
+
+**Alternatives Considered:**
+- *One codebase that grows from spike into product.* The common path, and the one that feels
+  efficient. Rejected because "temporary becomes permanent" is the default outcome, not the
+  exception — the spike's early shortcuts become load-bearing before anyone consciously decides
+  to productionise. Article 0 says code is cheap, which means throwing the experiment away is
+  cheap; it is *keeping* it that costs.
+- *Two platforms sharing one schema.* Rejected: the shared schema is exactly the thing the
+  walkthrough might invalidate, so sharing it defeats the disposability that is the whole point.
+- *No Experiment Platform; go straight to the Product Platform after the manual walkthrough.*
+  Not rejected — **held.** If the manual walkthrough answers enough and the volume experiments
+  turn out unnecessary, skip the Experiment Platform entirely. Decide that after the walkthrough,
+  on evidence, not now.
+
+**Trade-offs:**
+- Two codebases eventually exist, and throwaway work is real work. Accepted: the throwaway is
+  cheap (Article 0), and the alternative — fossilised assumptions — is expensive.
+- **The failure mode to watch:** the Experiment Platform quietly becoming the product because
+  it "already works." The guards are that it is named disposable in writing, that it
+  deliberately omits auth, tenancy and dashboards so it *cannot* be shipped, and that the
+  Product Platform gets its own architecture pass. If anyone proposes "let's just add auth to
+  the experiment platform and ship it," that is this failure mode arriving, and the answer is no.
+- Discipline is required to actually throw it away. The name and the missing production concerns
+  are the enforcement, not good intentions.
 
 ---
 
