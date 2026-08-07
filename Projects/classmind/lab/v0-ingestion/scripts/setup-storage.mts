@@ -60,7 +60,7 @@ async function main() {
     {
       public: false,
       fileSizeLimit: FILE_SIZE_LIMIT_BYTES,
-      allowedMimeTypes: ALLOWED_MIME_TYPES,
+      allowedMimeTypes: [...ALLOWED_MIME_TYPES],
     },
   );
 
