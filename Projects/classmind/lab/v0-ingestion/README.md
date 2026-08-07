@@ -1,5 +1,5 @@
 ---
-status: In progress — Milestone 1 of 5 complete
+status: In progress — Milestone 2 underway
 created: 2026-08-07
 updated: 2026-08-07
 ---
