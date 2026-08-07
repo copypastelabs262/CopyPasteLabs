@@ -1,10 +1,45 @@
 ---
-status: Not started
+status: In progress — Milestone 1 of 5 complete
 created: 2026-08-07
 updated: 2026-08-07
 ---
 
 # Lab v0 — Lecture Ingestion
+
+**Stack (2026-08-07 decision):** Next.js + TypeScript + Tailwind CSS + Supabase
+(Database + Storage) + Sarvam. Technology is shared with the intended Product
+Platform; architecture is not — see [`lab/README.md`](../README.md) for what
+that separation means and the standing constraints it implies (no Docker, no
+domain-concept naming, disposable code).
+
+## Milestone progress
+
+| # | Milestone | Status |
+|---|---|---|
+| 0 | Clear the Sarvam blocker | Not started |
+| 1 | Project scaffold & environment | **Done** — see below |
+| 2 | Audio Ingestion | Not started |
+| 3 | Transcript Normalization | Not started |
+| 4 | Transcript + Metadata Display | Not started |
+| 5 | End-to-end run & close-out | Not started |
+
+**Milestone 1, done 2026-08-07:** Next.js app scaffolded into this directory
+(`src/app`, `src/lib`, `src/types`). Typed env access, an anon-key browser
+Supabase client, and a `server-only`-guarded service-role client are in
+place. `src/types/provenance.ts` defines the provenance contract later
+milestones fill in. `supabase init` has run (config only — no local Docker
+stack, per the standing ban). `npm run build` passes with zero real
+credentials; `/` is confirmed dynamic (`ƒ`), not statically prerendered, so
+the build never depends on reaching Supabase. Found and fixed a real bug
+along the way: the scaffolded `.gitignore` was silently swallowing
+`.env.example` (no negation, unlike the root `.gitignore`'s pattern) —
+confirmed via `git check-ignore -v` before and after the fix.
+
+**Two manual steps remain before Milestone 2 can start**, and are not
+something I can do — they need your account access:
+1. Create a free Supabase project; copy its URL, anon key, and service-role
+   key into `.env.local` (template in `.env.example`).
+2. Clear the Milestone 0 blocker below, then get a Sarvam API key.
 
 ## Goal
 
