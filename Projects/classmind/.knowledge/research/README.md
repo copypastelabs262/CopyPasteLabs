@@ -26,7 +26,7 @@ truth. These are not.**
 ## Why five near-identical files are kept
 
 They overlap by roughly 85%, which normally violates
-[Principle 4 — one source of truth](../../../AI-Memory/01_Principles/PRINCIPLES.md).
+[Principle 4 — one source of truth](../../../../AI-Memory/01_Principles/PRINCIPLES.md).
 
 The exception holds because these are **inputs, not documentation**. They were submitted or
 drafted for college assessment, so they have provenance value that a merged version would
@@ -49,7 +49,7 @@ Recorded here so nobody rediscovers them the hard way:
 2. **Accuracy targets were set before any measurement.** The ≥92% / ≥90% / ≥85% precision
    figures are aspirations written before a single lecture was processed, not projections
    from a baseline. Treat them as goals to be revised once real numbers exist — see
-   [Principle 3](../../../AI-Memory/01_Principles/PRINCIPLES.md).
+   [Principle 3](../../../../AI-Memory/01_Principles/PRINCIPLES.md).
 3. **No privacy or consent analysis.** Recording a classroom captures students' voices as
    well as the lecturer's. India's DPDP Act 2023 applies. This is absent from all five
    documents and is a genuine gap, not an oversight to be filed away.

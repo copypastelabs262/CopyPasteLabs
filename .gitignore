@@ -88,6 +88,40 @@ coverage/
 *.db
 
 # ─────────────────────────────────────────────────────────────
+# Lab data — audio, transcripts and run output
+#
+# autosave.sh runs `git add -A` after every edit, so an unignored
+# lecture recording would be committed automatically and permanently.
+# A 40-minute WAV is 200-400 MB; GitHub's per-file hard limit is 100 MB.
+#
+# Beyond size: classroom audio contains identifiable students, and we
+# have no consent position and have not read Sarvam's terms on secondary
+# use. Audio does not enter a shared repository until both are settled.
+#
+# Every directory's README.md stays tracked so the structure and the
+# regeneration command survive.
+# ─────────────────────────────────────────────────────────────
+Projects/*/lab/data/**
+!Projects/*/lab/data/**/
+!Projects/*/lab/data/**/README.md
+!Projects/*/lab/data/README.md
+
+# Media, wherever it lands
+*.wav
+*.mp3
+*.m4a
+*.flac
+*.ogg
+*.opus
+*.aac
+*.wma
+*.mp4
+*.mkv
+*.mov
+*.avi
+*.webm
+
+# ─────────────────────────────────────────────────────────────
 # Editor and OS junk
 # ─────────────────────────────────────────────────────────────
 .vscode/*

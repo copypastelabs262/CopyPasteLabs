@@ -165,6 +165,12 @@ Nothing to run yet.
 | `.knowledge/architecture.md` | The **Product Platform's** design — not built until concepts are validated |
 | `.knowledge/requirements.md` | What must be true for this to be done |
 | `.knowledge/research/` | Frozen pre-build research and synopsis drafts |
+| `lab/` | Experiment Platform — disposable code, permanent evidence |
+| `product/` | Product Platform — empty by design until the Stage C gate |
+
+Knowledge lives in `.knowledge/` and nowhere else. `lab/` and `product/` hold code; a lab
+version's README records what that version did and links to findings rather than restating
+them. Deleting anything under `lab/` must never lose something we know.
 
 ## Open blockers
 

@@ -19,4 +19,9 @@ that improvement then reaches every future project for free.
 | Project | Status | Started | Summary |
 |---|---|---|---|
 | `builderos` | Supporting | 2026-07-28 | The knowledge system itself, tracked as a project. Feature-frozen. |
-| `classmind` | Planning | 2026-07-29 | Extracts assignments, deadlines and exam topics from code-switched Indian lecture speech — the capstone product |
+| `classmind` | Building | 2026-07-29 | Extracts assignments, deadlines and exam topics from code-switched Indian lecture speech — the capstone product |
+
+A project may add directories beside `.knowledge/` once it starts building. ClassMind splits
+code into `lab/` (disposable experiments) and `product/` (production, gated) — see
+`Projects/classmind/README.md`. That split is project-specific and deliberately **not** in
+`_TEMPLATE/`; a second project has to prove it generalises first.
