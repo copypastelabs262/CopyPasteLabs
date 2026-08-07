@@ -80,8 +80,8 @@ async function main() {
   console.log(`  allowedMimeTypes: ${ALLOWED_MIME_TYPES.join(", ")}`);
 }
 
-function isNotFound(error: { message: string }): boolean {
-  return /not.?found/i.test(error.message);
+function isNotFound(error: { status?: number }): boolean {
+  return error.status === 404;
 }
 
 main().catch((err) => {
