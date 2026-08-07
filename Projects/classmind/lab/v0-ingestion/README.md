@@ -18,10 +18,28 @@ domain-concept naming, disposable code).
 |---|---|---|
 | 0 | Clear the Sarvam blocker | Not started |
 | 1 | Project scaffold & environment | **Done** — see below |
-| 2 | Audio Ingestion | Not started |
-| 3 | Transcript Normalization | Not started |
-| 4 | Transcript + Metadata Display | Not started |
-| 5 | End-to-end run & close-out | Not started |
+| 2 | Audio Ingestion (upload → store → transcribe → normalize → display) | **In progress** — see below |
+| 3 | End-to-end run & close-out | Not started |
+
+Milestone 2 folds what were originally three separate milestones (Audio
+Ingestion / Transcript Normalization / Display) into one — a run isn't
+independently verifiable as "working" until a transcript is visible, so
+splitting at "audio sits in storage" wasn't a meaningful checkpoint.
+Sarvam's Speech-to-Text is also async (Batch API, not the 30-second-capped
+synchronous endpoint), so the `runs` lifecycle models a job, not a
+request — `provider_job_id` is what makes an in-flight transcription
+resumable across a refresh or restart.
+
+**Milestone 2 components so far:**
+1. **Done** — `runs` table migration + `scripts/setup-storage.mts` (bucket
+   provisioning, not yet run against a live project).
+2. **Done** — `POST /api/runs`: creates the row, mints a Supabase signed
+   upload URL. Audio bytes never touch this server — confirmed against the
+   installed Next.js docs that Route Handlers buffer the whole body via
+   `formData()`, and against the installed Supabase client that it
+   supports direct browser-to-Storage upload via signed URLs.
+3. Next — the `TranscriptionProvider` interface, the Sarvam adapter, and
+   the submit/poll routes.
 
 **Milestone 1, done 2026-08-07:** Next.js app scaffolded into this directory
 (`src/app`, `src/lib`, `src/types`). Typed env access, an anon-key browser
