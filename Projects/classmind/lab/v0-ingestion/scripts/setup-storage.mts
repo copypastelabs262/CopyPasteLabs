@@ -13,20 +13,13 @@
 import nextEnv from "@next/env";
 const { loadEnvConfig } = nextEnv;
 import { createClient } from "@supabase/supabase-js";
+import {
+  AUDIO_BUCKET as BUCKET_NAME,
+  FILE_SIZE_LIMIT_BYTES,
+  ALLOWED_MIME_TYPES,
+} from "../src/lib/storage/runs-bucket.ts";
 
 loadEnvConfig(process.cwd());
-
-const BUCKET_NAME = "audio";
-const FILE_SIZE_LIMIT_BYTES = 524_288_000; // 500 MiB
-const ALLOWED_MIME_TYPES = [
-  "audio/mpeg",
-  "audio/wav",
-  "audio/x-wav",
-  "audio/mp4",
-  "audio/m4a",
-  "audio/webm",
-  "audio/ogg",
-];
 
 function requireEnv(name: string): string {
   const value = process.env[name];
