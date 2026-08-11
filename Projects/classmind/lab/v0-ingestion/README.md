@@ -76,7 +76,7 @@ far better to know that now than in month four.
 part of the frozen [`walkthrough-protocol.md`](../../.knowledge/walkthrough-protocol.md), and is
 **not a prerequisite for it** — the protocol's step 2 accepts any suitable ASR in about twenty
 minutes. Lab v0 was chosen independently, to make transcription repeatable, measurable and
-reproducible ([`decisions.md`](../../.knowledge/decisions.md), 2026-08-07). The walkthrough remains
+reproducible ([`decisions.md`](../../.knowledge/decisions.md), 2026-08-11). The walkthrough remains
 the domain-model validation gate, and this version stays on the near side of it: bytes and
 provenance, no domain concepts.
 
