@@ -129,7 +129,7 @@ walkthrough** ([walkthrough-protocol.md](walkthrough-protocol.md)) validates the
 needs no software, and its step 2 accepts any suitable ASR in about twenty minutes. **Lab v0**
 measures whether transcription is good enough to build on; it was chosen independently and
 validates no concept. Lab v0 running ahead of the walkthrough is a recorded decision (see
-[decisions.md](decisions.md), 2026-08-07), not a substitution — **the walkthrough remains the
+[decisions.md](decisions.md), 2026-08-11), not a substitution — **the walkthrough remains the
 domain-model validation gate, and it remains unrun.**
 
 Still no college partnership and no consent position — those remain the real schedule risks.

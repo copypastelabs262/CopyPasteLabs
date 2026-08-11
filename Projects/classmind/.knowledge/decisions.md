@@ -296,7 +296,7 @@ the test might overturn.
 - Discipline is required to actually throw it away. The name and the missing production concerns
   are the enforcement, not good intentions.
 
-**Scope (noted 2026-08-07):** clarification 2 above says the Experiment Platform "earns its
+**Scope (noted 2026-08-11):** clarification 2 above says the Experiment Platform "earns its
 existence only for the *volume* experiments that come after the manual walkthrough." That is no
 longer what we are doing, and the entry is left unedited so the change is visible rather than
 silent. Lab v0 is being built **before** the walkthrough, as a deliberate choice recorded in the
@@ -387,7 +387,7 @@ the risk of one college seeing another's data during the transition.
 scope. Forgetting it is a data-leak bug rather than a visible error, which is the dangerous
 kind — mitigate with row-level security in Postgres rather than relying on discipline.
 
-**Scope (noted 2026-08-07):** this entry predates the 2026-07-30 platform split and binds the
+**Scope (noted 2026-08-11):** this entry predates the 2026-07-30 platform split and binds the
 **Product Platform**. Lab v0's `runs` table carries no institution identifier and is not in
 violation: tenancy is obligation 9 of the [capture-contract.md](capture-contract.md), which the
 Experiment Platform is exempt from. "From the first migration" means the first *Product Platform*
