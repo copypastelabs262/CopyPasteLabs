@@ -8,6 +8,15 @@ Answering questions we cannot answer by thinking. Nothing else. If a question ca
 by reading [`.knowledge/domain-model.md`](../.knowledge/domain-model.md) or by two people with
 a printout, it does not justify code.
 
+**What that rule does and does not rule out.** Two people with a printout can settle whether the
+domain model is legible — that is the frozen
+[`walkthrough-protocol.md`](../.knowledge/walkthrough-protocol.md), and it is why **no Lab version
+is a prerequisite for it**; its step 2 accepts any suitable ASR in about twenty minutes. What a
+printout cannot settle is whether transcription is good enough to build on, at a quality that
+survives "what produced this number?" That is Lab v0's question, it was chosen independently of
+the walkthrough, and **it validates no concept.** See
+[`decisions.md`](../.knowledge/decisions.md), 2026-08-07.
+
 ## Disposability, stated precisely
 
 **The code is disposable. The evidence is not, and neither is what we learned.**
