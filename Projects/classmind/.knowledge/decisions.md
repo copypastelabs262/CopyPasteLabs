@@ -296,14 +296,24 @@ the test might overturn.
 - Discipline is required to actually throw it away. The name and the missing production concerns
   are the enforcement, not good intentions.
 
-**Scope (noted 2026-08-11):** clarification 2 above says the Experiment Platform "earns its
-existence only for the *volume* experiments that come after the manual walkthrough." That is no
-longer what we are doing, and the entry is left unedited so the change is visible rather than
-silent. Lab v0 is being built **before** the walkthrough, as a deliberate choice recorded in the
-2026-08-07 build-by-choice entry at the top of this file. Everything else here still holds: the
-platform split, the disposability of the code, the non-disposability of the evidence, the
-Constitution's split by platform, and the named failure mode. **The gate is unchanged** — Lab v0
-handles bytes and provenance only, and validates nothing about the domain model.
+**Scope (noted 2026-08-11):** two phrases above have been overtaken and are left unedited so the
+change is visible rather than silent.
+
+1. Clarification 2 says the Experiment Platform "earns its existence only for the *volume*
+   experiments that come after the manual walkthrough." That is no longer what we are doing —
+   Lab v0 is being built **before** the walkthrough, as a deliberate choice recorded in the
+   2026-08-11 build-by-choice entry at the top of this file.
+2. The first bullet says the Experiment Platform exists "to generate evidence and **validate the
+   domain model**." Read today that is wrong, and load-bearingly so: **the walkthrough validates
+   the domain model; the Experiment Platform does not.** The Platform generates measurable,
+   reproducible evidence — about transcription now, about extraction accuracy later. It consumes
+   a validated model rather than producing one. Treating Lab progress as gate progress is the
+   precise rationalisation by which the gate would get crossed without anyone deciding to cross
+   it.
+
+Everything else here still holds: the platform split, the disposability of the code, the
+non-disposability of the evidence, the Constitution's split by platform, and the named failure
+mode. **The gate is unchanged** — Lab v0 handles bytes and provenance only.
 
 ---
 
