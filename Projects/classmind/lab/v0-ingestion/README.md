@@ -6,11 +6,13 @@ updated: 2026-08-07
 
 # Lab v0 — Lecture Ingestion
 
-**Stack (2026-08-07 decision):** Next.js + TypeScript + Tailwind CSS + Supabase
-(Database + Storage) + Sarvam. Technology is shared with the intended Product
-Platform; architecture is not — see [`lab/README.md`](../README.md) for what
-that separation means and the standing constraints it implies (no Docker, no
-domain-concept naming, disposable code).
+**Stack:** Next.js + TypeScript + Tailwind CSS + Supabase (Database + Storage) +
+Sarvam. Technology is shared with the intended Product Platform; architecture is
+not. The decision, its reasoning and its trade-offs live in
+[`decisions.md`](../../.knowledge/decisions.md) (2026-08-07) — not here. See
+[`lab/README.md`](../README.md) for what that separation means and the standing
+constraints it implies (no Docker, no domain-concept naming, no auth, no
+embeddings, disposable code).
 
 ## Milestone progress
 
