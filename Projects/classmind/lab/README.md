@@ -15,7 +15,7 @@ is a prerequisite for it**; its step 2 accepts any suitable ASR in about twenty 
 printout cannot settle is whether transcription is good enough to build on, at a quality that
 survives "what produced this number?" That is Lab v0's question, it was chosen independently of
 the walkthrough, and **it validates no concept.** See
-[`decisions.md`](../.knowledge/decisions.md), 2026-08-07.
+[`decisions.md`](../.knowledge/decisions.md), 2026-08-11.
 
 ## Disposability, stated precisely
 
