@@ -140,8 +140,14 @@ position exists.
 
 ## Expect
 
-Whisper on CPU for a 40-minute lecture runs 30–90 minutes on `small` and up to four hours on
-`medium`, blocking the machine throughout. Plan around it; do not discover it at 11pm.
+**Unknown, and that is the point** — wall-clock time per lecture is one of the numbers this
+version exists to produce. Sarvam's Batch API is asynchronous
+([`decisions.md`](../../.knowledge/decisions.md), 2026-08-07), so the wait is the provider's queue
+plus transcription, and it is polled rather than blocking a machine. Do not guess it; measure it.
+
+If the Whisper fallback is ever exercised locally, that path is different and worse: on CPU a
+40-minute lecture runs 30–90 minutes on `small` and up to four hours on `medium`, blocking the
+machine throughout. Plan around it; do not discover it at 11pm.
 
 ---
 
