@@ -1,7 +1,7 @@
 ---
 status: Draft
 created: 2026-07-29
-updated: 2026-07-30
+updated: 2026-08-11
 ---
 
 # Roadmap — ClassMind
