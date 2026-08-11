@@ -3,6 +3,89 @@
 Reverse-chronological. Newest at the top. Each entry is what changed and what it unblocked —
 not a commit log, which git already provides.
 
+Entries are snapshots of what was true when written and are never rewritten. Where a later entry
+resolves something an earlier one recorded as blocked, the earlier line gets a dated marker
+pointing forward — it does not get edited away.
+
+## 2026-08-11 — Documentation reconciled with the code; Lab v0's justification corrected
+
+**Done:** An audit of every ClassMind document against the code that now exists, and a
+seven-file reconciliation. The substantive finding was a **false claim**, not a stale one:
+`README.md` said "Lab v0 exists only because steps 2 and 8 of [the walkthrough] require a
+transcript." The frozen protocol says step 2 is "transcribe with whatever ASR is nearest to
+hand… 20 min." **The walkthrough never required Lab v0.** Engineering work was being justified by
+a mandate a frozen document does not contain — the worst class of error here, because the two
+co-founders reading only the repo had no way to catch it.
+
+Replaced with the honest version, now canonical in `decisions.md` (2026-08-11): Lab v0 is an
+**independently chosen** Experiment Platform for repeatable, measurable, reproducible
+transcription. It validates no concept, discharges no part of the walkthrough, and **the
+walkthrough remains the domain-model validation gate.**
+
+A second finding was a misattribution. `lab/README.md` banned "No database, no HTTP API" citing
+**Constitution VII** — but Article VII governs *evaluation-run records*, prescribes "one flat
+table and a directory of JSONL files," and never mentions APIs. A sentence prescribing one table
+had been read as a prohibition on tables. The constraint is withdrawn as a misreading; **the
+Constitution needed no change and got none.** "No auth, no embeddings" survives and still binds.
+
+Four decisions made on 2026-08-07 that had lived only in commit messages and source comments are
+now recorded in `decisions.md`: the stack, the database/HTTP-API reversal, Sarvam's async Batch
+API, and Course Context staying out of Lab v0. Two older entries gained dated scope notes rather
+than edits — the 2026-07-29 multi-tenancy decision (binds the Product Platform; `runs` is not in
+violation) and the 2026-07-30 platform split (its "Experiment Platform comes *after* the
+walkthrough" clarification is no longer what we are doing, and that change is now visible).
+
+Frozen and untouched, deliberately: `walkthrough-protocol.md`, `constitution.md`,
+`capture-contract.md`, `domain-model.md`, `architecture.md`. No source code was modified.
+
+**In progress:** Nothing.
+
+**Blocked:** Unchanged from 2026-08-07 — see below. Nothing in this pass cleared or created a
+blocker.
+
+**Next:** Milestone 2 component 3 — the `TranscriptionProvider` interface, the Sarvam adapter,
+and the submit/poll routes. Separately and still unscheduled: **book the walkthrough day.** Its
+continued slippage is the named cost of the 2026-08-11 decision, and it needs a date, not a
+resolution.
+
+## 2026-08-07 — Lab v0 built to Milestone 2, component 2
+
+**Done:** ClassMind split into three directories — `.knowledge/` (permanent), `lab/`
+(disposable), `product/` (empty until the Stage C gate) — making the 2026-07-30 platform
+decision physical. Then Lab v0 scaffolded and built to two thirds of Milestone 2.
+
+*Milestone 1:* Next.js app with typed env access, an anon-key browser Supabase client and a
+`server-only`-guarded service-role client. `npm run build` passes with no real credentials and
+`/` is confirmed dynamic, so the build never depends on reaching Supabase. Found and fixed a real
+bug: the scaffolded `.gitignore` was silently swallowing `.env.example`, confirmed with
+`git check-ignore -v` before and after.
+
+*Milestone 2, component 1:* the `runs` table migration and `scripts/setup-storage.mts`. RLS
+enabled with zero policies — deny-by-default, since only the service-role client touches the
+table. The migration carries a guardrail comment: no foreign key to any course or session
+concept, and none to be added speculatively, because which table a future FK should target is
+what the walkthrough exists to settle.
+
+*Milestone 2, component 2:* `POST /api/runs` — validates against shared MIME and size limits,
+generates the run id server-side so the storage path is known before the row is written, and
+mints a Supabase signed upload URL. **Audio bytes never touch this server.** Incorporated the
+async job lifecycle: Sarvam's Batch API is asynchronous, so a run models a job rather than a
+request, and `provider_job_id` is what makes an in-flight transcription resumable across a
+refresh or restart.
+
+**Blocked:** Two manual steps, both needing account access, both blocking a live end-to-end test
+but not further building — no Supabase project or `.env.local`, so the migration has never been
+applied and the bucket has never been provisioned; and no Sarvam API key, which is itself gated
+on the terms below.
+
+**Next:** Milestone 2 component 3 — `TranscriptionProvider` interface, Sarvam adapter,
+submit/poll routes.
+
+**Watch:** Sarvam's terms on secondary use of submitted audio have been listed as "Next" since
+2026-07-29 and are still unread. Ten minutes, a legal precondition to the first upload, and
+capable of invalidating the vendor choice outright — which would waste the adapter that is next
+in the queue.
+
 ## 2026-07-30 — Experiment/Product platform split encoded
 
 **Done:** Recorded the decision to build ClassMind as two distinct systems — a disposable
