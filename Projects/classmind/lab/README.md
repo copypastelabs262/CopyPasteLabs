@@ -38,7 +38,7 @@ version stays exactly where it is, with its README rewritten to say why it ended
 
 | Version | Goal | Status |
 |---|---|---|
-| [`v0-ingestion/`](v0-ingestion/) | Audio in, transcript out, viewable | Not started |
+| [`v0-ingestion/`](v0-ingestion/) | Audio in, transcript out, viewable | In progress — Milestone 2 of 3 |
 
 Each version README carries the same six fields: **Goal · Scope · Success criteria · What was
 learned · Why it ended · Replaced by.** The last three are filled in when the version closes.
