@@ -55,8 +55,10 @@ along the way: the scaffolded `.gitignore` was silently swallowing
 `.env.example` (no negation, unlike the root `.gitignore`'s pattern) —
 confirmed via `git check-ignore -v` before and after the fix.
 
-**Two manual steps remain before Milestone 2 can start**, and are not
-something I can do — they need your account access:
+**Two manual steps remain before Milestone 2 can be run end to end.** They do not
+block building it — components 1 and 2 are done without them — but nothing can be
+verified against a live backend until they are cleared, and they need account
+access:
 1. Create a free Supabase project; copy its URL, anon key, and service-role
    key into `.env.local` (template in `.env.example`).
 2. Clear the Milestone 0 blocker below, then get a Sarvam API key.
