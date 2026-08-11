@@ -31,7 +31,20 @@ was written in the wrong place.
 
 ## Where the project actually is
 
-Pre-code, entering implementation. The gating step is the frozen
-[`walkthrough-protocol.md`](.knowledge/walkthrough-protocol.md) — a two-person manual
-annotation experiment that needs no software at all. Lab v0 exists only because steps 2 and 8
-of that protocol require a transcript.
+Building the Experiment Platform. Lab v0 is at Milestone 2 of 3; the Product Platform has not
+started.
+
+The **gating step is still the frozen
+[`walkthrough-protocol.md`](.knowledge/walkthrough-protocol.md)** — a two-person manual annotation
+experiment that needs no software at all. Its step 2 calls for transcription "with whatever ASR is
+nearest to hand," twenty minutes, engine and version recorded. **The walkthrough is not waiting on
+Lab v0 and never was.**
+
+Lab v0 is a separate, deliberate choice: infrastructure for making transcription repeatable,
+measurable and reproducible against real classroom recordings, so that transcript quality becomes
+a number we can defend rather than an assumption. See the 2026-08-07 entry in
+[`decisions.md`](.knowledge/decisions.md).
+
+**Building it validates nothing about the domain model.** Only the walkthrough does that, and the
+gate it guards is unchanged: nothing that names Commitment, Notice or Guidance gets built until
+its results document exists.
