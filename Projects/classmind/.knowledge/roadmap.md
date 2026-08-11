@@ -139,7 +139,10 @@ Platform's* design and is not built until this stage.
 
 - 2026-07-29 — Founder sign-off on the six architecture deviations (was Phase 0's blocker)
 - 2026-07-30 — Two-platform development strategy adopted
-- 2026-08-05 — ClassMind split into `.knowledge/`, `lab/` and `product/`
+- 2026-08-07 — ClassMind split into `.knowledge/`, `lab/` and `product/`; Lab v0 scaffolded
+  (Milestone 1) and Milestone 2 begun
 - 2026-08-07 — Lab v0 stack chosen (Next.js + TypeScript + Tailwind + Supabase + Sarvam); Lab
   database/HTTP-API constraint reversed; Sarvam Batch API adopted as async; Course Context kept
-  out of Lab v0; Lab v0 recorded as built **by choice**, with the walkthrough gate intact
+  out of Lab v0
+- 2026-08-11 — Documentation reconciled with the code. Lab v0 recorded as built **by choice**,
+  not because the walkthrough requires it; the walkthrough gate is unchanged and still unrun
