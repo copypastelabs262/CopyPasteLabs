@@ -42,7 +42,7 @@ Lab v0 and never was.**
 
 Lab v0 is a separate, deliberate choice: infrastructure for making transcription repeatable,
 measurable and reproducible against real classroom recordings, so that transcript quality becomes
-a number we can defend rather than an assumption. See the 2026-08-07 entry in
+a number we can defend rather than an assumption. See the 2026-08-11 entry in
 [`decisions.md`](.knowledge/decisions.md).
 
 **Building it validates nothing about the domain model.** Only the walkthrough does that, and the
