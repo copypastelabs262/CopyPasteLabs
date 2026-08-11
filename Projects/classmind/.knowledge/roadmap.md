@@ -51,6 +51,10 @@ start now regardless of the walkthrough:
       [capture-contract.md](capture-contract.md) Article 8.
 - [ ] Read Sarvam's terms on secondary use of submitted audio before any upload.
 
+**Nothing in Stage A is blocked on software.** Step 2 of the frozen protocol accepts any suitable
+ASR — twenty minutes, engine and version recorded. Lab v0 is not a prerequisite here and its
+progress does not advance this stage. The walkthrough remains unrun and remains the gate.
+
 **Gate:** the conceptual model is frozen only when the walkthrough's exit criteria are met. If
 they are not, the model is too speculative for the evidence available — simplify it, do not run
 ten more lectures.
