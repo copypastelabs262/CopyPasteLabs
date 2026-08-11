@@ -27,7 +27,12 @@ something different from its synopsis reads as scope drift.
 
 ---
 
-## 2026-08-07 — Build Lab v0 by choice, not because the walkthrough requires it
+## 2026-08-11 — Build Lab v0 by choice, not because the walkthrough requires it
+
+**Context:** Lab v0 has been under construction since 2026-08-07. Until today it was justified by
+a claim in `README.md` that the frozen walkthrough's steps 2 and 8 required it. **A documentation
+audit on 2026-08-11 found that claim to be false.** This entry replaces it with the real reason,
+which is a choice rather than a requirement.
 
 **Decision:** We are building Lab v0 as Experiment Platform infrastructure, deliberately, while
 the frozen walkthrough remains unrun. Three things are distinguished and must not be conflated:
