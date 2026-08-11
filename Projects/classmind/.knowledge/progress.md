@@ -112,8 +112,12 @@ and the split does not materially change it.
 **Blocked:** Git remains uncommitted/unpushed in this environment (push hits a proxy 403). The
 knowledge base is 5+ commits ahead of `origin/master`, and `capture-contract.md` and
 `walkthrough-protocol.md` have never been committed at all — Shiv and Darsh cannot see them yet.
+*(Resolved 2026-08-07: both files are committed and the working tree is clean and in sync with
+`origin/master`. Left in place as the record of what was true then.)*
 
 **Next:** Run the manual walkthrough (Stage A). It needs no software.
+*(Still true and still unrun as of 2026-08-11. Lab v0 was built instead, by a decision recorded
+in `decisions.md` 2026-08-11 — the walkthrough remains the gate, not a discharged step.)*
 
 ## 2026-07-29 (later) — Domain model defined
 
