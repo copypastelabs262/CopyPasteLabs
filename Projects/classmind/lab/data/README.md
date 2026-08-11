@@ -35,7 +35,9 @@ audio must not enter a shared repository at all. See
 ## How to regenerate it
 
 Every run must be reproducible from what *is* committed — a source list, the code, and the
-recorded provenance (Constitution VII). When v0 exists, the exact command goes here.
+recorded provenance (Constitution VII). v0 exists but has not yet completed a run, so there is no
+command to record here; it goes in when Lab v0 first produces a transcript end to end. Until then
+this section is an unmet obligation, not a formality.
 
 If regenerating this directory ever requires knowledge that lives only in someone's head, that
 is a Constitution VII violation and gets fixed before the next run.
