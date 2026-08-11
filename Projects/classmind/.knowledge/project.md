@@ -9,7 +9,8 @@ slug: classmind
 
 # ClassMind
 
-- **Status:** Planning — scope defined, architecture not yet signed off
+- **Status:** Building — Experiment Platform (Lab v0, Milestone 2 of 3). The six architecture
+  deviations were signed off 2026-07-29; the Product Platform has not started
 - **Started:** 2026-07-29
 - **Owner:** CopyPasteLabs (Shyam, Shiv, Darsh)
 - **Repo / location:** `E:\CopyPasteLabs\Projects\classmind`
