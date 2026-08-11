@@ -1,7 +1,7 @@
 ---
-status: In progress — Milestone 2 underway
+status: In progress — Milestone 2 of 3, components 1–2 of 3 done
 created: 2026-08-07
-updated: 2026-08-07
+updated: 2026-08-11
 ---
 
 # Lab v0 — Lecture Ingestion
