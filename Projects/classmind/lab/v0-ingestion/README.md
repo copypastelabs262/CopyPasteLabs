@@ -72,6 +72,14 @@ The transcript is not the deliverable. **The deliverable is knowing whether tran
 the project's bottleneck** — because if it is, the research question changes shape, and it is
 far better to know that now than in month four.
 
+**What this version does not do.** It does not validate the domain model, does not discharge any
+part of the frozen [`walkthrough-protocol.md`](../../.knowledge/walkthrough-protocol.md), and is
+**not a prerequisite for it** — the protocol's step 2 accepts any suitable ASR in about twenty
+minutes. Lab v0 was chosen independently, to make transcription repeatable, measurable and
+reproducible ([`decisions.md`](../../.knowledge/decisions.md), 2026-08-07). The walkthrough remains
+the domain-model validation gate, and this version stays on the near side of it: bytes and
+provenance, no domain concepts.
+
 ## Scope
 
 Five steps. Nothing else.
