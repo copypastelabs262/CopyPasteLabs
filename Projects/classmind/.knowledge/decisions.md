@@ -8,8 +8,13 @@ If a decision here would apply to a future unrelated project, it belongs in
 The **six 2026-07-29 decisions** were taken together, before any code existed. Each deviates
 from `research/2026-07-24-synopsis-full.md`. The synopsis is not wrong so much as written
 before we had to build it — these are the corrections that come from planning the build rather
-than describing it. The **2026-07-30 platform-separation decision** at the top is separate and
-later; it is a development-strategy choice, not a synopsis deviation.
+than describing it. The **2026-07-30 platform-separation decision** is separate and later; it is
+a development-strategy choice, not a synopsis deviation. The **five 2026-08-07 decisions** are
+later still and are the first taken with code in existence — they record what Lab v0 is actually
+built on, and why it is being built at all.
+
+Older entries are never rewritten to match newer ones. Where a later decision changes an
+earlier one's scope, the earlier entry keeps its original text and gains a dated scope note.
 
 **If the synopsis has already been formally submitted and graded, these deviations need to be
 explained to the guide, not hidden.** A capstone that says "we changed approach X for reason
