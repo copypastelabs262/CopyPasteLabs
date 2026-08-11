@@ -369,6 +369,12 @@ the risk of one college seeing another's data during the transition.
 scope. Forgetting it is a data-leak bug rather than a visible error, which is the dangerous
 kind — mitigate with row-level security in Postgres rather than relying on discipline.
 
+**Scope (noted 2026-08-07):** this entry predates the 2026-07-30 platform split and binds the
+**Product Platform**. Lab v0's `runs` table carries no institution identifier and is not in
+violation: tenancy is obligation 9 of the [capture-contract.md](capture-contract.md), which the
+Experiment Platform is exempt from. "From the first migration" means the first *Product Platform*
+migration, which has not been written.
+
 ---
 
 ## 2026-07-29 — Live in-lecture transcription is out of scope for the capstone
