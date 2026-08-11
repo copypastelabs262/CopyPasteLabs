@@ -73,7 +73,7 @@ LLM extraction → store results → bare attestation screen → export.
 **Started early, deliberately (2026-08-07).** Lab v0 (`lab/v0-ingestion/`) is in progress ahead of
 the Stage A gate — a recorded choice, not a gate crossing: it produces transcripts and provenance,
 and encodes no domain concept. It answers the first bullet below and nothing else on this list.
-See [decisions.md](decisions.md), 2026-08-07. Every remaining Stage B item stays behind the gate.
+See [decisions.md](decisions.md), 2026-08-11. Every remaining Stage B item stays behind the gate.
 
 - [ ] **Measure ASR quality on Hinglish first**, on obligation-bearing sentences specifically.
       If transcription is the bottleneck, the research question changes shape — know this in
