@@ -112,18 +112,27 @@ Two things follow from phrasing it this way, and both matter:
 
 ## Current state
 
-Concepts defined, not yet validated (2026-07-30). Research archived; the Engineering
-Constitution, the domain model, the Capture Contract, and a frozen Walkthrough Protocol are
-all written. The six architecture deviations were signed off. No code.
+Concepts defined, not yet validated. Research archived; the Engineering Constitution, the domain
+model, the Capture Contract and a frozen Walkthrough Protocol are all written, and the six
+architecture deviations were signed off (2026-07-29). Lab v0 — the Experiment Platform's first
+version — is at Milestone 2 of 3 (2026-08-07). The Product Platform has not started and
+`product/` is empty by design.
 
 Development follows a **two-platform strategy** (see [decisions.md](decisions.md), 2026-07-30):
-a disposable **Experiment Platform** generates evidence to validate the domain model, and only
-then is the **Product Platform** — the system colleges use — designed from that evidence. The
-chain is Experiment → Evidence → Validated Concepts → Product, and each step gates the next.
+a disposable **Experiment Platform** produces measurable, reproducible evidence, and only after
+the concepts are validated is the **Product Platform** — the system colleges use — designed from
+that evidence. The chain is Experiment → Evidence → Validated Concepts → Product, and each step
+gates the next.
 
-The immediate next step needs no software: the manual walkthrough in
-[walkthrough-protocol.md](walkthrough-protocol.md). Still no college partnership and no consent
-position — those remain the real schedule risks.
+**Two things are running in parallel, and conflating them is the error to avoid.** The **frozen
+walkthrough** ([walkthrough-protocol.md](walkthrough-protocol.md)) validates the domain model; it
+needs no software, and its step 2 accepts any suitable ASR in about twenty minutes. **Lab v0**
+measures whether transcription is good enough to build on; it was chosen independently and
+validates no concept. Lab v0 running ahead of the walkthrough is a recorded decision (see
+[decisions.md](decisions.md), 2026-08-07), not a substitution — **the walkthrough remains the
+domain-model validation gate, and it remains unrun.**
+
+Still no college partnership and no consent position — those remain the real schedule risks.
 
 ## Team context
 
