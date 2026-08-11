@@ -287,6 +287,15 @@ the test might overturn.
 - Discipline is required to actually throw it away. The name and the missing production concerns
   are the enforcement, not good intentions.
 
+**Scope (noted 2026-08-07):** clarification 2 above says the Experiment Platform "earns its
+existence only for the *volume* experiments that come after the manual walkthrough." That is no
+longer what we are doing, and the entry is left unedited so the change is visible rather than
+silent. Lab v0 is being built **before** the walkthrough, as a deliberate choice recorded in the
+2026-08-07 build-by-choice entry at the top of this file. Everything else here still holds: the
+platform split, the disposability of the code, the non-disposability of the evidence, the
+Constitution's split by platform, and the named failure mode. **The gate is unchanged** — Lab v0
+handles bytes and provenance only, and validates nothing about the domain model.
+
 ---
 
 ## 2026-07-29 — Capture every faculty correction as labelled data
