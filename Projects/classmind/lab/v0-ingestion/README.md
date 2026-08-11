@@ -93,8 +93,7 @@ Upload audio → Store audio → Transcribe (Sarvam) → Store transcript → Vi
 Not "later" — **not in this version**, and adding any of them means v0 has failed at the only
 thing it was for:
 
-- Any database. JSONL and files.
-- Any HTTP API, auth, or multi-tenancy.
+- Auth, or multi-tenancy of any kind.
 - Extraction of any kind — no LLM, no patterns, no NER.
 - Any field named `Commitment`, `Notice`, `Guidance`, `Observation` or `Attestation`.
   These are behind the gate. v0 handles bytes and provenance; that is what puts it in front
