@@ -156,6 +156,8 @@ erasure must be a designed cascading operation built before the first real Recor
 delete. Nothing since 2026-07-28 is committed, and the auto-save hook is blocked too — which
 under the single-writer model means both read-only co-founders are looking at a repository
 with no ClassMind in it at all.
+*(Resolved 2026-08-07: the lock cleared and everything is committed. Left in place as the record
+of what was true then.)*
 
 **Next:** Three cheap experiments the domain model depends on and cannot answer by reasoning.
 Annotate three real Sessions and count what fraction of Observations refer to an already-known
