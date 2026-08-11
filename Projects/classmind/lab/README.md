@@ -67,7 +67,12 @@ which is the exact thing the walkthrough exists to test.
 
 ## Standing constraints
 
-- **No database, no HTTP API, no auth, no embeddings.** JSONL and files (Constitution VII).
+- **No auth, no embeddings.** These are disposability guards: a lab version that cannot be logged
+  into cannot be shipped. *This constraint previously also read "no database, no HTTP API,
+  JSONL and files (Constitution VII)" — **withdrawn 2026-08-07**, because Article VII governs
+  evaluation-run records, prescribes "one flat table and a directory of JSONL files," and says
+  nothing about HTTP APIs. The citation was a misreading, not a rule. See
+  [`decisions.md`](../.knowledge/decisions.md), 2026-08-07.*
 - **No Docker.** Docker Desktop needs WSL2, BIOS virtualization and admin rights, and may
   simply fail on one of three student laptops.
 - **No field named `confidence`** unless it has been calibrated (Constitution IX). Until then
