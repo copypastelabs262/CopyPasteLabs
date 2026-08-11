@@ -9,9 +9,13 @@ The **six 2026-07-29 decisions** were taken together, before any code existed. E
 from `research/2026-07-24-synopsis-full.md`. The synopsis is not wrong so much as written
 before we had to build it — these are the corrections that come from planning the build rather
 than describing it. The **2026-07-30 platform-separation decision** is separate and later; it is
-a development-strategy choice, not a synopsis deviation. The **five 2026-08-07 decisions** are
+a development-strategy choice, not a synopsis deviation. The **four 2026-08-07 decisions** are
 later still and are the first taken with code in existence — they record what Lab v0 is actually
-built on, and why it is being built at all.
+built on. They were *made* on 2026-08-07, as the code shows, but lived only in commit messages and
+source comments until a documentation reconciliation **recorded them here on 2026-08-11**; they
+are dated when they were made, not when they were written down. The **2026-08-11 decision** at the
+top was taken during that reconciliation, when the audit found that Lab v0's stated justification
+was false.
 
 Older entries are never rewritten to match newer ones. Where a later decision changes an
 earlier one's scope, the earlier entry keeps its original text and gains a dated scope note.
