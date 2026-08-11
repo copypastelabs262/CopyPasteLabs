@@ -23,6 +23,195 @@ something different from its synopsis reads as scope drift.
 
 ---
 
+## 2026-08-07 — Build Lab v0 by choice, not because the walkthrough requires it
+
+**Decision:** We are building Lab v0 as Experiment Platform infrastructure, deliberately, while
+the frozen walkthrough remains unrun. Three things are distinguished and must not be conflated:
+
+1. **What the frozen protocol requires.** Nothing from us. [walkthrough-protocol.md](walkthrough-protocol.md)
+   step 2 says transcribe "with whatever ASR is nearest to hand; record engine and version" — one
+   person, twenty minutes — and step 8 the same for lectures 2–4. Any suitable ASR satisfies it.
+   **The walkthrough has never been blocked on software, and Lab v0 does not unblock it.**
+2. **What we chose to build anyway.** Lab v0 is our own infrastructure for making transcription
+   **repeatable, measurable, reproducible, and practical against real classroom recordings** —
+   uploads that survive a browser refresh, provenance recorded at write time rather than
+   retrofitted, and a transcript any of the three of us can regenerate from a stored artefact. A
+   one-off manual transcription satisfies the protocol; it does not survive being asked "what
+   exactly produced this number?"
+3. **What it will eventually produce.** Evidence about transcription: error rate on
+   obligation-bearing sentences specifically (walkthrough criterion C4, and prediction P10),
+   wall-clock cost per lecture, and vendor cost. **Nothing about the domain model.**
+
+**Building Lab v0 validates no concept, and does not replace or partially discharge the
+walkthrough.** The gate is unchanged: nothing naming Commitment, Notice, Guidance or an
+annotation unit is built until the walkthrough's results document exists. Lab v0 sits on the near
+side of that line — it handles bytes and provenance, which is the boundary two of the three
+2026-07-30 council reviewers drew independently ([lab/README.md](../lab/README.md)).
+
+**Reason:** [walkthrough-protocol.md](walkthrough-protocol.md) § Stopping rule says "nothing
+downstream — product architecture, navigation index, schema, dashboards, implementation — begins
+until the results document exists," and Lab v0 has built a schema and an implementation. Read
+literally, that sentence has been crossed. It is recorded here rather than resolved by editing
+the protocol: the protocol is frozen precisely so that reality is not retrofitted onto
+predictions, and its own preamble instructs that design defects be recorded elsewhere and changed
+for the *next* run. The substantive defence is that the stopping rule guards the **domain model**
+from premature encoding, and `runs` encodes no domain concept — deliberately, with a guardrail
+comment in the migration and no foreign key to any course concept.
+
+Independently, criterion C4 and prediction P10 both concern ASR adequacy, and neither can be
+answered credibly by one hand-run transcription with no recorded provenance. Constitution VII
+requires every reported number to be regenerable by one command; a manual transcript cannot
+satisfy that.
+
+**Alternatives Considered:**
+- *Run the walkthrough first, build nothing.* The orthodox reading of both the roadmap and the
+  2026-07-30 decision, and the cheaper path. Not rejected on merit — the walkthrough is still the
+  next real milestone and is still unrun. Rejected only as an *exclusive* choice: the walkthrough
+  depends on two people having one uninterrupted day, and blocking all engineering on that
+  scheduling constraint wastes the interval.
+- *Declare Lab v0 a walkthrough dependency.* What `README.md` previously claimed. **Rejected as
+  false** — the protocol asks for any ASR in twenty minutes. Keeping the claim would have
+  justified the build with a fabricated requirement, which is worse than an honest choice.
+- *Amend the stopping rule.* Rejected. The protocol is frozen; amending it to fit what we already
+  did is the failure it exists to prevent.
+
+**Trade-offs:**
+- Engineering time spent before the gate that could have gone to running the walkthrough. Real,
+  accepted, and the walkthrough's continued delay is the cost to watch.
+- **The failure mode to watch:** Lab v0 becoming the reason the walkthrough keeps slipping. If the
+  next session again ends with Lab progress and no walkthrough date, that is this decision going
+  wrong, and the answer is to stop building and book the day.
+- We are on record as having crossed a frozen document's stopping rule on an interpretation. Shiv
+  and Darsh may disagree, and this entry exists so they can.
+- **This decision is void the moment Lab code names a domain concept.** That is the gate, not this
+  entry.
+
+---
+
+## 2026-08-07 — Lab v0 stack: Next.js + TypeScript + Tailwind + Supabase + Sarvam
+
+**Decision:** Lab v0 runs on Next.js 16.3 + TypeScript + Tailwind 4, with Supabase for Postgres
+and Storage, and Sarvam for speech-to-text. **Technology is shared with the intended Product
+Platform; architecture is not.**
+
+**Reason:** Constitution Article VI already names Postgres, Supabase Auth and Next.js as vendors
+this project has openly married, so this confirms an existing commitment rather than opening a
+new one. One language for the Lab (TypeScript) rather than the Product Platform's planned
+Python/TypeScript split, because the Lab does no ML work — it moves bytes. Supabase supplies
+Postgres, object storage and signed upload URLs from a single managed vendor, which matters for a
+three-person learning team ([project.md](project.md) § Team context) and satisfies the standing
+no-Docker constraint. Sarvam was already [architecture.md](architecture.md)'s primary ASR choice,
+selected for Indian code-switching.
+
+**Alternatives Considered:**
+- *Python/FastAPI, to match [architecture.md](architecture.md)'s Product Platform design.*
+  Rejected for the Lab: there is no ML work here, and a second runtime doubles what can break for
+  no benefit. That document is Product-scoped and is reconciled at Stage C, not now.
+- *Local filesystem and JSONL only* — the previous constraint. See the reversal entry below.
+- *Whisper locally as primary* — retained instead as the Article VI named second implementation
+  for the ASR seam, not the primary path.
+
+**Trade-offs:**
+- Sharing technology with the Product Platform makes it easier for the Lab to quietly *become* the
+  product — the failure mode the 2026-07-30 decision named. The guards are unchanged: no auth, no
+  dashboards, no domain-concept naming, `product/` stays empty.
+- External vendor dependency on Sarvam, whose secondary-use terms are still unread and still block
+  the first upload.
+
+---
+
+## 2026-08-07 — Lab v0 may use a database and an HTTP API (reverses the earlier constraint)
+
+**Decision:** The Lab's standing constraint "No database, no HTTP API, no auth, no embeddings —
+JSONL and files (Constitution VII)" is **narrowed to "no auth, no embeddings."** The database and
+HTTP-API prohibitions are withdrawn.
+
+**Reason:** The constraint's stated authority does not support it. Constitution Article VII
+governs **evaluation-run records** — it prescribes "one flat table and a directory of JSONL
+files," and rejects MLflow and Weights & Biases on the stated ground that they solve problems of
+many concurrent experimenters and hyperparameter sweeps. It says nothing about where an
+application's operational data lives, and nothing whatsoever about HTTP APIs. Reading a sentence
+that prescribes *one flat table* as a prohibition on tables inverted it. Article VI independently
+names Postgres and Next.js as married vendors.
+
+**This is the correction of a misreading, not a constitutional deviation**, and it therefore needs
+no suspension under the Constitution's meta-rule. The Constitution is unchanged and requires no
+change. The auth and embeddings prohibitions are unaffected and remain in force as disposability
+guards.
+
+**Alternatives Considered:**
+- *Keep the constraint and build on JSONL.* Rejected: resumable async job state (see the entry
+  below) held in flat files means hand-rolling atomic writes and locking, which is more machinery
+  than a table, not less.
+- *Amend Article VII to permit this.* Rejected — the article is correct as written; the citation
+  was wrong.
+
+**Trade-offs:**
+- A schema is more attractive to keep than a directory of files, which pulls toward the
+  "experiment becomes the product" failure mode. Mitigations: the migration's guardrail comment,
+  no domain-concept naming, no auth, and `product/` empty by design.
+- Anything already written against the old constraint has to be corrected rather than quietly
+  contradicted — which is what the 2026-08-07 documentation pass did.
+
+---
+
+## 2026-08-07 — Sarvam's Batch API is async; a run models a job, not a request
+
+**Decision:** Transcription is an asynchronous job, not a request. Sarvam's Batch API is used
+rather than the synchronous endpoint, and the `runs` lifecycle models a job accordingly:
+`pending_upload → uploaded → transcribing → completed | failed`, where `transcribing` means a
+provider job is in flight. `provider_job_id` is persisted at submission time and is the entire
+resume mechanism — the row already carries everything a poll needs, so no separate resume path
+exists. `provider_status` mirrors the provider's raw last-polled status string for debugging and
+audit only; **application code never branches on it.** At the boundary, provider-specific states
+collapse to `in_progress / completed / failed`, so a future provider's vocabulary never has to
+match Sarvam's.
+
+**Reason:** The synchronous endpoint caps at thirty seconds and a lecture is forty minutes, so the
+async path is not a preference. Once transcription is a job rather than a request, resumability
+across a page refresh or a restart has to be designed in rather than added: without a persisted
+job id, a closed browser tab orphans a paid transcription with no way to reclaim it.
+
+**Alternatives Considered:**
+- *Synchronous endpoint with chunking.* Rejected: it builds a chunker before measuring whether one
+  is needed, which [v0-ingestion/README.md](../lab/v0-ingestion/README.md) explicitly forbids.
+- *In-memory job tracking.* Rejected: does not survive a restart, which is the only failure this
+  mechanism exists to handle.
+- *Branching application logic on the provider's own status strings.* Rejected: it welds Sarvam's
+  vocabulary into the app and defeats the ASR seam Article VI approved.
+
+**Trade-offs:**
+- Polling infrastructure that a synchronous call would not need.
+- Latency is now the provider's queue plus transcription, and is not knowable until measured —
+  which is one of the numbers Lab v0 exists to produce.
+
+---
+
+## 2026-08-07 — Course Context stays outside Lab v0
+
+**Decision:** The `runs` table carries no foreign key to any course, session, offering or lecture
+concept, and none is to be added speculatively. Lab v0 handles one audio file at a time, with no
+notion of which course it belongs to.
+
+**Reason:** The real domain model links Course Offering → Session → Recording, not directly to a
+transcription run — so **which table a future foreign key should target is exactly what the
+walkthrough is meant to settle, and is not this schema's to guess.** Adding the column now would
+encode an unvalidated domain relationship into the first migration, which is the specific failure
+the platform split and the walkthrough gate both exist to prevent.
+
+**Alternatives Considered:**
+- *Add a nullable `course_id` now, "just in case."* Rejected: a speculative FK is a domain
+  assertion wearing a convenience's clothes, and the cost of adding it later is one additive
+  nullable column — the cheapest migration there is.
+
+**Trade-offs:**
+- Runs cannot be grouped or filtered by course. Acceptable at v0 volume, where the expected corpus
+  is four lectures.
+- Someone will eventually want this and must resist adding it until the walkthrough has run. The
+  migration carries a guardrail comment saying so.
+
+---
+
 ## 2026-07-30 — Separate the Experiment Platform from the Product Platform
 
 **Decision:** ClassMind is built as two distinct systems, not one that evolves into the other.
