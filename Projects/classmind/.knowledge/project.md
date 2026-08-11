@@ -160,7 +160,17 @@ feature costs a week. A data model that cannot support multiple colleges costs a
 
 ## How to run it
 
-Nothing to run yet.
+Lab v0 only — the Product Platform does not exist. From `lab/v0-ingestion/`:
+
+| Command | Does |
+|---|---|
+| `npm run dev` | Start the app locally |
+| `npm run build` | Production build; also type-checks the setup script |
+| `npm run setup:storage` | One-time Supabase Storage bucket provisioning |
+
+All three currently run without credentials and fail fast with a clear message. A live
+end-to-end run additionally needs `.env.local` (template in `.env.example`) and is blocked on
+Sarvam's secondary-use terms — see [`lab/v0-ingestion/README.md`](../lab/v0-ingestion/README.md).
 
 ## Key files
 
