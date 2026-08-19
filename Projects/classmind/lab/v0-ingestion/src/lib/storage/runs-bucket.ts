@@ -4,7 +4,7 @@
 // signed upload URL, rather than letting a doomed upload discover the
 // bucket's own limits after the fact.
 export const AUDIO_BUCKET = "audio";
-export const FILE_SIZE_LIMIT_BYTES = 524_288_000; // 500 MiB
+export const FILE_SIZE_LIMIT_BYTES = 52_428_800; // 50 MiB -- Supabase Free plan ceiling
 export const ALLOWED_MIME_TYPES = [
   "audio/mpeg",
   "audio/wav",

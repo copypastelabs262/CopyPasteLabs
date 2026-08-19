@@ -73,8 +73,11 @@ async function main() {
   console.log(`  allowedMimeTypes: ${ALLOWED_MIME_TYPES.join(", ")}`);
 }
 
-function isNotFound(error: { status?: number }): boolean {
-  return error.status === 404;
+// A missing bucket comes back as status 400 with statusCode "404" -- a
+// string, and the two fields disagree. Normalize to a number and prefer
+// statusCode, which carries the real HTTP semantics.
+function isNotFound(error: { status?: number; statusCode?: string | number }): boolean {
+  return Number(error.statusCode ?? error.status) === 404;
 }
 
 main().catch((err) => {
