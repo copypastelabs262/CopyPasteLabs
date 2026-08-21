@@ -1,0 +1,455 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://copypastelabs.local/schema/evidence.v1.schema.json",
+  "title": "End-Session evidence.json v1",
+  "description": "Derived from git alone. Contains no model judgment and must be re-derivable.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "generated_by",
+    "generated_at",
+    "producer",
+    "author",
+    "session",
+    "project",
+    "repo",
+    "session_boundary",
+    "commits",
+    "changes",
+    "working_tree",
+    "diff",
+    "related_sessions"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "generated_by": {
+      "type": "string"
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "producer": {
+      "type": "string"
+    },
+    "author": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "topic_slug",
+        "started_at",
+        "ended_at",
+        "duration_known",
+        "duration_minutes",
+        "duration_source",
+        "context_completeness",
+        "operator_note"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "topic_slug": {
+          "type": "string"
+        },
+        "started_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ended_at": {
+          "type": "string"
+        },
+        "duration_known": {
+          "type": "boolean"
+        },
+        "duration_minutes": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "duration_source": {
+          "enum": [
+            "session_start_marker",
+            "marker_stale",
+            "unavailable"
+          ]
+        },
+        "context_completeness": {
+          "enum": [
+            "complete",
+            "partial"
+          ]
+        },
+        "operator_note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "primary",
+        "primary_detection",
+        "secondary",
+        "secondary_reason"
+      ],
+      "properties": {
+        "primary": {
+          "type": "string"
+        },
+        "primary_detection": {
+          "enum": [
+            "explicit_override",
+            "changed_path_attribution",
+            "tie_break_lines",
+            "tie_break_alphabetical",
+            "platform"
+          ]
+        },
+        "secondary": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "secondary_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "repo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "remote",
+        "branch",
+        "upstream",
+        "ahead",
+        "behind"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "remote": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "branch": {
+          "type": "string"
+        },
+        "upstream": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ahead": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "behind": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      }
+    },
+    "session_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "base",
+        "base_short",
+        "base_strategy",
+        "base_source",
+        "head",
+        "head_short"
+      ],
+      "properties": {
+        "base": {
+          "type": "string"
+        },
+        "base_short": {
+          "type": "string"
+        },
+        "base_strategy": {
+          "enum": [
+            "previous_inbox_entry",
+            "session_start_marker",
+            "upstream_merge_base",
+            "root_commit"
+          ]
+        },
+        "base_source": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "head": {
+          "type": "string"
+        },
+        "head_short": {
+          "type": "string"
+        }
+      }
+    },
+    "commits": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sha",
+          "short",
+          "author_name",
+          "author_email",
+          "authored_at",
+          "subject",
+          "body",
+          "is_auto_save"
+        ],
+        "properties": {
+          "sha": {
+            "type": "string"
+          },
+          "short": {
+            "type": "string"
+          },
+          "author_name": {
+            "type": "string"
+          },
+          "author_email": {
+            "type": "string"
+          },
+          "authored_at": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "is_auto_save": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "changes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary",
+        "files"
+      ],
+      "properties": {
+        "summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "modified",
+            "added",
+            "deleted",
+            "renamed",
+            "copied",
+            "total_files",
+            "insertions",
+            "deletions"
+          ],
+          "properties": {
+            "modified": {
+              "type": "integer"
+            },
+            "added": {
+              "type": "integer"
+            },
+            "deleted": {
+              "type": "integer"
+            },
+            "renamed": {
+              "type": "integer"
+            },
+            "copied": {
+              "type": "integer"
+            },
+            "total_files": {
+              "type": "integer"
+            },
+            "insertions": {
+              "type": "integer"
+            },
+            "deletions": {
+              "type": "integer"
+            }
+          }
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "path",
+              "change_type",
+              "insertions",
+              "deletions",
+              "binary"
+            ],
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "change_type": {
+                "enum": [
+                  "modified",
+                  "added",
+                  "deleted",
+                  "renamed",
+                  "copied"
+                ]
+              },
+              "renamed_from": {
+                "type": "string"
+              },
+              "similarity": {
+                "type": "integer"
+              },
+              "insertions": {
+                "type": "integer"
+              },
+              "deletions": {
+                "type": "integer"
+              },
+              "binary": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      }
+    },
+    "working_tree": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "clean",
+        "uncommitted",
+        "staged",
+        "untracked"
+      ],
+      "properties": {
+        "clean": {
+          "type": "boolean"
+        },
+        "uncommitted": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "staged": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "untracked": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "diff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stored",
+        "path",
+        "size_bytes",
+        "omitted_reason",
+        "binary_files",
+        "regenerate_command"
+      ],
+      "properties": {
+        "stored": {
+          "type": "boolean"
+        },
+        "path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "size_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "omitted_reason": {
+          "enum": [
+            "size_exceeded",
+            "binary_present",
+            "file_count_exceeded",
+            "secret_suspected",
+            null
+          ]
+        },
+        "binary_files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "secret_suspected_paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "regenerate_command": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "related_sessions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

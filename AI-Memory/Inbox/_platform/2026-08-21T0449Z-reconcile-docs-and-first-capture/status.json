@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "session_id": "2026-08-21T0449Z-reconcile-docs-and-first-capture",
+  "project": "_platform",
+  "state": "pending",
+  "state_set_at": "2026-08-21T04:53:59Z",
+  "state_set_by": "End-Session/1.0.0",
+  "review": {
+    "reviewed_at": null,
+    "reviewed_by": null,
+    "candidate_outcomes": [],
+    "notes": ""
+  }
+}

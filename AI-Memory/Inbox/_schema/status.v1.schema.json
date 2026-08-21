@@ -1,0 +1,106 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://copypastelabs.local/schema/status.v1.schema.json",
+  "title": "End-Session status.json v1",
+  "description": "The only mutable file in an entry. Written once by End-Session with state 'pending'; owned by Knowledge-Promoter thereafter.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "session_id",
+    "project",
+    "state",
+    "state_set_at",
+    "state_set_by",
+    "review"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "project": {
+      "type": "string"
+    },
+    "state": {
+      "enum": [
+        "pending",
+        "in_review",
+        "promoted",
+        "partially_promoted",
+        "rejected",
+        "superseded"
+      ]
+    },
+    "state_set_at": {
+      "type": "string"
+    },
+    "state_set_by": {
+      "type": "string"
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reviewed_at",
+        "reviewed_by",
+        "candidate_outcomes",
+        "notes"
+      ],
+      "properties": {
+        "reviewed_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reviewed_by": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "candidate_outcomes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "outcome"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "outcome": {
+                "enum": [
+                  "promoted",
+                  "rejected",
+                  "merged",
+                  "deferred"
+                ]
+              },
+              "destination": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

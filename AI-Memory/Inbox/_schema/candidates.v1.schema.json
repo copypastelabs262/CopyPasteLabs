@@ -1,0 +1,152 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://copypastelabs.local/schema/candidates.v1.schema.json",
+  "title": "End-Session candidates.json v1",
+  "description": "Model-asserted proposals. Never authoritative. Every candidate carries a non-empty basis naming the specific event that makes it true.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "generated_by",
+    "generated_at",
+    "session_id",
+    "project",
+    "extraction_meta",
+    "candidates"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "generated_by": {
+      "type": "string"
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "project": {
+      "type": "string"
+    },
+    "extraction_meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "context_completeness",
+        "candidates_emitted",
+        "candidates_discarded_no_basis",
+        "note"
+      ],
+      "properties": {
+        "context_completeness": {
+          "enum": [
+            "complete",
+            "partial"
+          ]
+        },
+        "candidates_emitted": {
+          "type": "integer"
+        },
+        "candidates_discarded_no_basis": {
+          "type": "integer"
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "type",
+          "title",
+          "body",
+          "confidence",
+          "basis",
+          "evidence_refs",
+          "proposed_scope",
+          "proposed_status",
+          "possible_duplicates",
+          "promoter_notes"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^cand-[0-9]{3}$"
+          },
+          "type": {
+            "enum": [
+              "learning",
+              "principle",
+              "pattern",
+              "prompt",
+              "snippet",
+              "mistake",
+              "decision",
+              "tool",
+              "glossary",
+              "open_question",
+              "promotion_request",
+              "demotion_request"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "confidence": {
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ]
+          },
+          "basis": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "proposed_scope": {
+            "enum": [
+              "global",
+              "project"
+            ]
+          },
+          "proposed_status": {
+            "enum": [
+              "Draft"
+            ]
+          },
+          "possible_duplicates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "promoter_notes": {
+            "type": "string"
+          },
+          "operator_directive": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}
