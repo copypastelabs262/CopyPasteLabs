@@ -1,7 +1,7 @@
 ---
-status: In progress — Milestone 2 of 3, components 1–2 of 3 done
+status: In progress — Milestone 2 of 3, build complete (3 of 3 components), unverified end to end
 created: 2026-08-07
-updated: 2026-08-11
+updated: 2026-08-21
 ---
 
 # Lab v0 — Lecture Ingestion
@@ -18,7 +18,7 @@ embeddings, disposable code).
 
 | # | Milestone | Status |
 |---|---|---|
-| 0 | Clear the Sarvam blocker | Not started |
+| 0 | Clear the Sarvam blocker | **Done** — 2026-08-21 |
 | 1 | Project scaffold & environment | **Done** — see below |
 | 2 | Audio Ingestion (upload → store → transcribe → normalize → display) | **In progress** — see below |
 | 3 | End-to-end run & close-out | Not started |
@@ -40,8 +40,31 @@ resumable across a refresh or restart.
    installed Next.js docs that Route Handlers buffer the whole body via
    `formData()`, and against the installed Supabase client that it
    supports direct browser-to-Storage upload via signed URLs.
-3. Next — the `TranscriptionProvider` interface, the Sarvam adapter, and
-   the submit/poll routes.
+3. **Done** — the `TranscriptionProvider` interface, the Sarvam adapter,
+   the transcribe/poll routes and the provenance module. The provider
+   boundary collapses job states to `in_progress|completed|failed`, so
+   nothing downstream knows the word "Sarvam" and swapping providers is a
+   one-line change in `index.ts`. `provider_job_id` is written in the same
+   statement that moves the run to `transcribing`, so a crash cannot leave
+   an in-flight job unpollable. Provenance is written in the same `UPDATE`
+   as the transcript — there is deliberately no code path that stores a
+   transcript without one.
+
+**Milestone 2's build is complete; Milestone 2 is not.** What remains is
+**transcript normalization** (`transcript_normalized` is a column and a
+`NormalizedTranscript` type, but nothing writes it) and **display** (there is
+no upload UI and no transcript view — nothing in the app calls
+`POST /api/runs`; `src/app/page.tsx` is still the Milestone 1 scaffold).
+Both are deliberately not the next thing built — see "Blocked until" below.
+
+**No live Sarvam call has ever been made.** Two things follow. Success
+criterion 4 (Constitution VII, one-command regeneration) is unmet, and
+`lab/data/README.md` records that as an obligation rather than a formality.
+And one assumption is untested: Sarvam returns
+`storage_container_type: "Azure_V1"` but does not document how to upload to
+the presigned URL, so `uploadToPresignedUrl()` uses the Azure Blob SAS
+convention (`PUT` with `x-ms-blob-type: BlockBlob`). It is isolated in that
+one function precisely so the first live run can disprove it cheaply.
 
 **Milestone 1, done 2026-08-07:** Next.js app scaffolded into this directory
 (`src/app`, `src/lib`, `src/types`). Typed env access, an anon-key browser
@@ -55,13 +78,10 @@ along the way: the scaffolded `.gitignore` was silently swallowing
 `.env.example` (no negation, unlike the root `.gitignore`'s pattern) —
 confirmed via `git check-ignore -v` before and after the fix.
 
-**Two manual steps remain before Milestone 2 can be run end to end.** They do not
-block building it — components 1 and 2 are done without them — but nothing can be
-verified against a live backend until they are cleared, and they need account
-access:
-1. Create a free Supabase project; copy its URL, anon key, and service-role
-   key into `.env.local` (template in `.env.example`).
-2. Clear the Milestone 0 blocker below, then get a Sarvam API key.
+**Both manual steps are now cleared (2026-08-19).** The Supabase project exists,
+`.env.local` is populated, the migration is applied, the bucket is provisioned,
+and a Sarvam API key is in place. What is still missing is not access but a
+run: no audio has been sent to Sarvam.
 
 ## Goal
 
@@ -131,9 +151,19 @@ re-transcription ([`capture-contract.md`](../../.knowledge/capture-contract.md) 
 
 ## Blocked until
 
-- [ ] **Sarvam's terms on secondary use of submitted audio have been read.** A ten-minute
-      check, a legal precondition to the first upload, and it could invalidate the vendor
-      choice outright. Listed as "Next" since 2026-07-29 and still not done.
+- [x] **Sarvam's terms on secondary use of submitted audio have been read.** Cleared
+      2026-08-21: the vendor choice stands. Recorded late — the reading happened before the
+      API key was obtained but was never written down, and no clause was kept. **If a
+      specific term ever matters — retention, deletion, training use — re-read and quote
+      it; do not rely on this line.**
+
+**Not blocked, but next anyway — do not start Milestone 2's remainder.** Normalization and
+display are ready to build and are deliberately not being built. `decisions.md` (2026-08-11)
+named the stop condition for exactly this: *"If the next session again ends with Lab progress
+and no walkthrough date, that is this decision going wrong, and the answer is to stop building
+and book the day."* The 2026-08-19 session met it. The frozen walkthrough needs zero code and
+[`roadmap.md`](../../.knowledge/roadmap.md) Stage A states plainly that Lab v0's progress does
+not advance it.
 
 Public lecture audio only. No real classroom recording until the consent and data-protection
 position exists.

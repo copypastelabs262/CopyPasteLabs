@@ -115,7 +115,8 @@ Two things follow from phrasing it this way, and both matter:
 Concepts defined, not yet validated. Research archived; the Engineering Constitution, the domain
 model, the Capture Contract and a frozen Walkthrough Protocol are all written, and the six
 architecture deviations were signed off (2026-07-29). Lab v0 — the Experiment Platform's first
-version — is at Milestone 2 of 3 (2026-08-07). The Product Platform has not started and
+version — is at Milestone 2 of 3; that milestone's build was completed on 2026-08-19 but has
+never been run end to end, and transcript normalization and display remain unbuilt. The Product Platform has not started and
 `product/` is empty by design.
 
 Development follows a **two-platform strategy** (see [decisions.md](decisions.md), 2026-07-30):
@@ -168,9 +169,11 @@ Lab v0 only — the Product Platform does not exist. From `lab/v0-ingestion/`:
 | `npm run build` | Production build; also type-checks the setup script |
 | `npm run setup:storage` | One-time Supabase Storage bucket provisioning |
 
-All three currently run without credentials and fail fast with a clear message. A live
-end-to-end run additionally needs `.env.local` (template in `.env.example`) and is blocked on
-Sarvam's secondary-use terms — see [`lab/v0-ingestion/README.md`](../lab/v0-ingestion/README.md).
+All three fail fast with a clear message when credentials are absent. As of 2026-08-19 the
+Supabase project, `.env.local`, the applied migration, the provisioned bucket and a Sarvam API
+key all exist, and Sarvam's secondary-use terms were cleared on 2026-08-21 — so nothing external
+now blocks a live end-to-end run. It simply has not been done: no audio has been sent to Sarvam.
+See [`lab/v0-ingestion/README.md`](../lab/v0-ingestion/README.md).
 
 ## Key files
 

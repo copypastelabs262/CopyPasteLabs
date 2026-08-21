@@ -7,6 +7,55 @@ Entries are snapshots of what was true when written and are never rewritten. Whe
 resolves something an earlier one recorded as blocked, the earlier line gets a dated marker
 pointing forward — it does not get edited away.
 
+## 2026-08-21 — Milestone 2's build finished on 2026-08-19; the documents caught up today
+
+**Done (2026-08-19, recorded here on 2026-08-21):** Milestone 2 component 3 — the
+`TranscriptionProvider` boundary, the Sarvam Batch adapter, the transcribe and poll routes, and
+the provenance module. Committed as `b3db63b`. A run can now go from stored audio to a stored raw
+transcript with provenance written in the same `UPDATE` as the transcript, because Constitution
+IV forbids retrofitting it. Provisioning the backend also surfaced two real bugs, both fixed in
+the same commit: `setup-storage.mts` checked `error.status === 404` but the SDK reports a missing
+bucket as `status` 400 with `statusCode` `"404"` — a *string*, in a different field — so the
+existence probe read as fatal and the bucket could never be created; and the bucket's 500 MiB
+file limit was rejected outright because the Supabase Free plan caps the global limit at 50 MB.
+Full detail in [`sessions/2026-08-19-milestone-2-component-3.md`](sessions/2026-08-19-milestone-2-component-3.md).
+
+**Done (2026-08-21):** The 2026-08-19 session left no record at all — no session log, no entry
+here, no `roadmap.md` line — and **its commit was never pushed**, so for two days `origin/master`
+stood at `98a7b7a` and Shiv and Darsh could not see any of component 3. Both are now fixed:
+`b3db63b` is pushed, and the missing session log has been written retroactively and marked as
+such.
+
+The push failure has a structural cause worth naming, because it will recur: `scripts/autosave.sh`
+is wired to `PostToolUse` on `Write|Edit`, so it never fires for a commit made through the shell —
+which is exactly the deliberate, well-messaged commit `CLAUDE.md` asks for at the end of a
+session. **The auto-push safety net covers the incidental path and not the intentional one.**
+Recorded as a candidate for the BuilderOS platform, not fixed here.
+
+**Sarvam's terms on secondary use of submitted audio have been read, and the vendor choice
+stands.** This clears a blocker that had been listed as "Next" since 2026-07-29. Two honest
+caveats: the reading happened before the API key was obtained but was never written down, so this
+entry records it on Shyam's confirmation rather than from a contemporaneous note; and no extract
+or clause reference was kept. **If a specific term ever matters — retention, deletion, training
+use — it must be re-read and quoted, not recalled.** The unchecked box in `lab/v0-ingestion/README.md`
+and `roadmap.md` had become a false blocker, which is the same class of error the 2026-08-11 audit
+found and corrected.
+
+**In progress:** Nothing.
+
+**Blocked:** Unchanged except for Sarvam's terms, now cleared. The walkthrough is unrun, the
+college partnership has not started, and there is no consent/data-protection position. **No live
+Sarvam call has been made yet**, so Milestone 2 is built but unverified, Constitution VII's
+one-command regeneration is unmet, and the Azure Blob SAS upload convention in
+`uploadToPresignedUrl()` remains an untested assumption inferred from `storage_container_type`.
+
+**Next:** **Book the walkthrough day.** Not Milestone 2's remaining work. `decisions.md`
+(2026-08-11) named its own stop condition — *"If the next session again ends with Lab progress and
+no walkthrough date, that is this decision going wrong, and the answer is to stop building and
+book the day"* — and the 2026-08-19 session met it exactly. `roadmap.md` Stage A needs zero code
+and explicitly states that Lab v0's progress does not advance it. Transcript normalization and
+display are the remainder of Milestone 2 and are deliberately *not* next.
+
 ## 2026-08-11 — Documentation reconciled with the code; Lab v0's justification corrected
 
 **Done:** An audit of every ClassMind document against the code that now exists, and a
@@ -77,6 +126,9 @@ refresh or restart.
 but not further building — no Supabase project or `.env.local`, so the migration has never been
 applied and the bucket has never been provisioned; and no Sarvam API key, which is itself gated
 on the terms below.
+*(Resolved 2026-08-19: the Supabase project, `.env.local` and a Sarvam API key all exist; the
+migration is applied and the bucket provisioned. Left in place as the record of what was true
+then.)*
 
 **Next:** Milestone 2 component 3 — `TranscriptionProvider` interface, Sarvam adapter,
 submit/poll routes.
@@ -85,6 +137,8 @@ submit/poll routes.
 2026-07-29 and are still unread. Ten minutes, a legal precondition to the first upload, and
 capable of invalidating the vendor choice outright — which would waste the adapter that is next
 in the queue.
+*(Resolved 2026-08-21: read, and the vendor choice stands — though the reading was never written
+down at the time. See the 2026-08-21 entry for the caveats that come with recording it late.)*
 
 ## 2026-07-30 — Experiment/Product platform split encoded
 

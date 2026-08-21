@@ -1,7 +1,7 @@
 ---
 status: Draft
 created: 2026-07-29
-updated: 2026-08-11
+updated: 2026-08-21
 ---
 
 # Roadmap — ClassMind
@@ -49,7 +49,9 @@ start now regardless of the walkthrough:
 - [ ] Draft the consent and data-retention position. Required before the first *real* recording
       (not before the walkthrough — that uses public lectures). See
       [capture-contract.md](capture-contract.md) Article 8.
-- [ ] Read Sarvam's terms on secondary use of submitted audio before any upload.
+- [x] Read Sarvam's terms on secondary use of submitted audio before any upload. *(Cleared
+      2026-08-21; the vendor choice stands. Recorded from memory rather than a contemporaneous
+      note — see [progress.md](progress.md), 2026-08-21, for the caveat.)*
 
 **Nothing in Stage A is blocked on software.** Step 2 of the frozen protocol accepts any suitable
 ASR — twenty minutes, engine and version recorded. Lab v0 is not a prerequisite here and its
