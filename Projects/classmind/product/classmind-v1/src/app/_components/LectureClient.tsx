@@ -22,7 +22,11 @@ export default function LectureClient({
   courseId, lectureId,
 }: { courseId: string; lectureId: string }) {
   const searchParams = useSearchParams();
-  const jumpTo = Number(searchParams.get("t") ?? "");
+  // Absent must stay absent. `Number("")` is 0, which is a finite, seekable
+  // millisecond -- reading it that way made every plain visit jump to the top
+  // of the transcript and start the audio playing on its own.
+  const tParam = searchParams.get("t");
+  const jumpTo = tParam === null || tParam === "" ? null : Number(tParam);
 
   const [lecture, setLecture] = useState<Lecture | null>(null);
   const [segments, setSegments] = useState<Segment[]>([]);
