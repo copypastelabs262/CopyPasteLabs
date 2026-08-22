@@ -513,16 +513,28 @@ function readSignals(text: string, courseTerms: readonly CompiledCue[]): Signals
 //   exam ke point of view se solve karna hai" contains "exam" and is still
 //   pure instruction.
 //
-// The vetoes apply ONLY to rules marked `narrationProne`. Announcement rules
-// legitimately use first-person ("मैं ... कर देंगे" is the lecturer promising
-// something) and applying VETO_ADDRESSEE to them would delete the real finds.
+// Vetoes are scoped per rule, because they are not equally safe everywhere:
+//
+//   "full"      obligation rules. All three vetoes.
+//   "addressee" advice rules. Veto A only -- "let's revise the derivation" is
+//               a teaching move, not advice to students, and veto A is exactly
+//               the test for that. Vetoes B and C would be wrong here: advice
+//               about subject matter ("practice the field numericals") is
+//               still advice, and domain density is expected in it.
+//   "none"      announcements, exam dates, exam scope. Announcements
+//               legitimately use first person -- "मैं ... कर देंगे" is the
+//               lecturer promising something -- so veto A would delete exactly
+//               the real finds this method exists to catch.
+
+type SuppressionLevel = "none" | "addressee" | "full";
 
 interface VetoResult {
   readonly vetoed: boolean;
   readonly reason: string | null;
 }
 
-function narrationVeto(s: Signals): VetoResult {
+function narrationVeto(s: Signals, level: SuppressionLevel = "full"): VetoResult {
+  if (level === "none") return { vetoed: false, reason: null };
   // A. First-person-plural with no second person named. "हमें/humein" is the
   //    inclusive teaching "we" -- the speaker doing the step alongside the
   //    class. A real student obligation names the student. This veto ignores
