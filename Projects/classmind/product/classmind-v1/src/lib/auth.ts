@@ -1,4 +1,5 @@
 import "server-only";
+import { headers } from "next/headers";
 import { authClient } from "@/lib/supabase/server";
 import { serviceClient } from "@/lib/supabase/service";
 
@@ -12,22 +13,41 @@ export interface SessionUser {
 // Reads the signed-in user and their profile. Returns null when signed out --
 // callers decide whether that is an error or just an anonymous page.
 export async function currentUser(): Promise<SessionUser | null> {
+  let userId: string | null = null;
+  let email: string | null = null;
+
+  // Cookie session first -- this is how the browser authenticates.
   const supabase = await authClient();
   const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) return null;
+  if (!error && data.user) {
+    userId = data.user.id;
+    email = data.user.email ?? null;
+  } else {
+    // Bearer token fallback. The same session, presented by something that is
+    // not a browser: scripts, integration tests, and eventually a mobile client.
+    // Verified against Supabase rather than decoded locally, so a forged or
+    // expired token fails the same way an unauthenticated request does.
+    const bearer = (await headers()).get("authorization");
+    const token = bearer?.toLowerCase().startsWith("bearer ") ? bearer.slice(7).trim() : null;
+    if (!token) return null;
+    const { data: viaToken, error: tokenError } = await serviceClient().auth.getUser(token);
+    if (tokenError || !viaToken.user) return null;
+    userId = viaToken.user.id;
+    email = viaToken.user.email ?? null;
+  }
 
   const svc = serviceClient();
   const { data: profile } = await svc
     .from("profiles")
     .select("full_name, role")
-    .eq("id", data.user.id)
+    .eq("id", userId)
     .maybeSingle();
 
   // A profile is created at sign-up, but a user created another way (dashboard,
   // admin API) may not have one. Default rather than 500.
   return {
-    id: data.user.id,
-    email: data.user.email ?? null,
+    id: userId,
+    email,
     fullName: (profile?.full_name as string | null) ?? null,
     role: ((profile?.role as string | null) ?? "faculty") as "faculty" | "student",
   };
