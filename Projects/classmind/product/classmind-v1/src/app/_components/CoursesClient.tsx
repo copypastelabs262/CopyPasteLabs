@@ -107,11 +107,11 @@ export default function CoursesClient() {
         <form
           onSubmit={async (e) => {
             e.preventDefault();
-            setFormError(null);
+            setCreateError(null);
             try {
               await post("/api/courses", { code, title, term, transcriptionLanguage: language });
               setCode(""); setTitle(""); setTerm(""); setReload((v) => v + 1);
-            } catch (err) { setFormError(err instanceof Error ? err.message : String(err)); }
+            } catch (err) { setCreateError(err instanceof Error ? err.message : String(err)); }
           }}
           className="space-y-3 rounded-lg border border-zinc-200 p-5 dark:border-zinc-800"
         >
@@ -135,7 +135,7 @@ export default function CoursesClient() {
               Auto-detect once romanized an English lecture into Arabic. Pick what you teach in.
             </p>
           </div>
-          {formError ? <p className="text-sm text-red-600 dark:text-red-400">{formError}</p> : null}
+          {createError ? <p className="text-sm text-red-600 dark:text-red-400">{createError}</p> : null}
           <button className="w-full rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900">
             Create course
           </button>
@@ -144,15 +144,17 @@ export default function CoursesClient() {
         <form
           onSubmit={async (e) => {
             e.preventDefault();
+            setJoinError(null);
             try {
               await post("/api/enroll", { joinCode });
               setJoinCode(""); setReload((v) => v + 1);
-            } catch (err) { setError(err instanceof Error ? err.message : String(err)); }
+            } catch (err) { setJoinError(err instanceof Error ? err.message : String(err)); }
           }}
           className="space-y-3 rounded-lg border border-zinc-200 p-5 dark:border-zinc-800"
         >
           <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500">Join a course</h2>
           <Input label="Join code" value={joinCode} onChange={setJoinCode} placeholder="a1b2c3d4" required />
+          {joinError ? <p className="text-sm text-red-600 dark:text-red-400">{joinError}</p> : null}
           <button className="w-full rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900">
             Join as student
           </button>
