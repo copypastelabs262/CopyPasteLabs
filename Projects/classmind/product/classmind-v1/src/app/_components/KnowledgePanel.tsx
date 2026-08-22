@@ -39,15 +39,22 @@ function byKind(items: KnowledgeItem[]): [string, KnowledgeItem[]][] {
 }
 
 export function KnowledgeCard({
-  item, courseId, defaultOpen,
-}: { item: KnowledgeItem; courseId: string; defaultOpen?: boolean }) {
+  item, courseId, defaultOpen, hideKind,
+}: {
+  item: KnowledgeItem; courseId: string;
+  defaultOpen?: boolean; hideKind?: boolean;
+}) {
   const [open, setOpen] = useState(Boolean(defaultOpen));
   return (
     <li className="p-4">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs uppercase tracking-wide text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
-          {KIND_LABEL[item.kind] ?? item.kind}
-        </span>
+        {/* Dropped under a group heading that already says it, kept in answer
+            results, which are ranked across kinds and have no heading. */}
+        {hideKind ? null : (
+          <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs uppercase tracking-wide text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+            {KIND_LABEL[item.kind] ?? item.kind}
+          </span>
+        )}
         <span className="font-medium">{item.title}</span>
         {item.duePhrase ? (
           <span className="text-sm text-amber-700 dark:text-amber-400">&ldquo;{item.duePhrase}&rdquo;</span>
