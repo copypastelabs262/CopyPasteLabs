@@ -27,6 +27,60 @@ something different from its synopsis reads as scope drift.
 
 ---
 
+## 2026-08-22 — Build the Product Platform V1 before the walkthrough runs, and encode the domain model in it
+
+**This supersedes the scope of the 2026-08-11 decision below and crosses the frozen
+[walkthrough-protocol.md](walkthrough-protocol.md) § Stopping rule deliberately and completely.**
+The 2026-08-11 entry crossed that rule on a technicality it could defend — `runs` encodes no
+domain concept. This one cannot make that defence. `extraction_candidates` has a `kind` column
+whose check constraint enumerates `assignment`, `deadline`, `exam_scope`, `announcement`,
+`guidance`, and `candidate_reviews` encodes the confirm/edit/reject gate. **That is the domain
+model, in a schema, before the walkthrough that was supposed to validate it.**
+
+**Decision:** Build ClassMind V1 as the actual product, now, under `product/classmind-v1/`. The
+walkthrough remains unrun and remains the right way to get evidence about the domain model.
+Lab v0 is untouched and stays the research environment.
+
+**Reason:** Directed by Shyam on 2026-08-22, with the crossing named before work started rather
+than discovered afterwards. The instruction was explicit that this is the actual product and not
+a prototype, and that the loop should not stop for architectural approval. Recorded here rather
+than resolved by editing the protocol — the protocol is frozen precisely so reality is not
+retrofitted onto predictions, and its preamble instructs that design defects be recorded
+elsewhere and changed for the *next* run.
+
+**What this costs, stated plainly:** the walkthrough was the mechanism for finding out whether
+Commitment / Scope / Notice / Guidance are the right four categories *before* they were expensive
+to change. They are now in a check constraint, in an extraction lexicon, in a review UI and in a
+student view. Changing them from here is a migration plus a re-extraction, not a conversation.
+**If the walkthrough later shows the categories are wrong, that cost is the price of this
+decision and must not be argued away by keeping bad categories because they are already built.**
+
+**Two things preserve most of what the walkthrough was protecting, and they are why this is
+survivable:**
+
+1. **Nothing is published without a human.** `extraction_candidates` rows are immutable proposals
+   and are unreachable by a student at the route level; only `candidate_reviews` makes an item
+   visible. A wrong category produces a bad review queue, not a wrong answer to a student.
+2. **The extraction method is replaceable and versioned.** `ExtractionMethod` plus
+   `extraction_method` / `extraction_version` on every stored candidate means pattern matching,
+   NER and an LLM can still be compared on byte-identical input, which was walkthrough criterion
+   C4's real purpose.
+
+**Alternatives Considered:**
+- *Run the walkthrough first.* Still the orthodox reading and still the cheaper path if the
+  categories turn out wrong. Rejected because it was overridden by an explicit instruction, and
+  because the walkthrough has been "next" since 2026-07-29 without being booked — the 2026-08-11
+  entry named exactly that pattern as its own failure condition.
+- *Build the product with no domain vocabulary — bytes and provenance only, like Lab v0.* Would
+  have kept the stopping rule intact. Rejected because a product that cannot say "this is an
+  assignment" is not the product; the vocabulary IS the deliverable.
+
+**Revisit when:** the walkthrough runs. Its results document should be read as a test of the
+categories now in the schema, and a disagreement is a migration to write, not a finding to
+discount.
+
+---
+
 ## 2026-08-11 — Build Lab v0 by choice, not because the walkthrough requires it
 
 **Context:** Lab v0 has been under construction since 2026-08-07. Until today it was justified by
