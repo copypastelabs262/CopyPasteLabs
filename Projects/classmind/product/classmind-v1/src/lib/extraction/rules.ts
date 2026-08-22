@@ -739,7 +739,6 @@ const SENTENCE_BREAK = /[.!?;\n।॥]+/g;
 function splitSentences(text: string): Sentence[] {
   const out: Sentence[] = [];
   let cursor = 0;
-  SENTENCE_BREAK.lastIndex = 0;
   for (const match of text.matchAll(SENTENCE_BREAK)) {
     const end = match.index;
     if (end > cursor) out.push({ text: text.slice(cursor, end), offset: cursor });
