@@ -163,10 +163,24 @@ export default function KnowledgePanel({
         </p>
       ) : null}
 
+      {/* Grouped by kind rather than listed flat: a student arrives asking one
+          question -- what do I owe, and when -- and a single list of mixed
+          assignments, exam scope and asides makes them read all of it to find
+          out. */}
       {items.length ? (
-        <ul className="mt-3 divide-y divide-zinc-200 rounded-lg border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
-          {items.map((i) => <KnowledgeCard key={i.candidateId} item={i} courseId={courseId} />)}
-        </ul>
+        <div className="mt-3 space-y-6">
+          {byKind(items).map(([kind, group]) => (
+            <div key={kind}>
+              <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                {KIND_LABEL[kind] ?? kind}
+                <span className="ml-2 font-normal text-zinc-400">{group.length}</span>
+              </h3>
+              <ul className="mt-2 divide-y divide-zinc-200 rounded-lg border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+                {group.map((i) => <KnowledgeCard key={i.candidateId} item={i} courseId={courseId} />)}
+              </ul>
+            </div>
+          ))}
+        </div>
       ) : null}
     </section>
   );
