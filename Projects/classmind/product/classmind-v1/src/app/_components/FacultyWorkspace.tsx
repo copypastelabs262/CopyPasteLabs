@@ -99,6 +99,9 @@ export default function FacultyWorkspace({
                   {l.error_message ? (
                     <p className="mt-0.5 text-xs text-red-600 dark:text-red-400">{l.error_message}</p>
                   ) : null}
+                  {/* Renders nothing for a lecture that is already done, so the
+                      list keeps polling only for the one that is still moving. */}
+                  <LectureProgress lectureId={l.id} status={l.status} onAdvanced={onChanged} />
                 </div>
                 <Link
                   href={`/courses/${courseId}/lectures/${l.id}`}
