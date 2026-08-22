@@ -143,7 +143,12 @@ export default function KnowledgePanel({
           <p className="border-b border-zinc-200 p-3 text-sm dark:border-zinc-800">{answer.message}</p>
           {answer.items.length ? (
             <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
-              {answer.items.map((i) => <KnowledgeCard key={i.candidateId} item={i} courseId={courseId} />)}
+              {/* Open by default here, unlike the browsable list. An answer that
+                  hides what it is based on is asking to be taken on trust,
+                  which is the one thing this product refuses to do. */}
+              {answer.items.map((i) => (
+                <KnowledgeCard key={i.candidateId} item={i} courseId={courseId} defaultOpen />
+              ))}
             </ul>
           ) : null}
         </div>
