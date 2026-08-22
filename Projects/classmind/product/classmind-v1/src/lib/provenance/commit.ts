@@ -25,6 +25,17 @@ export function getCommitHash(): string {
     return cached;
   }
 
+  // Vercel builds ship without a .git directory and without a git binary, so
+  // the execFileSync path below always throws there and every provenance record
+  // would carry "commitHash could not be resolved". Vercel injects the SHA it
+  // built from, which is exactly what Constitution IV asks for -- and it is
+  // necessarily clean, because a deployment is built from a pushed commit.
+  const fromVercel = process.env.VERCEL_GIT_COMMIT_SHA;
+  if (fromVercel) {
+    cached = fromVercel;
+    return cached;
+  }
+
   try {
     const head = run(["rev-parse", "HEAD"]);
     const dirty = run(["status", "--porcelain"]).length > 0;

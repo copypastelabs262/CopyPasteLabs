@@ -6,6 +6,18 @@ import { getTranscriptionProvider } from "@/lib/transcription";
 
 // Streams the stored audio to the provider and records the job id. The audio
 // never passes through a browser again.
+
+// The heaviest route in the app by a wide margin: it pulls the whole object out
+// of Supabase Storage and pushes it to the provider, so a 50 MB lecture is two
+// large transfers inside one request. Everything else finishes in milliseconds
+// and keeps the platform default.
+//
+// 60s is the ceiling on Vercel's Hobby plan and is accepted on every plan, so
+// this value deploys anywhere. On Pro it can go to 300 -- raise it here, not in
+// vercel.json, if a real lecture ever times out. If it does time out the lecture
+// is recoverable rather than lost: it stays `pending_upload` with the audio
+// already in storage, so submitting again re-runs only the transfer.
+export const maxDuration = 60;
 export async function POST(_r: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
