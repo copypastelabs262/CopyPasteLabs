@@ -54,3 +54,19 @@ export const KIND_LABEL: Record<string, string> = {
   announcement: "Announcement",
   guidance: "Guidance",
 };
+
+// Lecture status, in faculty words rather than column values. Lives here rather
+// than beside one of its two callers because the course list and the lecture
+// page must never disagree about what a lecture is currently doing.
+export const STATUS_LABEL: Record<string, string> = {
+  pending_upload: "Awaiting upload",
+  uploaded: "Uploaded",
+  transcribing: "Transcribing",
+  // Deliberately not "review candidates": at `transcribed` there are none yet.
+  // Extraction is a separate step and the UI has to say so, or a stalled
+  // lecture looks finished.
+  transcribed: "Transcribed — candidates not extracted yet",
+  extracting: "Extracting",
+  ready: "Published",
+  failed: "Failed",
+};
