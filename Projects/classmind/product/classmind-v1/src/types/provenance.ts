@@ -18,6 +18,14 @@ export interface ProcessingProvenance {
   // The language actually reported by the engine when it reports one,
   // otherwise the language the run was configured with.
   language: string
+  // The engine's own confidence in that language, when it reports one.
+  //
+  // Structured rather than left as prose inside `limitations`, because the
+  // question it answers -- "show me every lecture transcribed below 0.8" -- is
+  // a query, and a number recoverable only by regexing an English sentence is
+  // not queryable. The 0.617 that produced romanized Arabic is exactly the
+  // value a sweep like that needs to find.
+  languageProbability: number | null
   // The language the run was configured with. "unknown" means the engine was
   // asked to detect it rather than being told.
   configuredLanguage: string

@@ -89,8 +89,16 @@ export default function LectureClient({
     document.getElementById(`seg-${anchor}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [segments]);
 
+  // The deep link fires once per `?t=`, not once per fetch. Polling and every
+  // review verdict refetch, and each refetch hands back a fresh `segments`
+  // array -- without this the page would jump back and restart the audio under
+  // the reader every time something else on it changed.
+  const jumped = useRef<number | null>(null);
+
   useEffect(() => {
     if (jumpTo === null || !Number.isFinite(jumpTo) || !segments.length) return;
+    if (jumped.current === jumpTo) return;
+    jumped.current = jumpTo;
     // A beat after the transcript renders, so there is something to scroll to.
     const timer = setTimeout(() => seek(jumpTo), 250);
     return () => clearTimeout(timer);
