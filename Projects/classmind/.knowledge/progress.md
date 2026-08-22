@@ -7,6 +7,60 @@ Entries are snapshots of what was true when written and are never rewritten. Whe
 resolves something an earlier one recorded as blocked, the earlier line gets a dated marker
 pointing forward — it does not get edited away.
 
+## 2026-08-22 — ClassMind V1 exists and its end-to-end workflow is verified; running it found two real defects
+
+**Done:** The Product Platform is built and, for the first time, actually driven. A faculty
+member can create a course, add course context, upload a lecture, watch it process, read a
+timestamped transcript, review extracted candidates against their evidence, confirm / edit /
+reject them — and a student can then open the course, read only what was confirmed, ask a
+question, and jump to the transcript timestamp the answer came from. Four verification suites,
+all green: extraction 75 checks, provenance 16, end-to-end 67, languages 33. Detail in
+[`sessions/2026-08-22-classmind-v1-build-and-verification.md`](sessions/2026-08-22-classmind-v1-build-and-verification.md).
+
+**The session's real content is what running it exposed, because none of it was visible from
+code that compiled.**
+
+*First:* the extraction engine read an 18-minute **university course-outline lecture** as two
+generic guidance items — missing the whole module-by-module syllabus and the prescribed textbook,
+which are the only two things in that lecture a student needs. The lexicon had been built from a
+Class-12 coaching lecture and knew "homework", "DPP" and "notes on Telegram"; it had no rule for
+a lecturer walking through a syllabus. Two rules later, the same lecture yields 21 candidates.
+Method version 1.0.0 → 1.1.0.
+
+*Second, and worse:* **the provenance guard written for the Arabic failure cannot see the Arabic
+failure.** Sarvam returned fluent romanized Arabic for an English lecture and reported
+`language_code: "en-IN"` — the code the run was configured with. The check compares those two
+fields, so the branch is unreachable on the one run it exists for. Only the engine's 0.617
+confidence flagged it, clearing the 0.8 threshold by 0.183; at 0.85 that transcript would have
+carried no warning at all. `language-check.ts` now reads the transcript text instead — English
+function-word density is 42.5% in the genuine English lecture and 3.9% in the Arabic one.
+
+**Both defects share a shape worth naming:** the code was written against the *description* of a
+problem rather than against the input that caused it. Neither was findable by reading, by
+typechecking, or by building. Both took under an hour to find once something actually ran.
+
+**Decision:** [2026-08-22 — Build the Product Platform V1 before the walkthrough runs, and encode
+the domain model in it](decisions.md). This crosses the frozen walkthrough protocol's stopping
+rule **completely** — `extraction_candidates.kind` enumerates the domain model in a check
+constraint, before the walkthrough that was supposed to validate it. Recorded with its cost
+stated rather than argued away.
+
+**In progress:** Nothing.
+
+**Blocked:** **No live Sarvam call has ever been made from the product.** Everything verified
+today ran through a fixture provider replaying three responses captured in Lab v0 RUN 1, all of
+them found material rather than a class anyone taught. Constitution VII's one-command
+regeneration is unmet for the product, and the Azure Blob SAS convention in
+`uploadToPresignedUrl()` is still an untested assumption. There is no romanized-Hinglish ASR
+fixture — the case the lexicon covers most heavily and has the least evidence for. The `translit`
+Arabic bug is **still unfixed in Lab v0**; only the product guards against it. The walkthrough is
+still unrun, the college partnership has not started, and there is no consent/data-protection
+position.
+
+**Next:** **One real lecture, recorded by an actual lecturer, through a live Sarvam call.** Not
+more features. The product's whole claim is that a student can trust what they read, and every
+number behind that claim currently comes from three found recordings and a replay.
+
 ## 2026-08-21 — Milestone 2's build finished on 2026-08-19; the documents caught up today
 
 **Done (2026-08-19, recorded here on 2026-08-21):** Milestone 2 component 3 — the
