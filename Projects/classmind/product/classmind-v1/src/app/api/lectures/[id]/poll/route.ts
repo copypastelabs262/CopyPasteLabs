@@ -69,6 +69,11 @@ export async function POST(_r: Request, { params }: { params: Promise<{ id: stri
     // descriptor is rebuilt from the language this lecture was actually
     // submitted with, not from the course's current setting.
     const provenance = buildProvenance({
+      // The record names the run and the provider call it came from, so a
+      // transcript can be proved to belong to this lecture without trusting
+      // the row it happens to be sitting in.
+      lectureId: id,
+      providerJobId: lecture.provider_job_id as string,
       descriptor: provider.describe((lecture.language_code as string | null) ?? undefined),
       providerCreatedAt: polled.providerCreatedAt,
       providerUpdatedAt: polled.providerUpdatedAt,
@@ -78,14 +83,31 @@ export async function POST(_r: Request, { params }: { params: Promise<{ id: stri
 
     // raw_transcription_response is stored exactly as received. Normalization
     // happens at read time; this row is the artefact everything re-derives from.
-    const { error: updateError } = await svc.from("lectures").update({
-      status: "transcribed",
-      provider_status: polled.providerStatus,
-      raw_transcription_response: raw,
-      provenance,
-      completed_at: new Date().toISOString(),
-    }).eq("id", id);
+    // Matched on provider_job_id as well as id. The job id was read off this
+    // same row moments ago, so the extra predicate only fails if the row was
+    // re-submitted concurrently -- in which case this response belongs to a
+    // superseded job and must NOT overwrite the newer one. Cheap, and it makes
+    // "a transcript is only ever attached to the run that generated it" a
+    // property of the write rather than of the code path leading to it.
+    const { data: updated, error: updateError } = await svc
+      .from("lectures")
+      .update({
+        status: "transcribed",
+        provider_status: polled.providerStatus,
+        raw_transcription_response: raw,
+        provenance,
+        completed_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .eq("provider_job_id", lecture.provider_job_id as string)
+      .select("id");
     if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
+    if (!updated?.length) {
+      return NextResponse.json(
+        { error: "This lecture was re-submitted while its transcript was being retrieved; the stale result was discarded." },
+        { status: 409 },
+      );
+    }
 
     return NextResponse.json({ lectureId: id, status: "transcribed" });
   } catch (err) {

@@ -5,6 +5,11 @@ import { getCommitHash } from "@/lib/provenance/commit";
 import { checkTranscriptLanguage } from "@/lib/provenance/language-check";
 
 interface BuildInput {
+  // The run this record describes, and the provider call that produced it.
+  // Required, not optional: a provenance record that cannot name its own run is
+  // the shape of record that let a replayed transcript look legitimate.
+  lectureId: string
+  providerJobId: string | null
   // Must come from provider.describe(<the language this run was submitted
   // with>), not from a describe() with no argument. The descriptor carries
   // decodingParams, and decodingParams is only a record of the request if it
@@ -136,6 +141,8 @@ export function buildProvenance(input: BuildInput): ProcessingProvenance {
   }
 
   return {
+    lectureId: input.lectureId,
+    providerJobId: input.providerJobId,
     engine: descriptor.engine,
     modelSnapshot: descriptor.modelSnapshot,
     modelSnapshotIsDated: descriptor.modelSnapshotIsDated,

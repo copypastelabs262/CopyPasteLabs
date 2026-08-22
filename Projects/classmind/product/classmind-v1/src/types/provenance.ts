@@ -2,6 +2,18 @@
 // yet (Milestone 2+ wires it into Supabase), just the shape everything
 // downstream agrees on. See Constitution Article IV and capture-contract.md.
 export interface ProcessingProvenance {
+  // The run this artefact belongs to, written into the record itself.
+  //
+  // Added after a replayed transcript from one recording was stored against a
+  // different lecture. The row's own id was correct throughout -- the failure
+  // was upstream, in which provider answered -- but a provenance record that
+  // does not name its own run cannot be audited once it is copied, exported or
+  // read out of context. `providerJobId` is here for the same reason: it is the
+  // only identifier that ties this record to a specific call to a specific
+  // provider, and it is what makes "prove this transcript came from this
+  // audio" a question with an answer.
+  lectureId: string
+  providerJobId: string | null
   engine: string
   // Constitution IV asks for a dated snapshot and forbids a floating alias.
   // Some providers publish only an alias; when that happens the alias is
