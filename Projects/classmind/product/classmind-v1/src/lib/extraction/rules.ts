@@ -572,9 +572,14 @@ interface Rule {
   readonly kind: CandidateKind;
   readonly label: string;
   readonly base: number;
-  // Built on an obligation cue, and therefore subject to the vetoes above.
-  readonly narrationProne?: true;
+  readonly suppression: SuppressionLevel;
   readonly fires: (s: Signals) => boolean;
+}
+
+// True for rules built on an obligation cue: they carry the scoring penalties
+// as well as the vetoes.
+function isObligationRule(rule: Rule): boolean {
+  return rule.suppression === "full";
 }
 
 // Order is the deterministic tie-break when two rules score identically on one
