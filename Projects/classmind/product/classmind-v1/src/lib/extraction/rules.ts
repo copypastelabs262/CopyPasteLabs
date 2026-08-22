@@ -204,7 +204,7 @@ const DEMONSTRATIVE_OBJECT = compile([
 // Density here is used only to DOWN-weight, never to classify.
 const DOMAIN_TERMS = compile([
   "charge", "charged", "positive", "negative", "electron", "electrons",
-  "proton", "neutron", "atom", "nucleus", "force", "field", "electric field",
+  "proton", "neutron", "atom", "nucleus", "force", "field",
   "magnetic", "potential", "voltage", "current", "resistance", "capacitor",
   "velocity", "acceleration", "displacement", "momentum", "energy", "mass",
   "vector", "scalar", "equation", "formula", "derivation", "derive",
