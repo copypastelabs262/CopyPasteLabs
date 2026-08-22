@@ -4,8 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import CandidateReview, { type Candidate, type Review } from "./CandidateReview";
+import LectureProgress from "./LectureProgress";
 import { mmss } from "./KnowledgePanel";
-import { formatBytes } from "./Input";
+import { formatBytes, STATUS_LABEL } from "./Input";
 
 interface Segment { startMs: number; endMs: number; charStart: number; charEnd: number; text: string }
 interface Lecture {
