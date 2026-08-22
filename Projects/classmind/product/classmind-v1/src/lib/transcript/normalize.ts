@@ -67,7 +67,7 @@ function fromEntryArray(entries: unknown): DraftSegment[] | null {
 // words, one marker per word would be unreadable prose and would also amount
 // to pre-cutting the transcript on ASR boundaries.
 const GROUP_MS = 12_000;
-const SENTENCE_END = /[.!?।]$/; // includes danda
+const SENTENCE_END = /[.!?\u0964]$/; // includes danda
 
 // An element lasting this long is not a word, whatever the field is called.
 // Sarvam's chunks average ~15s; no spoken word comes close.
