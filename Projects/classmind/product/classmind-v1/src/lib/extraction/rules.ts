@@ -781,7 +781,6 @@ function evaluateSentence(
   courseTerms: readonly CompiledCue[],
 ): Scored[] {
   const s = readSignals(sentence.text, courseTerms);
-  const veto = narrationVeto(s);
 
   // Char offsets are computed inside segment.text and then clamped into the
   // range the segment declares. When the two disagree in length -- a
