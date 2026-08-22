@@ -40,18 +40,18 @@ if (listError) {
 const existing = (buckets ?? []).find((b) => b.name === BUCKET);
 if (existing) {
   console.log(`Bucket "${BUCKET}" already exists (public=${existing.public}, limit=${existing.file_size_limit}). Nothing to do.`);
-  process.exit(0);
-}
+} else {
 
-// Private. Audio is reached only through short-lived signed URLs minted by a
-// server route that has already checked who is asking.
-const { error: createError } = await svc.storage.createBucket(BUCKET, {
-  public: false,
-  fileSizeLimit: FILE_SIZE_LIMIT,
-  allowedMimeTypes: ALLOWED,
-});
-if (createError) {
-  console.error(`Could not create bucket "${BUCKET}": ${createError.message}`);
-  process.exit(1);
+  // Private. Audio is reached only through short-lived signed URLs minted by a
+  // server route that has already checked who is asking.
+  const { error: createError } = await svc.storage.createBucket(BUCKET, {
+    public: false,
+    fileSizeLimit: FILE_SIZE_LIMIT,
+    allowedMimeTypes: ALLOWED,
+  });
+  if (createError) {
+    console.error(`Could not create bucket "${BUCKET}": ${createError.message}`);
+    process.exit(1);
+  }
+  console.log(`Created private bucket "${BUCKET}" (limit ${FILE_SIZE_LIMIT} bytes).`);
 }
-console.log(`Created private bucket "${BUCKET}" (limit ${FILE_SIZE_LIMIT} bytes).`);

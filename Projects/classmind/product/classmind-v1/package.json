@@ -7,8 +7,10 @@
     "build": "next build",
     "start": "next start -p 3100",
     "lint": "eslint",
-    "setup:db": "node scripts/setup-storage.mts",
-    "test:extraction": "node scripts/test-extraction.mts"
+    "setup:db": "node --env-file=.env.local scripts/setup-storage.mts",
+    "test:extraction": "node scripts/test-extraction.mts",
+    "test:e2e": "node --env-file=.env.local scripts/e2e.mts",
+    "test:languages": "node --env-file=.env.local scripts/verify-languages.mts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",

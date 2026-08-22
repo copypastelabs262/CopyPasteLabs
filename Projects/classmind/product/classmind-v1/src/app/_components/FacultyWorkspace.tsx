@@ -3,21 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import LectureUpload from "./LectureUpload";
+import LectureProgress from "./LectureProgress";
 import KnowledgePanel from "./KnowledgePanel";
-import { Input, TextArea, formatBytes, formatWhen } from "./Input";
+import { Input, TextArea, formatBytes, formatWhen, STATUS_LABEL } from "./Input";
 import type { CourseContextDoc, CourseLecture } from "./CourseClient";
 
 const CONTEXT_KINDS = ["syllabus", "policy", "schedule", "note"] as const;
-
-const STATUS_LABEL: Record<string, string> = {
-  pending_upload: "Awaiting upload",
-  uploaded: "Uploaded",
-  transcribing: "Transcribing",
-  transcribed: "Transcribed — review candidates",
-  extracting: "Extracting",
-  ready: "Published",
-  failed: "Failed",
-};
 
 export default function FacultyWorkspace({
   courseId, lectures, context, onChanged,
