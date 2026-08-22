@@ -4,6 +4,19 @@ import { serviceClient } from "@/lib/supabase/service";
 import { normalizeRawTranscript } from "@/lib/transcript/normalize";
 import { LECTURE_BUCKET } from "@/lib/storage";
 
+// Numeric, part by part. A string comparison would sort "1.10.0" below
+// "1.9.0", and a review queue silently showing the older of two rule sets is
+// worse than showing both.
+function compareVersions(a: string, b: string): number {
+  const left = a.split(".").map(Number);
+  const right = b.split(".").map(Number);
+  for (let i = 0; i < Math.max(left.length, right.length); i += 1) {
+    const diff = (left[i] ?? 0) - (right[i] ?? 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
 // One lecture, role-aware.
 //
 // Owner: transcript plus every candidate and its review history.
@@ -41,12 +54,37 @@ export async function GET(_r: Request, { params }: { params: Promise<{ id: strin
 
     let candidates: unknown[] = [];
     let reviews: unknown[] = [];
+    let supersededCount = 0;
     if (isOwner) {
-      candidates = (await svc
+      const all = (await svc
         .from("extraction_candidates")
         .select("id, kind, title, detail, due_phrase, due_resolved, evidence_start_ms, evidence_end_ms, evidence_char_start, evidence_char_end, evidence_text, confidence, matched_cue, extraction_method, extraction_version, created_at")
         .eq("lecture_id", id)
         .order("evidence_start_ms", { ascending: true })).data ?? [];
+
+      // Only the newest version of each method reaches the review queue.
+      //
+      // Candidates are immutable and a re-run under a bumped version inserts
+      // alongside the old rows rather than replacing them -- deliberately,
+      // because comparing methods on identical input is the whole reason the
+      // method is pluggable. The cost is that after a version bump the queue
+      // shows a reviewer the same sentence twice, once per version, which is
+      // the fastest way to make a review queue stop being read.
+      //
+      // Nothing is deleted and nothing is hidden from the database: this is a
+      // read filter, the count it held back is returned, and knowledge.ts still
+      // honours a verdict already given on a now-superseded candidate.
+      const latest = new Map<string, string>();
+      for (const c of all) {
+        const method = c.extraction_method as string;
+        const version = c.extraction_version as string;
+        const held = latest.get(method);
+        if (!held || compareVersions(version, held) > 0) latest.set(method, version);
+      }
+      candidates = all.filter(
+        (c) => latest.get(c.extraction_method as string) === c.extraction_version,
+      );
+      supersededCount = all.length - candidates.length;
 
       const ids = (candidates as { id: string }[]).map((c) => c.id);
       reviews = ids.length
@@ -74,6 +112,9 @@ export async function GET(_r: Request, { params }: { params: Promise<{ id: strin
       rawTranscriptionResponse:
         transcript === null ? lecture.raw_transcription_response : null,
       candidates, reviews,
+      // Non-zero means an older extraction version produced rows that are not
+      // being shown. Surfaced rather than silently dropped.
+      supersededCount,
     });
   } catch (err) {
     const { body, status } = errorResponse(err);
