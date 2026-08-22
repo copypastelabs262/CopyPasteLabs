@@ -1,11 +1,40 @@
 # Deploying ClassMind V1 to Vercel
 
+**Live: https://copy-paste-labs.vercel.app** — deployed 2026-08-22, verified with 67 end-to-end
+and 33 language checks run against production.
+
 The app is a standard Next.js 16 App Router project and deploys without a `vercel.json`.
 Everything below is a setting, a secret, or a check — there is no build magic to get right.
 
 Four things about this repository will break a naive deploy, and all four are handled in code
 already. They are listed at the end under "What was fixed for serverless" so that a future
 change does not quietly undo them.
+
+## Current state of the live project
+
+| | |
+|---|---|
+| Vercel project | `copypaste-labs/copy-paste-labs` |
+| Root Directory | `Projects/classmind/product/classmind-v1` |
+| Framework | Next.js |
+| Function region | `bom1` (Mumbai) |
+| Production branch | `master` — every push deploys |
+| Supabase | `kkjyfojcahlopsfpcdbw`, wired by the Supabase Vercel integration |
+| Transcription | `TRANSCRIPTION_PROVIDER=fixture` — **replay mode, see § 2** |
+
+### Two things the first deploy got wrong, so they are not rediscovered
+
+**The project was created with Root Directory unset.** It "succeeded" in 2 seconds and served a
+404 on every path: Vercel found no `package.json` at the repository root, detected no framework,
+built nothing, and deployed an empty site. A build that is suspiciously fast and a 404 that
+mentions no route are the symptom.
+
+**`vercel --prod` from inside the app directory does not work on this project, and that is
+correct behaviour.** The CLI uploads the current directory as the deployment root, and Vercel
+then applies Root Directory *inside* that upload — so it looks for
+`Projects/classmind/product/classmind-v1/Projects/classmind/product/classmind-v1` and fails with
+"The specified Root Directory does not exist." Deploy by pushing to `master`, or trigger a Git
+deployment through the dashboard. If you must use the CLI, run it from the repository root.
 
 ---
 
@@ -41,8 +70,20 @@ output lands in the session.
 
 ## 2. Environment variables
 
-Set these in **Project → Settings → Environment Variables**, for Production *and* Preview.
-Copy the values from your local `.env.local` — it is gitignored, so nothing here is in the repo.
+**Most of these are already set.** The Supabase Vercel integration populated
+`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` and a
+number of `POSTGRES_*` variables the app does not use; `SARVAM_API_KEY` and
+`TRANSCRIPTION_PROVIDER` were added by hand. All of them are **Production only** — preview
+deployments have no Supabase configuration and will fail at request time until the targets are
+widened.
+
+Vercel marks these values *sensitive*, which means they can never be read back — not through the
+API, not in the dashboard. Verify which Supabase project is wired up with
+`vercel env pull <file> --environment=production`, which resolves the non-sensitive ones, rather
+than by trying to decrypt them.
+
+Set any new ones in **Project → Settings → Environment Variables**. Copy values from your local
+`.env.local` — it is gitignored, so nothing here is in the repo.
 
 | Variable | Required | Notes |
 |---|---|---|
@@ -95,16 +136,24 @@ signed URL and never passes through a Vercel function, which is what keeps uploa
 Vercel's 4.5 MB request body limit. Run `npm run setup:db` once against the project if the
 `lectures` bucket does not exist yet.
 
-### Function region — worth getting right, not cosmetic
+### Function region — measured, not theoretical
 
-Vercel defaults new projects to **Washington DC (`iad1`)**. If the Supabase project is in Mumbai
-(`ap-south-1`), which is the sensible region for an Indian college, then every database query and
-**the entire 50 MB audio transfer in the transcribe route** crosses the Atlantic twice.
+Already set to `bom1`. Do not move it without re-measuring.
 
-Check the Supabase project's region under **Settings → General**, then set the matching Vercel
-region under **Project → Settings → Functions → Function Region** — `bom1` for Mumbai. This is
-the difference between a transcribe submission that finishes in seconds and one that flirts with
-the 60-second ceiling.
+Vercel defaults new projects to **Washington DC (`iad1`)**. This Supabase project resolves to
+`2406:da1a:…` — AWS **ap-south-1 (Mumbai)** — so on the default region every database query, and
+the entire audio transfer in the transcribe route, crossed the Atlantic.
+
+Measured on the live deployment, five calls to `/api/courses` (a two-query endpoint):
+
+| Function region | Median | Range |
+|---|---|---|
+| `iad1` (Washington DC) | **1545 ms** | 1140–2328 ms |
+| `bom1` (Mumbai) | **389 ms** | 151–1299 ms |
+
+Four times faster, and the high end of the `bom1` range is a cold start rather than network
+distance. If the Supabase project is ever moved, re-run the measurement — the setting is under
+**Project → Settings → Functions → Function Region**.
 
 ---
 
