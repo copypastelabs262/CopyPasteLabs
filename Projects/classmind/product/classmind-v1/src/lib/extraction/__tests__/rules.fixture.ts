@@ -292,12 +292,14 @@ export const COURSE_CONTEXT: readonly CourseContextDocument[] = [
 ];
 
 // The segment that changes when the syllabus above is supplied.
+const CONTEXT_SEGMENT_TEXT = "Tutorial Sheet 4 aapko agle hafte tak complete karna hai.";
+
 export const COURSE_CONTEXT_SEGMENT: TranscriptSegmentInput = {
-  text: "Tutorial Sheet 4 aapko agle hafte tak complete karna hai.",
+  text: CONTEXT_SEGMENT_TEXT,
   startMs: 0,
   endMs: SEGMENT_MS,
   charStart: 0,
-  charEnd: 56,
+  charEnd: CONTEXT_SEGMENT_TEXT.length,
 };
 
 // ---------------------------------------------------------------------------
