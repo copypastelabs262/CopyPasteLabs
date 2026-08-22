@@ -183,7 +183,9 @@ export default function KnowledgePanel({
                 <span className="ml-2 font-normal text-zinc-400">{group.length}</span>
               </h3>
               <ul className="mt-2 divide-y divide-zinc-200 rounded-lg border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
-                {group.map((i) => <KnowledgeCard key={i.candidateId} item={i} courseId={courseId} />)}
+                {group.map((i) => (
+                  <KnowledgeCard key={i.candidateId} item={i} courseId={courseId} hideKind />
+                ))}
               </ul>
             </div>
           ))}
