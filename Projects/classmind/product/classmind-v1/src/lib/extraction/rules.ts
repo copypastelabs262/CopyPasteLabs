@@ -599,17 +599,21 @@ const RULES: readonly Rule[] = [
     kind: "deadline",
     label: "due date stated",
     base: 0.7,
+    suppression: "none",
     fires: (s) =>
       s.deadlineWord &&
-      Boolean(s.work ?? s.assessment ?? s.courseTerm) === true
-        ? true
-        : s.deadlineWord && (s.submission || s.duePhrase !== null),
+      (s.work !== null ||
+        s.assessment !== null ||
+        s.courseTerm !== null ||
+        s.submission ||
+        s.duePhrase !== null),
   },
   {
     id: "announcement.schedule_release",
     kind: "announcement",
     label: "schedule or timetable to be released",
     base: 0.66,
+    suppression: "none",
     fires: (s) =>
       s.schedule !== null && (s.promise || s.availability || s.duePhrase !== null),
   },
@@ -618,6 +622,9 @@ const RULES: readonly Rule[] = [
     kind: "deadline",
     label: "assessment scheduled",
     base: 0.62,
+    suppression: "none",
+    // `!s.scopeCue` hands sentences that say what an exam COVERS to the scope
+    // rule below instead of claiming them as an exam date.
     fires: (s) => s.assessment !== null && s.duePhrase !== null && !s.scopeCue,
   },
   {
@@ -625,6 +632,9 @@ const RULES: readonly Rule[] = [
     kind: "exam_scope",
     label: "exam scope mentioned",
     base: 0.62,
+    suppression: "none",
+    // The assessment term is what makes a generic "aayega" safe to use. On its
+    // own that cue fires on half a physics lecture.
     fires: (s) => s.assessment !== null && s.scopeCue,
   },
   {
@@ -632,6 +642,7 @@ const RULES: readonly Rule[] = [
     kind: "announcement",
     label: "material will be shared",
     base: 0.62,
+    suppression: "none",
     fires: (s) =>
       (s.material !== null || s.schedule !== null) && (s.availability || s.promise),
   },
@@ -640,7 +651,7 @@ const RULES: readonly Rule[] = [
     kind: "assignment",
     label: "submission required",
     base: 0.6,
-    narrationProne: true,
+    suppression: "full",
     fires: (s) =>
       (s.work !== null || s.courseTerm !== null || s.assessment !== null) &&
       (s.obligation || s.submission),
@@ -650,6 +661,7 @@ const RULES: readonly Rule[] = [
     kind: "guidance",
     label: "suggested practice or reading",
     base: 0.52,
+    suppression: "addressee",
     fires: (s) => s.guidance && (s.studyObject || s.addresseeDative || s.addresseeWeak),
   },
   {
@@ -657,6 +669,7 @@ const RULES: readonly Rule[] = [
     kind: "announcement",
     label: "lecturer commitment to students",
     base: 0.5,
+    suppression: "none",
     fires: (s) =>
       s.promise && (s.addresseeDative || s.addresseeWeak || s.deliverable !== null),
   },
@@ -665,12 +678,12 @@ const RULES: readonly Rule[] = [
     // is a real and common way to set work without naming it. Gated as hard as
     // it is possible to gate a rule: a dative addressee AND a time expression
     // AND no deliverable (a deliverable means the rule above already has it),
-    // on top of the vetoes.
+    // on top of all three vetoes.
     id: "assignment.bare_obligation",
     kind: "assignment",
     label: "unnamed task required",
     base: 0.48,
-    narrationProne: true,
+    suppression: "full",
     fires: (s) =>
       s.obligation &&
       s.addresseeDative &&
