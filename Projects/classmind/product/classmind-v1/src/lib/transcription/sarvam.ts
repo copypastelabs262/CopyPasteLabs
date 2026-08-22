@@ -1,4 +1,5 @@
 import "server-only";
+import { readEnv } from "@/lib/env";
 import {
   DEFAULT_LANGUAGE_CODE,
   LANGUAGE_DETECT,
