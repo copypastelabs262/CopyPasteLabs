@@ -96,7 +96,7 @@ interface JobStatusResponse {
 }
 
 function apiKey(): string {
-  const key = process.env.SARVAM_API_KEY;
+  const key = readEnv("SARVAM_API_KEY");
   if (!key) {
     throw new Error(
       "Missing SARVAM_API_KEY. Add it to .env.local -- see .env.example.",
