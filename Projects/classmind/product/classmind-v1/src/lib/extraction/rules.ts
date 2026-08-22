@@ -208,6 +208,8 @@ const DOMAIN_TERMS = compile([
   "magnetic", "potential", "voltage", "current", "resistance", "capacitor",
   "velocity", "acceleration", "displacement", "momentum", "energy", "mass",
   "vector", "scalar", "equation", "formula", "derivation", "derive",
+  // Note: no "electric field" entry. It would match alongside "field" and
+  // double-count a single concept, and the density veto counts distinct cues.
   "integrate", "integration", "differentiate", "coulomb", "newton", "joule",
   "ampere", "friction", "torque", "radius", "sphere", "conductor",
   "insulator", "dielectric", "flux", "amplitude", "frequency", "wavelength",
