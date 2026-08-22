@@ -15,6 +15,11 @@
 // of false positives in real Hinglish lecture speech is documented there and
 // it is not obvious.
 
+// Relative, with the extension, rather than the app's "@/" alias. This module
+// is pure logic with no app dependencies, and keeping its internal imports
+// resolvable by plain `node` is what lets scripts/test-extraction.mts run it
+// without a bundler or a test framework. Alias imports are still correct for
+// anything reaching INTO this module from the app.
 import type {
   CandidateKind,
   CourseContextDocument,
@@ -22,7 +27,7 @@ import type {
   ExtractionInput,
   ExtractionMethod,
   TranscriptSegmentInput,
-} from "@/lib/extraction/types";
+} from "./types.ts";
 
 // ===========================================================================
 // 1. Cue matching primitives
