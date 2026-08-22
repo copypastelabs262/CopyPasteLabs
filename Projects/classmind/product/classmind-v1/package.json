@@ -9,6 +9,7 @@
     "lint": "eslint",
     "setup:db": "node --env-file=.env.local scripts/setup-storage.mts",
     "test:extraction": "node scripts/test-extraction.mts",
+    "test:provenance": "node scripts/test-provenance.mts",
     "test:e2e": "node --env-file=.env.local scripts/e2e.mts",
     "test:languages": "node --env-file=.env.local scripts/verify-languages.mts"
   },
