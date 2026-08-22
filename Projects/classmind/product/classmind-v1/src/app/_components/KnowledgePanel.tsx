@@ -18,8 +18,30 @@ export function mmss(ms: number): string {
   return `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
 }
 
-export function KnowledgeCard({ item, courseId }: { item: KnowledgeItem; courseId: string }) {
-  const [open, setOpen] = useState(false);
+// KIND_LABEL is declared in the order faculty think in -- what is owed first,
+// advice last -- so its key order is also the order the groups read in.
+const KIND_ORDER = Object.keys(KIND_LABEL);
+
+function byKind(items: KnowledgeItem[]): [string, KnowledgeItem[]][] {
+  const groups = new Map<string, KnowledgeItem[]>();
+  for (const item of items) {
+    const bucket = groups.get(item.kind);
+    if (bucket) bucket.push(item);
+    else groups.set(item.kind, [item]);
+  }
+  const rank = (kind: string) => {
+    const i = KIND_ORDER.indexOf(kind);
+    // A kind the extractor grew but this UI has not learned yet still has to
+    // appear, so it sorts last rather than being dropped.
+    return i === -1 ? KIND_ORDER.length : i;
+  };
+  return [...groups].sort((a, b) => rank(a[0]) - rank(b[0]));
+}
+
+export function KnowledgeCard({
+  item, courseId, defaultOpen,
+}: { item: KnowledgeItem; courseId: string; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(Boolean(defaultOpen));
   return (
     <li className="p-4">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
