@@ -114,8 +114,10 @@ function fromChunkArrays(timestamps: unknown): DraftSegment[] | null {
     if (groupStart === null) groupStart = startMs;
     buffer.push(chunk);
     groupEnd = endMs;
-    if (endMs - groupStart >= GROUP_MS && SENTENCE_END.test(chunk)) flush();
-    else if (endMs - groupStart >= GROUP_MS * 2) flush();
+    const span = endMs - groupStart;
+    const standsAlone = endMs - startMs >= CHUNK_MS || SENTENCE_END.test(chunk);
+    if (span >= GROUP_MS && standsAlone) flush();
+    else if (span >= GROUP_MS * 2) flush();
   }
   flush();
 
