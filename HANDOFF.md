@@ -1,6 +1,6 @@
 # ClassMind / CopyPasteLabs — Context Handoff
 
-**As of:** 2026-08-21
+**As of:** 2026-08-22
 **Repo:** `E:\E\CopyPasteLabs` · `github.com/copypastelabs262/CopyPasteLabs` · branch `master`
 **Written for:** an assistant picking up this work with no memory of the sessions below.
 
@@ -12,29 +12,32 @@
 
 ## 0. Read this before doing anything
 
-**Nothing from 2026-08-21 is committed.** `HEAD` is `53c39a6`, level with `origin/master`.
-Seven paths are uncommitted, including a database migration that **has already been applied to
-the live Supabase project**. So the database is ahead of the repository: the repo's migrations
-cannot reproduce the database that exists.
+**Everything is committed and pushed.** Section 4 below describes 2026-08-21, when it was not;
+that is history now and its "NOT committed" markers are resolved. The database-ahead-of-repo gap
+it describes is closed.
 
-Under the single-writer model in `TEAM.md` §0, the repository is the only channel to the two
-read-only co-founders (Shiv and Darsh). Until this is committed and pushed, **they cannot see any
-of it.**
+**The big change since: ClassMind V1, the actual product, exists and its end-to-end workflow is
+verified.** It lives at `Projects/classmind/product/classmind-v1/` and is separate from Lab v0,
+which is untouched and remains the research environment. See section 11.
 
-```
- M Projects/classmind/lab/v0-ingestion/src/app/api/runs/route.ts
- M Projects/classmind/lab/v0-ingestion/src/app/page.tsx
- M Projects/classmind/lab/v0-ingestion/src/lib/transcription/sarvam.ts
-?? Projects/classmind/lab/v0-ingestion/src/app/_components/
-?? Projects/classmind/lab/v0-ingestion/src/app/api/runs/[id]/route.ts
-?? Projects/classmind/lab/v0-ingestion/src/lib/runs/normalize.ts
-?? Projects/classmind/lab/v0-ingestion/supabase/migrations/20260821052056_grant_runs_dml_to_service_role.sql
-?? Projects/classmind/walkthrough/
-```
+**Building it crossed the frozen walkthrough protocol's stopping rule, deliberately and
+completely.** Not on the technicality the 2026-08-11 entry could defend --- `extraction_candidates`
+has a `kind` check constraint enumerating the domain model, built before the walkthrough that was
+meant to validate it. Directed by Shyam on 2026-08-22 and recorded, with its cost stated, in
+`Projects/classmind/.knowledge/decisions.md`. **Do not treat the frozen protocol as still
+governing what may be built; do treat its results, when it runs, as a test of the categories now
+in the schema.**
 
-**The most urgent open problem is §7.1 — transliteration produced Arabic on a real lecture.**
+Two things to know before touching anything:
 
----
+- **`scripts/autosave.sh` fires on `Write|Edit` and commits everything staged, not just the file
+  that changed.** During a session with subagents it will sweep your in-progress work into a
+  commit called `Auto-save: <file>.ts`. It does **not** fire for a commit made through the shell.
+  Write the deliberate, well-messaged commit anyway; expect part of the diff to have already
+  landed under an `Auto-save:` message, and say so in the message rather than pretending the
+  history is clean.
+- **Two test accounts exist in the live Supabase project.** `faculty.test@classmind.local` and
+  `student.test@classmind.local`, both `ClassMindTest!2026`. **Delete them before any real use.**
 
 ## 1. What ClassMind is
 
@@ -442,6 +445,11 @@ Standing instructions from the operator, still in force:
 
 ## 10. Where things stand and what is next
 
+> **Superseded on 2026-08-22.** This section records where things stood at the close of
+> 2026-08-21 and is kept unedited. Its "next" is no longer the next thing: ClassMind V1 was
+> built and verified on 2026-08-22 (section 11), and the walkthrough it names as the blocker was
+> deliberately bypassed rather than run. The walkthrough is still unrun and still worth running.
+
 **Working:** upload → Supabase Storage → Sarvam Saaras v3 → transcript stored with provenance →
 transcript viewed as prose with `[mm:ss]` markers → downloaded as `.txt` → listed and reopened
 from the Lecture Library. The pipeline is real and has run end to end three times.
@@ -479,3 +487,114 @@ mid-build. Finish it, delete it, or leave it, but do not assume it is usable.
 
 *Generated 2026-08-21. If `git log` shows commits after `53c39a6`, this file may be out of date —
 check `Projects/classmind/.knowledge/progress.md` for anything newer.*
+
+---
+
+## 11. ClassMind V1 --- the product (2026-08-22)
+
+`Projects/classmind/product/classmind-v1/`. Next.js 16 / React 19 / Tailwind v4 / TypeScript /
+Supabase (same project as Lab v0, different tables and a different bucket).
+
+### How to run it
+
+```
+cd Projects/classmind/product/classmind-v1
+npm install
+npm run setup:db          # creates the `lectures` storage bucket; idempotent
+npm run dev               # http://localhost:3100
+```
+
+`.env.local` needs the four keys in `.env.example`. **`TRANSCRIPTION_PROVIDER=fixture` is
+currently set**, which replays captured Lab v0 responses instead of calling Sarvam. Remove it to
+transcribe for real --- and note that a real call costs money and has never been made from this
+app.
+
+### Verification suites --- run these before believing anything
+
+```
+npm run test:extraction   # 75 checks, offline, no server needed
+npm run test:provenance   # 16 checks, offline, against the real captured responses
+npm run test:e2e          # 67 checks, needs the dev server running
+npm run test:languages    # 33 checks, needs the dev server running
+```
+
+`test:e2e` drives the whole product over HTTP as a browser would: sign in, create a course, add
+context, upload 10.5 MB of real audio through a signed URL, transcribe, poll, extract,
+confirm/edit/reject, then re-enter as a student and ask a question. Its load-bearing checks are
+the negative ones --- a student's lecture payload carries zero candidates, a student cannot rule
+on a candidate or trigger extraction, and the anon key cannot read any of the four tables
+directly.
+
+### The transcription fixture provider
+
+`src/lib/transcription/fixture.ts`, selected by `TRANSCRIPTION_PROVIDER=fixture`. It replays three
+**verbatim** Sarvam Batch responses captured during Lab v0 RUN 1 and exported once to
+`fixtures/transcription/`. The product never reads Lab v0's `runs` table at runtime.
+
+The response bytes are real, so normalization, evidence offsets and provenance are exercised
+against genuine output; only the network call and the queue delay are simulated. Every provenance
+record written this way begins its limitations with `REPLAYED, NOT TRANSCRIBED`. Sarvam is the
+default, so nothing can fall back to replay by accident.
+
+The fixture is chosen by matching its slug inside the uploaded filename, so uploading
+`physics-class12-hi.mp3` replays the Hindi lecture and `fft-lecture-misdetected.mp3` replays the
+wrong-language one.
+
+### Section 7.1's Arabic failure --- what is now known
+
+The `translit` bug is still **unfixed in Lab v0**. What changed is the understanding of it, and
+the product now guards against it.
+
+The critical detail, found on 2026-08-22 by driving all three fixtures through the running
+server: **Sarvam reported `language_code: "en-IN"` on that run --- the correct code.** The
+provenance mismatch check compares the reported code against the configured one, so on the one
+run it was written for, it was unreachable. The only thing that flagged that transcript was the
+engine's own 0.617 confidence clearing the 0.8 threshold by 0.183. At 0.85 the same Arabic text
+would have carried no warning at all.
+
+`src/lib/provenance/language-check.ts` reads the transcript instead. Function-word density,
+measured over the three real responses:
+
+| fixture | configured | reported | p | English function words | Devanagari |
+|---|---|---|---|---|---|
+| `course-outline-en` | en-IN | en-IN | 0.846 | **42.5%** | 0% |
+| `fft-lecture-misdetected` | en-IN | en-IN | 0.617 | **3.9%** | 0% |
+| `physics-class12-hi` | hi-IN | hi-IN | 0.999 | 0% | **76.3%** |
+
+An order of magnitude apart, which is why a crude test suffices. It appends a limitation and
+never blocks or edits a transcript, refuses to judge under 120 tokens, and stays silent for
+`unknown`. It is **not calibrated** --- three lectures is not a calibration.
+
+### Data model
+
+Seven tables in `supabase/migrations/20260822090000_classmind_v1_core.sql`, plus a
+`lectures.language_code` column applied separately. **RLS is enabled with zero policies on every
+one of them**, exactly as `runs` does: the anon key can read nothing, and every read and write
+goes through a server route holding the service-role key. That makes "no unverified information
+reaches students" structural rather than a rule someone has to remember --- a student's browser
+has no path to `extraction_candidates` at all.
+
+`extraction_candidates` rows are **immutable proposals**; `candidate_reviews` rows are
+**append-only verdicts**. An edit never overwrites the proposal and a rejection is retained, not
+deleted. Confirmed knowledge is **derived** by joining the two --- there is no third table, so a
+confirmed item cannot drift from what was actually confirmed.
+
+Because candidates are immutable, a re-run under a bumped method version inserts alongside the
+old rows. The lecture route returns only the newest version per method and reports
+`supersededCount`; nothing is deleted, so method comparison stays possible.
+
+### Known limitations
+
+- **No live Sarvam call has ever been made from the product.** Constitution VII's one-command
+  regeneration remains unmet for it, and the Azure Blob SAS upload convention in
+  `uploadToPresignedUrl()` is still an untested assumption inherited from Lab v0.
+- **No romanized-Hinglish ASR fixture exists.** The extraction lexicon has its heaviest coverage
+  for exactly that case, and it is the case with the least real evidence behind it. The Hindi
+  fixture is Devanagari; the English one is English.
+- **Question answering retrieves, it does not generate.** `searchKnowledge` ranks confirmed items
+  by term overlap and returns them with their evidence. It cannot hallucinate, because it can
+  only return rows that exist --- and it will miss a paraphrase that shares no words with the
+  item.
+- **`rules` v1.1.0 is uncalibrated.** No precision or recall number has been measured against a
+  benchmark. `confidence` orders the review queue and means nothing else.
+
