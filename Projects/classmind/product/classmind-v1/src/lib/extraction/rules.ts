@@ -707,7 +707,7 @@ function score(rule: Rule, s: Signals): number {
   // Too short to judge. A three-word fragment that happens to contain a cue is
   // usually an ASR artefact, not a sentence.
   if (s.wordCount < 4) value -= 0.12;
-  if (rule.narrationProne) {
+  if (isObligationRule(rule)) {
     // Sub-veto weight: one domain term is not enough to reject, but it is
     // enough to sort below a clean match.
     if (s.domainHits === 1 && !s.work && !s.courseTerm) value -= 0.15;
