@@ -130,6 +130,10 @@ const MATERIAL_TERMS = compile([
   "notes", "note", "pdf", "pdfs", "material", "materials", "study material",
   "slides", "ppt", "handout", "handouts", "question bank", "sample paper",
   "previous year paper", "pyq", "pyqs", "solution", "solutions", "recording",
+  // Prescribed reading. A university course names its text in the first
+  // lecture and never again, so missing it costs the whole course.
+  "textbook", "text book", "reference book", "course book", "prescribed text",
+  "recommended text", "edition",
   "नोट्स", "नोट", "पीडीएफ", "मटेरियल", "स्लाइड्स", "किताब", "हैंडआउट",
 ]);
 
@@ -280,6 +284,47 @@ const PROMISE_CUES = compile([
   "will be posted", "will be released",
   "कर दूंगा", "कर दूँगा", "कर देंगे", "दे दूंगा", "दे देंगे", "भेज दूंगा",
   "डाल दूंगा", "डाल देंगे", "रिलीज कर", "अपलोड कर", "शेयर कर", "मैंने की है",
+]);
+
+// What a lecturer says when walking through the syllabus rather than teaching
+// it. These are all first-person-plural by nature ("we will discuss..."), which
+// is precisely the shape veto A exists to delete -- so the rule built on them
+// runs at suppression "none" and is gated on a curricular unit noun instead.
+const COVERAGE_CUES = compile([
+  "we will discuss", "we will cover", "we will look at", "we will learn",
+  "we will study", "we will explore", "we will see", "we discuss",
+  "we look at", "we cover", "we start with", "we begin with",
+  "we move on to", "we then", "we first start with", "we also look at",
+  "will be covered", "is covered", "are covered", "is discussed",
+  "are discussed", "deals with", "we deal with",
+  "outline of the course", "course outline", "the outline",
+  "learning objective", "learning objectives", "learning outcome",
+  "learning outcomes", "at the end of the course", "you should be able to",
+  "you will be able to", "the topics", "topics that we",
+  "cover karenge", "padhenge", "padhaenge", "karvaenge", "dekhenge",
+  "कवर करेंगे", "पढ़ेंगे", "पढ़ाएंगे", "देखेंगे",
+]);
+
+// The unit of curriculum a coverage statement is about. Without one of these,
+// "we will look at" is a step in a derivation, not a statement of scope.
+const CURRICULAR_UNIT_TERMS = compile([
+  "module", "modules", "unit", "units", "chapter", "chapters",
+  "course", "syllabus", "curriculum", "semester", "topic", "topics",
+  "section", "sections", "lecture series", "series of lectures",
+  "मॉड्यूल", "यूनिट", "अध्याय", "चैप्टर", "कोर्स", "सिलेबस", "टॉपिक",
+]);
+
+// Naming the book the course is taught from. Separate from AVAILABILITY_CUES
+// because a prescribed text is not something being handed out -- it is
+// something a student has to go and obtain, which is a different action.
+const PRESCRIPTION_CUES = compile([
+  "teaching out of", "teaching from", "teach out of", "teaching primarily out of",
+  "i will be using", "i am using", "i will use", "we will use",
+  "we will follow", "i will follow", "follow the book", "based on the book",
+  "prescribed", "recommended", "refer to", "referring to", "reference is",
+  "taken from", "are taken from", "is taken from", "published by",
+  "you are free to read", "free to read",
+  "follow karenge", "refer karna", "refer kariye",
 ]);
 
 // ===========================================================================
@@ -447,6 +492,9 @@ interface Signals {
   readonly guidance: boolean;
   readonly studyObject: boolean;
   readonly scopeCue: boolean;
+  readonly coverage: boolean;
+  readonly curricularUnit: string | null;
+  readonly prescription: boolean;
   readonly availability: boolean;
   readonly promise: boolean;
   readonly duePhrase: string | null;
@@ -477,6 +525,9 @@ function readSignals(text: string, courseTerms: readonly CompiledCue[]): Signals
     guidance: hasCue(text, GUIDANCE_CUES),
     studyObject: hasCue(text, STUDY_OBJECT_TERMS),
     scopeCue: hasCue(text, SCOPE_CUES),
+    coverage: hasCue(text, COVERAGE_CUES),
+    curricularUnit: findCue(text, CURRICULAR_UNIT_TERMS),
+    prescription: hasCue(text, PRESCRIPTION_CUES),
     availability: hasCue(text, AVAILABILITY_CUES),
     promise: hasCue(text, PROMISE_CUES),
     duePhrase: findDuePhrase(text),
@@ -643,6 +694,35 @@ const RULES: readonly Rule[] = [
     fires: (s) => s.assessment !== null && s.scopeCue,
   },
   {
+    // A university course states its scope once, in the first lecture, and
+    // never again -- which makes this the single highest-value sentence family
+    // in the whole corpus and the one a coaching-class lexicon misses entirely.
+    //
+    // Runs at suppression "none" deliberately. Every sentence this rule exists
+    // to catch is first-person-plural ("we will discuss...", "in the next
+    // module we look at..."), so veto A would delete all of them. The gate that
+    // replaces it is the curricular unit noun: without "module" / "course" /
+    // "syllabus" in the sentence, "we will look at" is a step in a derivation.
+    id: "exam_scope.course_coverage",
+    kind: "exam_scope",
+    label: "course coverage stated",
+    base: 0.55,
+    suppression: "none",
+    fires: (s) => s.coverage && s.curricularUnit !== null,
+  },
+  {
+    // "I will be teaching out of my textbook, second edition." A student who
+    // misses this buys the wrong book, and it is said once. Kept separate from
+    // material_available because a prescribed text is not being handed out --
+    // it is something the student must go and obtain.
+    id: "announcement.prescribed_material",
+    kind: "announcement",
+    label: "prescribed reading named",
+    base: 0.58,
+    suppression: "none",
+    fires: (s) => s.material !== null && s.prescription,
+  },
+  {
     id: "announcement.material_available",
     kind: "announcement",
     label: "material will be shared",
@@ -767,7 +847,13 @@ function toDisplay(term: string): string {
 }
 
 function buildTitle(rule: Rule, s: Signals): string {
-  const subject = s.courseTerm ?? s.work ?? s.assessment ?? s.material ?? s.schedule;
+  // The coverage rule is the one case where the curricular unit IS the subject:
+  // "Module — course coverage stated" reads correctly, whereas falling through
+  // to a stray material term would title a syllabus sentence "Notes — ...".
+  const subject =
+    rule.id === "exam_scope.course_coverage"
+      ? s.curricularUnit ?? s.courseTerm
+      : s.courseTerm ?? s.work ?? s.assessment ?? s.material ?? s.schedule;
   return subject ? `${toDisplay(subject)} — ${rule.label}` : rule.label;
 }
 
@@ -879,7 +965,11 @@ function extract(input: ExtractionInput): ExtractionCandidate[] {
 
 export const rulesExtractionMethod: ExtractionMethod = {
   id: "rules",
-  version: "1.0.0",
+  // 1.1.0 adds exam_scope.course_coverage and announcement.prescribed_material.
+  // Bumped rather than edited in place because a stored candidate names the
+  // version that produced it, and two different rule sets sharing one version
+  // string would make every accuracy number produced before today unreadable.
+  version: "1.1.0",
   displayName: "Cue matching (English / Hinglish / Devanagari)",
   extract,
 };

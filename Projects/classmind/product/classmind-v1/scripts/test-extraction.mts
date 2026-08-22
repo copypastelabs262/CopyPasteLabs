@@ -354,6 +354,120 @@ check(
 );
 
 // ---------------------------------------------------------------------------
+// 9. University syllabus lectures  (rules v1.1.0)
+// ---------------------------------------------------------------------------
+//
+// The lexicon was built from a Class-12 coaching lecture and read a real
+// 18-minute university course-outline lecture as 2 generic guidance items --
+// missing the entire module-by-module syllabus and the prescribed textbook,
+// which are the only two things in that lecture a student actually needs.
+// These cases pin the two rules added for it, and the negative cases pin the
+// gate that stops them firing inside ordinary teaching.
+
+section("University syllabus lectures");
+
+// Both rules run at suppression "none" because every sentence they exist to
+// catch is first-person-plural, which veto A deletes. If a later change flips
+// them to "full" or "addressee", every one of these goes red.
+function onlyCandidate(text: string) {
+  const out = method.extract({
+    segments: [{ text, startMs: 0, endMs: 12_000, charStart: 0, charEnd: text.length }],
+  });
+  return out.length === 1 ? out[0] : null;
+}
+
+const coverage = onlyCandidate("In the second module, we discuss system, control volume and the state of a system.");
+check(
+  coverage?.kind === "exam_scope" && coverage.matchedCue.startsWith("exam_scope.course_coverage"),
+  "a module walkthrough is extracted as exam_scope",
+  coverage ? describe(coverage) : "no single candidate",
+);
+
+const objectives = onlyCandidate("The primary learning objectives in this course are to learn the first and the second laws of thermodynamics.");
+check(
+  objectives?.kind === "exam_scope",
+  "stated learning objectives are extracted as exam_scope",
+  objectives ? describe(objectives) : "no single candidate",
+);
+
+check(
+  coverage?.title.startsWith("Module") === true,
+  "a coverage candidate is titled by its curricular unit, not by a stray material term",
+  coverage?.title,
+);
+
+const textbook = onlyCandidate("I will be teaching primarily out of my textbook which is Fundamentals of Engineering Thermodynamics.");
+check(
+  textbook?.kind === "announcement" && textbook.matchedCue.startsWith("announcement.prescribed_material"),
+  "a prescribed textbook is extracted as an announcement",
+  textbook ? describe(textbook) : "no single candidate",
+);
+
+// The gate. Without a curricular unit noun, "we will look at" is a step in a
+// derivation -- and a rules engine that cannot tell those apart floods the
+// review queue with the lecture itself.
+check(
+  method.extract({
+    segments: [{
+      text: "So we will look at the compressor and calculate the pressure rise across it.",
+      startMs: 0, endMs: 12_000, charStart: 0, charEnd: 76,
+    }],
+  }).length === 0,
+  "`we will look at` with no curricular unit does NOT fire",
+);
+check(
+  method.extract({
+    segments: [{
+      text: "Now we discuss what happens to the entropy of the universe here.",
+      startMs: 0, endMs: 12_000, charStart: 0, charEnd: 64,
+    }],
+  }).length === 0,
+  "mid-explanation narration with no curricular unit does NOT fire",
+);
+// A bare mention of a book is not a prescription -- the prescription cue is
+// what separates "buy this" from "a book exists".
+check(
+  method.extract({
+    segments: [{
+      text: "The textbook has a diagram of this cycle on the next page.",
+      startMs: 0, endMs: 12_000, charStart: 0, charEnd: 58,
+    }],
+  }).length === 0,
+  "naming a textbook without a prescription cue does NOT fire",
+);
+
+// Regression guard on the whole point of the change.
+const SYLLABUS_LECTURE = [
+  "So the outline of the course is as follows, we start with an introduction.",
+  "In the second module, we discuss basic concepts such as system and control volume.",
+  "Now in the third module, we discuss work and heat.",
+  "In the next module, we look at second law of thermodynamics.",
+  "I will be teaching primarily out of my textbook, Fundamentals of Engineering Thermodynamics.",
+].map((text, i) => ({
+  text,
+  startMs: i * 12_000,
+  endMs: i * 12_000 + 12_000,
+  charStart: i * 200,
+  charEnd: i * 200 + text.length,
+}));
+const syllabusOut = method.extract({ segments: SYLLABUS_LECTURE });
+check(
+  syllabusOut.length === 5,
+  "every sentence of a syllabus walkthrough is extracted",
+  `${syllabusOut.length} of 5`,
+);
+check(
+  syllabusOut.filter((c) => c.kind === "exam_scope").length === 4 &&
+    syllabusOut.filter((c) => c.kind === "announcement").length === 1,
+  "a syllabus walkthrough yields scope items plus the prescribed reading",
+  syllabusOut.map((c) => c.kind).join(","),
+);
+check(
+  syllabusOut.every((c) => c.duePhrase === null),
+  "a syllabus walkthrough invents no due dates",
+);
+
+// ---------------------------------------------------------------------------
 
 section("Summary");
 console.log(`${passed} passed, ${failed} failed`);
