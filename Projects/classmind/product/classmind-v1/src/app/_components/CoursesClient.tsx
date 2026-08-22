@@ -134,6 +134,7 @@ export default function CoursesClient() {
               Auto-detect once romanized an English lecture into Arabic. Pick what you teach in.
             </p>
           </div>
+          {formError ? <p className="text-sm text-red-600 dark:text-red-400">{formError}</p> : null}
           <button className="w-full rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900">
             Create course
           </button>
