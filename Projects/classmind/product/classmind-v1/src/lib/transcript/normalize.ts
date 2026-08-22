@@ -62,12 +62,23 @@ function fromEntryArray(entries: unknown): DraftSegment[] | null {
 // one Sarvam chunk becomes one segment and the timing stays as fine-grained
 // as the response allows.
 //
-// The grouping is kept anyway, unchanged, because the field name is the only
-// thing Sarvam promises: if a future model or a diarized job really does
-// return words, one marker per word would be unreadable prose and would also
-// amount to pre-cutting the transcript on ASR boundaries.
+// The grouping is kept anyway, because the field name is the only thing
+// Sarvam promises: if a future model or a diarized job really does return
+// words, one marker per word would be unreadable prose and would also amount
+// to pre-cutting the transcript on ASR boundaries.
 const GROUP_MS = 12_000;
 const SENTENCE_END = /[.!?।]$/; // includes danda
+
+// An element lasting this long is not a word, whatever the field is called.
+// Sarvam's chunks average ~15s; no spoken word comes close.
+//
+// This exists because translit output does not reliably punctuate. Requiring
+// a full stop before closing a group -- correct when grouping words -- makes
+// an unpunctuated chunk swallow the next one and hold until the hard cap, so
+// a response that punctuates half its chunks silently loses half its timing
+// resolution. An element long enough to be a chunk is allowed to close its
+// own group; the sentence rule still governs everything shorter.
+const CHUNK_MS = 5_000;
 
 function fromChunkArrays(timestamps: unknown): DraftSegment[] | null {
   const rec = asRecord(timestamps);

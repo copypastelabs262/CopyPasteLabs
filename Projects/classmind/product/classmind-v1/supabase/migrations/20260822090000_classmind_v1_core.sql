@@ -146,3 +146,8 @@ grant select, insert, update, delete on public.course_context        to service_
 grant select, insert, update, delete on public.lectures              to service_role;
 grant select, insert, update, delete on public.extraction_candidates to service_role;
 grant select, insert, update, delete on public.candidate_reviews     to service_role;
+
+-- Applied 2026-08-22 as migration classmind_v1_lecture_language_code.
+-- The language actually SENT to the provider, persisted at submit time, because
+-- provenance is written later (at poll) and must reproduce this call's params.
+alter table public.lectures add column language_code text;
