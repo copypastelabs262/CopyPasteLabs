@@ -136,7 +136,7 @@ export default function TermsOfService() {
 
       <H2>Contact</H2>
       <P>
-        CopyPasteLabs &mdash; ClassMind. <strong>CONTACT_EMAIL_PLACEHOLDER</strong>.
+        CopyPasteLabs &mdash; ClassMind. <a className="underline" href="mailto:shyamworks06@gmail.com">shyamworks06@gmail.com</a>.
       </P>
     </LegalPage>
   );

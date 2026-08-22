@@ -33,6 +33,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </div>
         </header>
         <main className="mx-auto max-w-5xl px-6 py-10">{children}</main>
+        {/* Both links must be reachable from every page without signing in:
+            Google's OAuth consent review checks that the policy and terms URLs
+            it was given actually resolve for an anonymous visitor. */}
+        <footer className="border-t border-zinc-200 dark:border-zinc-800">
+          <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-5 gap-y-2 px-6 py-6 text-xs text-zinc-500">
+            <span>ClassMind &middot; CopyPasteLabs</span>
+            <Link href="/privacy" className="hover:underline">Privacy Policy</Link>
+            <Link href="/terms" className="hover:underline">Terms of Service</Link>
+          </div>
+        </footer>
       </body>
     </html>
   );
