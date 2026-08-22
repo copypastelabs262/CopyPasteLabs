@@ -81,8 +81,11 @@ short recording and watch the function logs.
   https://<your-vercel-domain>/**
   http://localhost:3100/**
   ```
-  The wildcards cover `/auth/callback` for Google sign-in and the email-confirmation link. Keep
-  the localhost entry so local development keeps working.
+  **The wildcard is not optional.** Supabase glob-matches the *entire* `redirectTo` URL including
+  its query string, and the sign-in page appends `?role=faculty` so the callback knows which kind
+  of account to create. A bare `https://<domain>/auth/callback` entry will not match that and the
+  sign-in fails with a redirect-not-allowed error. Keep the localhost entry so local development
+  keeps working.
 
 Preview deployments get a new URL per commit. If you want OAuth to work on previews, add
 `https://*-<your-team-slug>.vercel.app/**` too — or just test auth on production.
@@ -120,11 +123,25 @@ application*:
   Getting this wrong is the single most common failure. The app's own `/auth/callback` is where
   Supabase sends the user *afterwards*; Google never calls it directly.
 
-You will also need to fill in the OAuth consent screen. While it is in *Testing* status only
-accounts you list as test users can sign in — publish it before a real demo.
+You will also need to fill in the OAuth consent screen (User Type *External*, app name, support
+email, developer contact). **While it is in _Testing_ status, only Google accounts you list under
+Test users can sign in** — everyone else gets `access_denied`, which looks exactly like a code
+bug. Publish it before a real demo.
 
 **Supabase dashboard** → Authentication → Providers → Google: enable it, paste the Client ID and
-Client Secret, save.
+Client Secret, save. That panel also displays the callback URL Supabase expects — confirm it
+matches character-for-character what you pasted into Google above.
+
+Nothing goes into `.env.local` or Vercel for this. The Google client ID and secret live in
+Supabase, not in the app.
+
+**What the code does, so you can tell a config problem from a code problem.** The button calls
+`signInWithOAuth`; Google returns to Supabase; Supabase returns to `/auth/callback`, which
+exchanges the code for a session cookie and creates a `profiles` row **only if none exists** — a
+second Google sign-in never overwrites a name or role the user has since changed. Every failure
+path redirects to `/signin?error=<message>` rather than showing a blank page, so whatever goes
+wrong will be legible on screen. The `next` parameter is validated against open redirects
+(`//evil.com`, `/\evil.com`, absolute URLs are all rejected).
 
 ---
 
