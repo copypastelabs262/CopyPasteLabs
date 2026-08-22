@@ -62,20 +62,32 @@ export default function LectureClient({
 
   // Seek audio and scroll the transcript to a moment. This is the durable
   // anchor from Capture Contract Article 7 made clickable.
+  //
+  // The requested moment is snapped to the nearest segment before anything is
+  // looked up. An evidence span carries its own start time, which is under no
+  // obligation to fall exactly on a segment boundary, and an unsnapped id
+  // lookup fails silently -- the audio would move and the transcript would sit
+  // there, which reads as a broken link rather than a near miss.
   const seek = useCallback((ms: number) => {
-    setHighlight(ms);
+    const nearest = segments.length
+      ? segments.reduce((best, s) =>
+          Math.abs(s.startMs - ms) < Math.abs(best.startMs - ms) ? s : best, segments[0])
+      : null;
+    const anchor = nearest?.startMs ?? ms;
+    setHighlight(anchor);
     if (audioRef.current) {
+      // The audio seeks to the moment asked for, not to the snapped one: the
+      // segment is a reading position, the timestamp is the evidence.
       audioRef.current.currentTime = ms / 1000;
       void audioRef.current.play().catch(() => undefined);
     }
-    document.getElementById(`seg-${ms}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, []);
+    document.getElementById(`seg-${anchor}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [segments]);
 
   useEffect(() => {
-    if (!Number.isFinite(jumpTo) || !segments.length) return;
-    const target = segments.reduce((best, s) =>
-      Math.abs(s.startMs - jumpTo) < Math.abs(best.startMs - jumpTo) ? s : best, segments[0]);
-    const timer = setTimeout(() => seek(target.startMs), 250);
+    if (jumpTo === null || !Number.isFinite(jumpTo) || !segments.length) return;
+    // A beat after the transcript renders, so there is something to scroll to.
+    const timer = setTimeout(() => seek(jumpTo), 250);
     return () => clearTimeout(timer);
   }, [jumpTo, segments, seek]);
 
