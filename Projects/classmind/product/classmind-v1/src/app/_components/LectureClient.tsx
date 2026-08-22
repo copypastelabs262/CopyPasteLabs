@@ -140,7 +140,7 @@ export default function LectureClient({
       {isOwner ? (
         <CandidateReview
           candidates={candidates} reviews={reviews}
-          onSeek={seek} onReviewed={() => setVersion((v) => v + 1)}
+          onSeek={seek} onReviewed={refresh}
         />
       ) : null}
 
