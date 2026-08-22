@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import CandidateReview, { type Candidate, type Review } from "./CandidateReview";
 import LectureProgress from "./LectureProgress";
+import TaughtPanel from "./TaughtPanel";
+import DeleteLecture from "./DeleteLecture";
 import { mmss } from "./KnowledgePanel";
 import { formatBytes, STATUS_LABEL } from "./Input";
 
@@ -146,10 +148,24 @@ export default function LectureClient({
       ) : null}
 
       {isOwner ? (
-        <CandidateReview
-          candidates={candidates} reviews={reviews}
-          onSeek={seek} onReviewed={refresh}
-        />
+        <>
+          {/* What was taught comes BEFORE the review queue. A reviewer facing
+              thirty candidates needs to know what the lecture was about first:
+              the queue is the work, this is the map. */}
+          <TaughtPanel lectureId={lectureId} version={version} onSeek={seek} />
+
+          <CandidateReview
+            candidates={candidates} reviews={reviews}
+            onSeek={seek} onReviewed={refresh}
+          />
+
+          <DeleteLecture
+            lectureId={lectureId}
+            lectureTitle={lecture.title}
+            courseId={courseId}
+            candidateCount={candidates.length}
+          />
+        </>
       ) : null}
 
       <section>

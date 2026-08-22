@@ -47,7 +47,12 @@ function section(title: string): void {
   console.log(`\n--- ${title} ---`);
 }
 
-const method = getExtractionMethod();
+// The product default is now the composite `lecture` method. Most of this file
+// pins the ACTIONABLE half, so it asks for `rules` by name -- otherwise every
+// assertion about "this sentence yields nothing" would also be asserting that
+// the teaching pass found nothing in it, which is a different claim.
+const method = getExtractionMethod("rules");
+const defaultMethod = getExtractionMethod();
 
 // ---------------------------------------------------------------------------
 // 1. The registry
@@ -67,7 +72,7 @@ check(
 );
 check(
   getExtractionMethod("rules") === method,
-  "getExtractionMethod('rules') resolves to the same instance",
+  "getExtractionMethod('rules') resolves to the actionable-only baseline",
 );
 
 let threwOnUnknown = false;
@@ -433,7 +438,18 @@ check(
       startMs: 0, endMs: 12_000, charStart: 0, charEnd: 58,
     }],
   }).length === 0,
-  "naming a textbook without a prescription cue does NOT fire",
+  "naming a textbook without a prescription cue produces no ACTIONABLE item",
+);
+// Under the composite method the same sentence is legitimately a reference --
+// a resource the lecturer named. It must not become an announcement.
+check(
+  defaultMethod.extract({
+    segments: [{
+      text: "The textbook has a diagram of this cycle on the next page.",
+      startMs: 0, endMs: 12_000, charStart: 0, charEnd: 58,
+    }],
+  }).every((c) => c.kind === "reference"),
+  "under the composite method it is a reference, never an announcement",
 );
 
 // Regression guard on the whole point of the change.

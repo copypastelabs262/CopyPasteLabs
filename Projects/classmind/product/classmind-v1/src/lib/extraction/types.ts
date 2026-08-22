@@ -77,11 +77,24 @@ export interface ExtractionInput {
 // Ledger's nouns for them would blur the one boundary the architecture exists
 // to protect.
 export type CandidateKind =
+  // ACTIONABLE -- something is required of, or announced to, students.
   | "assignment"
   | "deadline"
   | "exam_scope"
   | "announcement"
-  | "guidance";
+  | "guidance"
+  // TEACHING -- what the lecturer explained. Added 2026-08-22 after a real
+  // 23-minute college lecture produced exactly one candidate: the assignment in
+  // its final minute. Nothing was wrong with the matcher. Every kind above is a
+  // category of ACTION, so there was no shape in which "the lecturer defined a
+  // unified manager" could be stored even had something detected it.
+  | "lesson_scope"
+  | "topic"
+  | "definition"
+  | "enumeration"
+  | "comparison"
+  // CONTEXT -- a resource, tool or technology named in passing.
+  | "reference";
 
 export const CANDIDATE_KINDS: readonly CandidateKind[] = [
   "assignment",
@@ -89,7 +102,38 @@ export const CANDIDATE_KINDS: readonly CandidateKind[] = [
   "exam_scope",
   "announcement",
   "guidance",
+  "lesson_scope",
+  "topic",
+  "definition",
+  "enumeration",
+  "comparison",
+  "reference",
 ];
+
+// The three-way split the product reasons in. `kind` says what a thing is;
+// `category` says which of the three questions it answers -- what was taught,
+// what must I do, what was referred to. Derived rather than stored on the
+// candidate type, because a kind belongs to exactly one category and two
+// fields that can disagree will eventually disagree.
+export type KnowledgeCategory = "teaching" | "actionable" | "reference";
+
+const CATEGORY_OF: Record<CandidateKind, KnowledgeCategory> = {
+  assignment: "actionable",
+  deadline: "actionable",
+  exam_scope: "actionable",
+  announcement: "actionable",
+  guidance: "actionable",
+  lesson_scope: "teaching",
+  topic: "teaching",
+  definition: "teaching",
+  enumeration: "teaching",
+  comparison: "teaching",
+  reference: "reference",
+};
+
+export function categoryOf(kind: string): KnowledgeCategory {
+  return CATEGORY_OF[kind as CandidateKind] ?? "actionable";
+}
 
 // A proposal about one span of speech. Never shown to a student, never true on
 // its own. It becomes true only when a person with authority confirms it.

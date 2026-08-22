@@ -1,5 +1,6 @@
 import "server-only";
 import { serviceClient } from "@/lib/supabase/service";
+import { categoryOf } from "@/lib/extraction";
 
 // One confirmed item as students see it. Note every field a student reads is
 // either the faculty's own wording or the machine's proposal that a human
@@ -115,4 +116,139 @@ export function searchKnowledge(items: KnowledgeItem[], query: string): Knowledg
     .sort((a, b) => b.score - a.score)
     .slice(0, 10)
     .map((s) => s.item);
+}
+
+// ---------------------------------------------------------------------------
+// What was taught in this lecture
+// ---------------------------------------------------------------------------
+//
+// Answers one question well rather than answering anything badly. It reads the
+// STORED knowledge for a lecture -- the candidates and the verdicts on them --
+// and never re-reads the transcript. That is the point: the transcript is
+// 22,000 characters of code-switched speech, and a product that re-derives its
+// answer from it on every question has no stored knowledge at all, only a
+// cache-less summariser.
+//
+// Nothing here generates prose. Every line a reader sees is a title extracted
+// from a sentence the lecturer actually said, carried with the timestamp it was
+// said at, so any claim can be checked against the recording in one click.
+
+export interface TaughtItem {
+  candidateId: string;
+  kind: string;
+  title: string;
+  detail: string;
+  evidenceStartMs: number;
+  evidenceEndMs: number;
+  evidenceText: string;
+  confidence: number | null;
+  // Whether a human has ruled on this yet, and what they said. Teaching items
+  // are shown to faculty before review -- the alternative is a reviewer facing
+  // thirty rows with no idea what the lecture was about -- so the review state
+  // travels with every item rather than being implied by its presence.
+  reviewState: "unreviewed" | "confirmed" | "rejected";
+}
+
+export interface LectureTaught {
+  lectureId: string;
+  lectureTitle: string;
+  // The lecturer's own statement of what the session covers, when they made
+  // one. Worth its own field: it is the only summary in the lecture written by
+  // someone who knew what they were about to teach.
+  lessonScope: TaughtItem[];
+  mainTopics: TaughtItem[];
+  concepts: TaughtItem[];
+  breakdowns: TaughtItem[];
+  comparisons: TaughtItem[];
+  references: TaughtItem[];
+  actionable: TaughtItem[];
+  counts: { teaching: number; actionable: number; reference: number; rejected: number };
+}
+
+const BUCKET_OF: Record<string, keyof Omit<LectureTaught, "lectureId" | "lectureTitle" | "counts">> = {
+  lesson_scope: "lessonScope",
+  topic: "mainTopics",
+  definition: "concepts",
+  enumeration: "breakdowns",
+  comparison: "comparisons",
+  reference: "references",
+  assignment: "actionable",
+  deadline: "actionable",
+  exam_scope: "actionable",
+  announcement: "actionable",
+  guidance: "actionable",
+};
+
+export async function lectureTaught(lectureId: string): Promise<LectureTaught | null> {
+  const svc = serviceClient();
+
+  const { data: lecture } = await svc
+    .from("lectures").select("id, title").eq("id", lectureId).maybeSingle();
+  if (!lecture) return null;
+
+  const { data: candidates } = await svc
+    .from("extraction_candidates")
+    .select("id, kind, title, detail, evidence_start_ms, evidence_end_ms, evidence_text, confidence, extraction_method, extraction_version, created_at")
+    .eq("lecture_id", lectureId)
+    .order("evidence_start_ms", { ascending: true });
+
+  const out: LectureTaught = {
+    lectureId, lectureTitle: lecture.title as string,
+    lessonScope: [], mainTopics: [], concepts: [], breakdowns: [],
+    comparisons: [], references: [], actionable: [],
+    counts: { teaching: 0, actionable: 0, reference: 0, rejected: 0 },
+  };
+  if (!candidates?.length) return out;
+
+  // Only the most recent extraction run reaches a reader -- the same rule the
+  // review queue applies, for the same reason: a re-run would otherwise show
+  // every topic twice, once per run.
+  let newestRun: { key: string; at: number } | null = null;
+  for (const c of candidates) {
+    const key = `${c.extraction_method}@${c.extraction_version}`;
+    const at = Date.parse(c.created_at as string);
+    if (!newestRun || at > newestRun.at) newestRun = { key, at };
+  }
+  const current = candidates.filter(
+    (c) => `${c.extraction_method}@${c.extraction_version}` === newestRun?.key,
+  );
+
+  const { data: reviews } = await svc
+    .from("candidate_reviews")
+    .select("candidate_id, action, final_kind, final_title, final_detail, created_at")
+    .in("candidate_id", current.map((c) => c.id as string))
+    .order("created_at", { ascending: false });
+
+  const verdict = new Map<string, NonNullable<typeof reviews>[number]>();
+  for (const r of reviews ?? []) {
+    const key = r.candidate_id as string;
+    if (!verdict.has(key)) verdict.set(key, r);
+  }
+
+  for (const c of current) {
+    const v = verdict.get(c.id as string);
+    const state: TaughtItem["reviewState"] =
+      !v ? "unreviewed" : v.action === "reject" ? "rejected" : "confirmed";
+    if (state === "rejected") { out.counts.rejected += 1; continue; }
+
+    // A confirmed item shows the faculty member's wording; an unreviewed one
+    // shows the machine's. Never the other way round.
+    const kind = (v?.final_kind as string | null) ?? (c.kind as string);
+    const item: TaughtItem = {
+      candidateId: c.id as string,
+      kind,
+      title: (v?.final_title as string | null) ?? (c.title as string),
+      detail: (v?.final_detail as string | null) ?? (c.detail as string),
+      evidenceStartMs: Number(c.evidence_start_ms),
+      evidenceEndMs: Number(c.evidence_end_ms),
+      evidenceText: c.evidence_text as string,
+      confidence: c.confidence === null ? null : Number(c.confidence),
+      reviewState: state,
+    };
+    const bucket = BUCKET_OF[kind] ?? "actionable";
+    out[bucket].push(item);
+    const cat = categoryOf(kind);
+    out.counts[cat] += 1;
+  }
+  return out;
 }

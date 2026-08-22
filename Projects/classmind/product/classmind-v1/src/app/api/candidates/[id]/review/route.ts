@@ -3,7 +3,12 @@ import { requireUser, requireCourseOwner, errorResponse } from "@/lib/auth";
 import { serviceClient } from "@/lib/supabase/service";
 
 const ACTIONS = ["confirm", "edit", "reject"];
-const KINDS = ["assignment", "deadline", "exam_scope", "announcement", "guidance"];
+// Includes the teaching and reference kinds: a faculty member editing a
+// candidate may legitimately decide the machine filed a definition as a topic.
+const KINDS = [
+  "assignment", "deadline", "exam_scope", "announcement", "guidance",
+  "lesson_scope", "topic", "definition", "enumeration", "comparison", "reference",
+];
 
 // Records a verdict on a candidate.
 //

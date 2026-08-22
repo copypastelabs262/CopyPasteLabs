@@ -1,21 +1,8 @@
 import { NextResponse } from "next/server";
-import { requireUser, requireCourseAccess, errorResponse } from "@/lib/auth";
+import { requireUser, requireCourseAccess, requireCourseOwner, errorResponse } from "@/lib/auth";
 import { serviceClient } from "@/lib/supabase/service";
 import { normalizeRawTranscript } from "@/lib/transcript/normalize";
 import { LECTURE_BUCKET } from "@/lib/storage";
-
-// Numeric, part by part. A string comparison would sort "1.10.0" below
-// "1.9.0", and a review queue silently showing the older of two rule sets is
-// worse than showing both.
-function compareVersions(a: string, b: string): number {
-  const left = a.split(".").map(Number);
-  const right = b.split(".").map(Number);
-  for (let i = 0; i < Math.max(left.length, right.length); i += 1) {
-    const diff = (left[i] ?? 0) - (right[i] ?? 0);
-    if (diff !== 0) return diff;
-  }
-  return 0;
-}
 
 // One lecture, role-aware.
 //
@@ -62,27 +49,31 @@ export async function GET(_r: Request, { params }: { params: Promise<{ id: strin
         .eq("lecture_id", id)
         .order("evidence_start_ms", { ascending: true })).data ?? [];
 
-      // Only the newest version of each method reaches the review queue.
+      // Only the MOST RECENT extraction run reaches the review queue.
       //
-      // Candidates are immutable and a re-run under a bumped version inserts
-      // alongside the old rows rather than replacing them -- deliberately,
-      // because comparing methods on identical input is the whole reason the
-      // method is pluggable. The cost is that after a version bump the queue
-      // shows a reviewer the same sentence twice, once per version, which is
-      // the fastest way to make a review queue stop being read.
+      // Candidates are immutable and a re-run inserts alongside the old rows
+      // rather than replacing them -- deliberately, because comparing methods on
+      // identical input is the whole reason the method is pluggable. The cost is
+      // that a reviewer would see the same sentence once per run, which is the
+      // fastest way to make a review queue stop being read.
       //
-      // Nothing is deleted and nothing is hidden from the database: this is a
-      // read filter, the count it held back is returned, and knowledge.ts still
-      // honours a verdict already given on a now-superseded candidate.
-      const latest = new Map<string, string>();
+      // Keyed on method AND version, and chosen by recency rather than by
+      // version order, because switching methods is now a real event: the
+      // actionable-only `rules` method produced one candidate for a lecture that
+      // the composite `lecture` method reads as thirty. Highest-version-per-
+      // method would have shown both sets at once.
+      //
+      // Nothing is deleted: this is a read filter, the count it held back is
+      // reported, and knowledge.ts still honours a verdict already given on a
+      // now-superseded candidate.
+      let newestRun: { key: string; at: number } | null = null;
       for (const c of all) {
-        const method = c.extraction_method as string;
-        const version = c.extraction_version as string;
-        const held = latest.get(method);
-        if (!held || compareVersions(version, held) > 0) latest.set(method, version);
+        const key = `${c.extraction_method}@${c.extraction_version}`;
+        const at = Date.parse(c.created_at as string);
+        if (!newestRun || at > newestRun.at) newestRun = { key, at };
       }
       candidates = all.filter(
-        (c) => latest.get(c.extraction_method as string) === c.extraction_version,
+        (c) => `${c.extraction_method}@${c.extraction_version}` === newestRun?.key,
       );
       supersededCount = all.length - candidates.length;
 
@@ -115,6 +106,78 @@ export async function GET(_r: Request, { params }: { params: Promise<{ id: strin
       // Non-zero means an older extraction version produced rows that are not
       // being shown. Surfaced rather than silently dropped.
       supersededCount,
+    });
+  } catch (err) {
+    const { body, status } = errorResponse(err);
+    return NextResponse.json(body, { status });
+  }
+}
+
+// Delete a lecture, its audio, and everything derived from it.
+//
+// Necessary well before launch: the wrong file, the wrong lecture, a duplicate,
+// or a private recording uploaded by accident are all one misclick away, and
+// until now there was no way to undo any of them.
+//
+// Order matters. The storage object goes first and the row second, because
+// removing an object is idempotent -- a retry after a half-failure succeeds --
+// whereas deleting the row first would strand the audio with nothing pointing
+// at it and no way to find it again.
+//
+// Derived data needs no explicit handling: extraction_candidates cascades from
+// lectures, and candidate_reviews cascades from candidates. Deleting them here
+// as well would be a second, weaker copy of a rule the schema already enforces.
+export async function DELETE(_r: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    const user = await requireUser();
+    const svc = serviceClient();
+
+    const { data: lecture } = await svc
+      .from("lectures")
+      .select("id, course_id, title, storage_path")
+      .eq("id", id)
+      .maybeSingle();
+    if (!lecture) return NextResponse.json({ error: "Lecture not found." }, { status: 404 });
+
+    // Owner only, and scoped to THIS lecture's course. Deletion is the one
+    // action where getting the authorization check wrong destroys data rather
+    // than leaking it.
+    await requireCourseOwner(lecture.course_id as string, user.id);
+
+    const { data: candidates } = await svc
+      .from("extraction_candidates").select("id").eq("lecture_id", id);
+    const candidateCount = (candidates ?? []).length;
+
+    const { error: storageError } = await svc.storage
+      .from(LECTURE_BUCKET)
+      .remove([lecture.storage_path as string]);
+    if (storageError) {
+      return NextResponse.json(
+        { error: `Could not delete the audio, so nothing was deleted: ${storageError.message}` },
+        { status: 502 },
+      );
+    }
+
+    const { error: rowError } = await svc.from("lectures").delete().eq("id", id);
+    if (rowError) {
+      return NextResponse.json(
+        {
+          error:
+            `The audio was deleted but the lecture record was not: ${rowError.message}. ` +
+            "Deleting the lecture again will finish the job.",
+        },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({
+      deleted: {
+        lectureId: id,
+        title: lecture.title,
+        storagePath: lecture.storage_path,
+        candidatesRemoved: candidateCount,
+      },
     });
   } catch (err) {
     const { body, status } = errorResponse(err);

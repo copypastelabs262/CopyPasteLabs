@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { mmss } from "./KnowledgePanel";
-import { KIND_LABEL } from "./Input";
+import { KIND_LABEL, CATEGORY_LABEL, categoryFor } from "./Input";
 
 export interface Candidate {
   id: string; kind: string; title: string; detail: string;
@@ -16,7 +16,10 @@ export interface Review {
   final_title: string | null; note: string | null; created_at: string;
 }
 
-const KINDS = ["assignment", "deadline", "exam_scope", "announcement", "guidance"];
+const KINDS = [
+  "assignment", "deadline", "exam_scope", "announcement", "guidance",
+  "lesson_scope", "topic", "definition", "enumeration", "comparison", "reference",
+];
 
 // Faculty review. Every action INSERTS a verdict; the candidate row is never
 // mutated, so what the machine proposed stays readable forever alongside what
@@ -51,13 +54,138 @@ export default function CandidateReview({
 
   const pending = candidates.filter((c) => !latest.has(c.id));
   const ruled = candidates.filter((c) => latest.has(c.id));
+  const [showRuled, setShowRuled] = useState(false);
+
+  // A ruled candidate LEAVES the queue.
+  //
+  // This used to render `[...pending, ...ruled]`, so confirming an item moved
+  // the counter to "0 pending" while the card stayed exactly where it was. The
+  // persistence underneath was correct all along -- the verdict was written, the
+  // item became course knowledge, a refresh preserved it -- but a queue whose
+  // items never leave is not a queue, and from the outside "it worked" and "it
+  // did nothing" looked identical.
+  async function confirmAll(group: Candidate[]) {
+    setBusy("bulk"); setError(null);
+    try {
+      // Sequential on purpose. Each call inserts a verdict row, and firing
+      // thirty of them at once is how you discover your connection limit.
+      for (const c of group) {
+        const r = await fetch(`/api/candidates/${c.id}/review`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "confirm" }),
+        });
+        if (!r.ok) throw new Error((await r.json()).error ?? "Review failed.");
+      }
+      onReviewed();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally { setBusy(null); }
+  }
+
+  function card(c: Candidate) {
+    const verdict = latest.get(c.id);
+    const isEditing = editing === c.id;
+    return (
+      <li
+        key={c.id}
+        className={
+          "rounded-lg border p-4 " +
+          (verdict?.action === "reject"
+            ? "border-zinc-200 opacity-60 dark:border-zinc-800"
+            : verdict
+              ? "border-green-300 dark:border-green-900"
+              : "border-zinc-200 dark:border-zinc-800")
+        }
+      >
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs uppercase text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+            {KIND_LABEL[c.kind] ?? c.kind}
+          </span>
+          <span className="font-medium">{c.title}</span>
+          {c.due_phrase ? (
+            <span className="text-sm text-amber-700 dark:text-amber-400">
+              &ldquo;{c.due_phrase}&rdquo;
+            </span>
+          ) : null}
+          <button
+            onClick={() => onSeek(c.evidence_start_ms)}
+            className="ml-auto font-mono text-xs text-zinc-500 hover:underline"
+          >
+            [{mmss(c.evidence_start_ms)}]
+          </button>
+        </div>
+        <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">{c.detail}</p>
+        <div className="mt-2 rounded-md border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900">
+          <p className="text-xs text-zinc-500">Evidence &mdash; what was actually said</p>
+          <p className="mt-1 text-sm italic text-zinc-700 dark:text-zinc-300">
+            &ldquo;{c.evidence_text}&rdquo;
+          </p>
+          <p className="mt-2 text-xs text-zinc-400">
+            {c.extraction_method} v{c.extraction_version}
+            {c.matched_cue ? ` · cue: ${c.matched_cue}` : ""}
+            {c.confidence != null ? ` · confidence ${Number(c.confidence).toFixed(2)}` : ""}
+          </p>
+        </div>
+        {verdict ? (
+          <p className="mt-2 text-xs text-zinc-500">
+            {verdict.action === "reject" ? "Rejected" : verdict.action === "edit" ? "Edited and confirmed" : "Confirmed"}
+            {verdict.note ? ` · ${verdict.note}` : ""} · rule again to change this
+          </p>
+        ) : null}
+        {isEditing ? (
+          <EditForm
+            draft={draft} setDraft={setDraft} busy={busy === c.id}
+            onCancel={() => setEditing(null)}
+            onSave={() => act(c.id, {
+              action: "edit", kind: draft.kind, title: draft.title,
+              detail: draft.detail, duePhrase: draft.duePhrase || null,
+            })}
+          />
+        ) : (
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              disabled={busy !== null} onClick={() => act(c.id, { action: "confirm" })}
+              className="rounded-md bg-green-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-800 disabled:opacity-50"
+            >
+              Confirm
+            </button>
+            <button
+              disabled={busy !== null}
+              onClick={() => {
+                setEditing(c.id);
+                setDraft({ kind: c.kind, title: c.title, detail: c.detail, duePhrase: c.due_phrase ?? "" });
+              }}
+              className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
+            >
+              Edit
+            </button>
+            <button
+              disabled={busy !== null} onClick={() => act(c.id, { action: "reject" })}
+              className="rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950"
+            >
+              Reject
+            </button>
+          </div>
+        )}
+      </li>
+    );
+  }
+
+  // Grouped, because a 23-minute lecture now yields roughly thirty candidates
+  // and an undifferentiated list of thirty is not reviewable. Obligations
+  // first: they are the ones with a consequence attached.
+  const GROUPS: { key: string; items: Candidate[] }[] = [
+    { key: "actionable", items: pending.filter((c) => categoryFor(c.kind) === "actionable") },
+    { key: "teaching", items: pending.filter((c) => categoryFor(c.kind) === "teaching") },
+    { key: "reference", items: pending.filter((c) => categoryFor(c.kind) === "reference") },
+  ];
 
   return (
     <section>
       <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500">
         Candidates for review
         <span className="ml-2 font-normal normal-case text-zinc-400">
-          {pending.length} pending · {ruled.length} ruled
+          {pending.length} pending &middot; {ruled.length} ruled
         </span>
       </h2>
       <p className="mt-1 text-xs text-zinc-500">
@@ -66,99 +194,50 @@ export default function CandidateReview({
       {error ? <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p> : null}
       {!candidates.length ? (
         <p className="mt-3 text-sm text-zinc-500">
-          No candidates yet — extraction runs after transcription completes.
+          No candidates yet &mdash; extraction runs after transcription completes.
         </p>
       ) : null}
-      <ul className="mt-3 space-y-3">
-        {[...pending, ...ruled].map((c) => {
-          const verdict = latest.get(c.id);
-          const isEditing = editing === c.id;
-          return (
-            <li
-              key={c.id}
-              className={
-                "rounded-lg border p-4 " +
-                (verdict?.action === "reject"
-                  ? "border-zinc-200 opacity-60 dark:border-zinc-800"
-                  : verdict
-                    ? "border-green-300 dark:border-green-900"
-                    : "border-zinc-200 dark:border-zinc-800")
-              }
-            >
-              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs uppercase text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
-                  {KIND_LABEL[c.kind] ?? c.kind}
-                </span>
-                <span className="font-medium">{c.title}</span>
-                {c.due_phrase ? (
-                  <span className="text-sm text-amber-700 dark:text-amber-400">
-                    &ldquo;{c.due_phrase}&rdquo;
-                  </span>
-                ) : null}
-                <button
-                  onClick={() => onSeek(c.evidence_start_ms)}
-                  className="ml-auto font-mono text-xs text-zinc-500 hover:underline"
-                >
-                  [{mmss(c.evidence_start_ms)}]
-                </button>
-              </div>
-              <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">{c.detail}</p>
-              <div className="mt-2 rounded-md border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900">
-                <p className="text-xs text-zinc-500">Evidence &mdash; what was actually said</p>
-                <p className="mt-1 text-sm italic text-zinc-700 dark:text-zinc-300">
-                  &ldquo;{c.evidence_text}&rdquo;
-                </p>
-                <p className="mt-2 text-xs text-zinc-400">
-                  {c.extraction_method} v{c.extraction_version}
-                  {c.matched_cue ? ` · cue: ${c.matched_cue}` : ""}
-                  {c.confidence != null ? ` · confidence ${Number(c.confidence).toFixed(2)}` : ""}
-                </p>
-              </div>
-              {verdict ? (
-                <p className="mt-2 text-xs text-zinc-500">
-                  {verdict.action === "reject" ? "Rejected" : verdict.action === "edit" ? "Edited and confirmed" : "Confirmed"}
-                  {verdict.note ? ` · ${verdict.note}` : ""} · rule again to change this
-                </p>
-              ) : null}
-              {isEditing ? (
-                <EditForm
-                  draft={draft} setDraft={setDraft} busy={busy === c.id}
-                  onCancel={() => setEditing(null)}
-                  onSave={() => act(c.id, {
-                    action: "edit", kind: draft.kind, title: draft.title,
-                    detail: draft.detail, duePhrase: draft.duePhrase || null,
-                  })}
-                />
-              ) : (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <button
-                    disabled={busy === c.id} onClick={() => act(c.id, { action: "confirm" })}
-                    className="rounded-md bg-green-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-800 disabled:opacity-50"
-                  >
-                    Confirm
-                  </button>
-                  <button
-                    disabled={busy === c.id}
-                    onClick={() => {
-                      setEditing(c.id);
-                      setDraft({ kind: c.kind, title: c.title, detail: c.detail, duePhrase: c.due_phrase ?? "" });
-                    }}
-                    className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    disabled={busy === c.id} onClick={() => act(c.id, { action: "reject" })}
-                    className="rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950"
-                  >
-                    Reject
-                  </button>
-                </div>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+      {candidates.length > 0 && pending.length === 0 ? (
+        <p className="mt-3 rounded-md border border-green-300 bg-green-50 p-3 text-sm text-green-800 dark:border-green-900 dark:bg-green-950 dark:text-green-300">
+          Everything in this lecture has been reviewed.
+        </p>
+      ) : null}
+
+      {GROUPS.filter((g) => g.items.length > 0).map((g) => (
+        <div key={g.key} className="mt-6">
+          <div className="flex items-baseline justify-between gap-3">
+            <h3 className="text-sm font-semibold">
+              {CATEGORY_LABEL[g.key]}
+              <span className="ml-2 font-normal text-zinc-400">{g.items.length}</span>
+            </h3>
+            {/* Bulk confirm for teaching and references only. An assignment or a
+                deadline is exactly the claim that has to be read one at a time,
+                so the actionable group deliberately has no such button. */}
+            {g.key !== "actionable" ? (
+              <button
+                disabled={busy !== null}
+                onClick={() => confirmAll(g.items)}
+                className="rounded-md border border-zinc-300 px-3 py-1 text-xs font-medium hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
+              >
+                {busy === "bulk" ? "Confirming…" : `Confirm all ${g.items.length}`}
+              </button>
+            ) : null}
+          </div>
+          <ul className="mt-3 space-y-3">{g.items.map(card)}</ul>
+        </div>
+      ))}
+
+      {ruled.length > 0 ? (
+        <div className="mt-8">
+          <button
+            onClick={() => setShowRuled(!showRuled)}
+            className="text-sm text-zinc-600 hover:underline dark:text-zinc-400"
+          >
+            {showRuled ? "Hide" : "Show"} {ruled.length} already ruled
+          </button>
+          {showRuled ? <ul className="mt-3 space-y-3">{ruled.map(card)}</ul> : null}
+        </div>
+      ) : null}
     </section>
   );
 }

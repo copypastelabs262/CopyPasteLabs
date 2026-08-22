@@ -110,6 +110,11 @@ const WORK_TERMS = compile([
   "practice sheet", "worksheet", "work sheet", "problem set", "problem sheet",
   "project", "report", "lab report", "lab record", "lab file", "practical file",
   "presentation", "seminar", "submission", "submissions",
+  // Added 2026-08-22 from a real college lecture whose assignment was "research
+  // paper ko aapko find karna hai ... implement karna hai". These are things a
+  // student produces, which is what this list is for.
+  "research paper", "review paper", "term paper", "case study", "case-study",
+  "literature survey", "mini project", "capstone",
   "असाइनमेंट", "होमवर्क", "प्रोजेक्ट", "प्रेजेंटेशन", "प्रैक्टिकल फाइल",
 ]);
 
@@ -160,6 +165,40 @@ const OBLIGATION_ENGLISH = compile([
   "have to", "has to", "you must", "must", "need to", "needs to",
   "required to", "is required", "are required", "expected to",
   "make sure you", "don't forget to", "dont forget to",
+]);
+
+// Second-person imperative. Hindi marks a command by verb form, and a lecturer
+// setting work says "questions likho", "search karo", "find out karo" without
+// ever using "karna hai". The obligation lexicon above is built entirely from
+// the infinitive-plus-auxiliary construction and is deaf to this one, which is
+// why a real assignment block delivered as four consecutive imperatives
+// produced nothing.
+//
+// Imperatives are also how a lecturer directs attention mid-explanation --
+// "dekho", "socho", "suno" -- so those are deliberately absent. Only verbs
+// naming work a student takes away are listed.
+// IMPERATIVE FORMS ONLY. The infinitives -- karna, likhna, banana, padhna --
+// are deliberately absent even though they look like near-synonyms. "derive
+// karna hai" is a step in a worked example and "derive karo" is an instruction
+// to the class; including the infinitive here collapsed that distinction and
+// immediately resurrected the exact false positive the suppression rules in
+// section 6 exist to kill. The verb form IS the signal.
+const IMPERATIVE_HINDI = compile([
+  "likho", "likh lo", "likh lena", "banao", "bana lo",
+  "karo", "kar lo", "kar lena", "kar dena",
+  "find out karo", "search karo", "search kar lo", "dhundo", "dhoondo",
+  "submit karo", "jama karo", "jama kar do", "bhejo", "bhej do",
+  "padh lo", "padh lena", "solve karo", "complete karo", "prepare karo",
+  "implement karo", "deploy karo", "upload karo", "banaao",
+  "लिखो", "करो", "बनाओ", "ढूंढो", "जमा करो", "भेजो", "पढ़ लो",
+]);
+
+// Marks or weight attached to a task. Not an obligation on its own -- it is
+// what tells a student how much the obligation matters, and a lecturer who
+// names marks is almost always naming an assessed deliverable.
+const WEIGHT_CUES = compile([
+  "mark", "marks", "marks ke liye", "mark ke liye", "weightage", "weightage hai",
+  "carries", "out of", "अंक", "मार्क्स",
 ]);
 
 const SUBMISSION_CUES = compile([
@@ -482,6 +521,8 @@ interface Signals {
   readonly courseTerm: string | null;
   readonly deliverable: string | null;
   readonly obligation: boolean;
+  readonly imperative: boolean;
+  readonly weight: boolean;
   readonly submission: boolean;
   readonly deadlineWord: boolean;
   readonly addresseeDative: boolean;
@@ -490,7 +531,7 @@ interface Signals {
   readonly demonstrative: boolean;
   readonly domainHits: number;
   readonly guidance: boolean;
-  readonly studyObject: boolean;
+  readonly studyObject: string | null;
   readonly scopeCue: boolean;
   readonly coverage: boolean;
   readonly curricularUnit: string | null;
@@ -515,6 +556,8 @@ function readSignals(text: string, courseTerms: readonly CompiledCue[]): Signals
     courseTerm,
     deliverable: courseTerm ?? work ?? assessment ?? material ?? schedule,
     obligation: hasCue(text, OBLIGATION_HINDI) || hasCue(text, OBLIGATION_ENGLISH),
+    imperative: hasCue(text, IMPERATIVE_HINDI),
+    weight: hasCue(text, WEIGHT_CUES),
     submission: hasCue(text, SUBMISSION_CUES),
     deadlineWord: hasCue(text, DEADLINE_CUES),
     addresseeDative: hasCue(text, ADDRESSEE_DATIVE),
@@ -523,7 +566,7 @@ function readSignals(text: string, courseTerms: readonly CompiledCue[]): Signals
     demonstrative: hasCue(text, DEMONSTRATIVE_OBJECT),
     domainHits: countCues(text, DOMAIN_TERMS),
     guidance: hasCue(text, GUIDANCE_CUES),
-    studyObject: hasCue(text, STUDY_OBJECT_TERMS),
+    studyObject: findCue(text, STUDY_OBJECT_TERMS),
     scopeCue: hasCue(text, SCOPE_CUES),
     coverage: hasCue(text, COVERAGE_CUES),
     curricularUnit: findCue(text, CURRICULAR_UNIT_TERMS),
@@ -742,12 +785,55 @@ const RULES: readonly Rule[] = [
       (s.obligation || s.submission),
   },
   {
+    // A named deliverable plus a direct command. This is the assignment block of
+    // a real lecture: "Questions likho, search karo, scenario based questions
+    // find out karo." No infinitive, no "karna hai", no due date -- and
+    // unmistakably work being set.
+    //
+    // Runs at "addressee" suppression rather than "full": an imperative already
+    // encodes its addressee grammatically, so veto A (first-person-plural with
+    // no addressee) is the only one that applies, and it is exactly the test
+    // that separates "karo" from "karte hain".
+    id: "assignment.imperative_task",
+    kind: "assignment",
+    label: "task set",
+    base: 0.6,
+    suppression: "addressee",
+    fires: (s) =>
+      s.imperative &&
+      (s.work !== null || s.courseTerm !== null || s.assessment !== null || s.studyObject !== null),
+  },
+  {
+    // A deliverable announced AT students with no verb of obligation at all:
+    // "Assignment for you." The weakest thing in this file that is still worth
+    // a reviewer's second, because the noun alone carries the whole meaning and
+    // a lecturer does not say it by accident.
+    id: "assignment.deliverable_addressed",
+    kind: "assignment",
+    label: "work announced",
+    base: 0.52,
+    suppression: "full",
+    fires: (s) =>
+      s.work !== null && (s.addresseeDative || s.addresseeWeak) && !s.obligation,
+  },
+  {
+    // Marks named against a deliverable. Tells a student what the work is
+    // worth, which is the first thing they ask and the thing least likely to be
+    // written down anywhere else.
+    id: "announcement.weight_stated",
+    kind: "announcement",
+    label: "marks stated",
+    base: 0.58,
+    suppression: "none",
+    fires: (s) => s.weight && (s.work !== null || s.assessment !== null || s.courseTerm !== null),
+  },
+  {
     id: "guidance.advice",
     kind: "guidance",
     label: "suggested practice or reading",
     base: 0.52,
     suppression: "addressee",
-    fires: (s) => s.guidance && (s.studyObject || s.addresseeDative || s.addresseeWeak),
+    fires: (s) => s.guidance && (s.studyObject !== null || s.addresseeDative || s.addresseeWeak),
   },
   {
     id: "announcement.lecturer_promise",
@@ -788,10 +874,14 @@ function score(rule: Rule, s: Signals): number {
   else if (s.addresseeWeak) value += 0.04;
   if (s.duePhrase !== null) value += 0.12;
   if (s.submission) value += 0.06;
+  if (s.imperative) value += 0.05;
+  if (s.weight) value += 0.05;
   if (s.deadlineWord) value += 0.05;
   // Too short to judge. A three-word fragment that happens to contain a cue is
-  // usually an ASR artefact, not a sentence.
-  if (s.wordCount < 4) value -= 0.12;
+  // usually an ASR artefact, not a sentence -- unless it names a deliverable.
+  // "Assignment for you." is three words, complete, and the whole point; the
+  // penalty pushed it 0.01 below the floor and it vanished.
+  if (s.wordCount < 4 && s.work === null && s.courseTerm === null) value -= 0.12;
   if (isObligationRule(rule)) {
     // Sub-veto weight: one domain term is not enough to reject, but it is
     // enough to sort below a clean match.
@@ -853,7 +943,7 @@ function buildTitle(rule: Rule, s: Signals): string {
   const subject =
     rule.id === "exam_scope.course_coverage"
       ? s.curricularUnit ?? s.courseTerm
-      : s.courseTerm ?? s.work ?? s.assessment ?? s.material ?? s.schedule;
+      : s.courseTerm ?? s.work ?? s.assessment ?? s.material ?? s.schedule ?? s.studyObject;
   return subject ? `${toDisplay(subject)} — ${rule.label}` : rule.label;
 }
 
@@ -965,11 +1055,14 @@ function extract(input: ExtractionInput): ExtractionCandidate[] {
 
 export const rulesExtractionMethod: ExtractionMethod = {
   id: "rules",
+  // 1.2.0 adds the imperative, addressed-deliverable and marks rules, after a
+  // real college lecture set an assignment across five consecutive sentences
+  // and only the one containing "karna hai" was detected.
   // 1.1.0 adds exam_scope.course_coverage and announcement.prescribed_material.
   // Bumped rather than edited in place because a stored candidate names the
   // version that produced it, and two different rule sets sharing one version
   // string would make every accuracy number produced before today unreadable.
-  version: "1.1.0",
+  version: "1.3.0",
   displayName: "Cue matching (English / Hinglish / Devanagari)",
   extract,
 };
