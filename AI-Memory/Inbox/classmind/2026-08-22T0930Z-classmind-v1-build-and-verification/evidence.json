@@ -1,0 +1,322 @@
+{
+  "schema_version": 1,
+  "generated_by": "hand-authored, following End-Session/1.0.0 § 7",
+  "generated_at": "2026-08-22T09:28:05Z",
+  "producer": "claude-opus-5 (Claude Code)",
+  "author": "hello@blackcanvasfilms.in",
+  "session": {
+    "id": "2026-08-22T0930Z-classmind-v1-build-and-verification",
+    "topic_slug": "classmind-v1-build-and-verification",
+    "started_at": "2026-08-22T09:30:00Z",
+    "ended_at": "2026-08-22T09:28:05Z",
+    "duration_known": false,
+    "duration_minutes": null,
+    "duration_source": null,
+    "context_completeness": "partial",
+    "operator_note": "Continuation of a session earlier the same day that hit its usage limit mid-build; that session's conversation is not in this one's context and its work is reconstructed from the repository rather than recalled. The base commit 84c68de is where this continuation began, so commits from the first half of the day are outside the boundary. Two subagents ran in parallel and their file writes were swept into Auto-save: commits, so commit boundaries here do not correspond to units of work."
+  },
+  "project": {
+    "primary": "classmind",
+    "primary_detection": "path-majority",
+    "secondary": [
+      "_platform"
+    ],
+    "secondary_reason": "HANDOFF.md at the repository root was rewritten; it is platform-level, not ClassMind-level."
+  },
+  "repo": {
+    "name": "CopyPasteLabs",
+    "remote": "https://github.com/copypastelabs262/CopyPasteLabs.git",
+    "branch": "master",
+    "upstream": "origin/master",
+    "ahead": 0,
+    "behind": 0
+  },
+  "session_boundary": {
+    "base": "84c68de827bfa0749ca96489003f2ab0e756a86f",
+    "base_short": "84c68de",
+    "base_strategy": "operator_supplied",
+    "base_source": "HEAD as reported in the git status snapshot at the start of this conversation. merge-base was not usable: the branch auto-pushes after every file edit, so it returns HEAD.",
+    "head": "fab2e38349473a12ff246db8bd70c5757879548e",
+    "head_short": "fab2e38"
+  },
+  "commits": [
+    {
+      "sha": "02e7efb2f39465dd8363ce234c922e680c48ebe5",
+      "short": "02e7efb",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:48:31+05:30",
+      "subject": "Catch the wrong-language failure by reading the transcript, not the metadata",
+      "body": "The guard written for Lab v0's worst failure could not see it. On 2026-08-21\nSarvam returned fluent romanized ARABIC for an English engineering lecture and\nreported `language_code: \"en-IN\"` -- the same code the run was configured with.\n`buildProvenance` compares exactly those two fields, so on the one run it was\nwritten for, it stayed silent. The only thing that flagged that transcript was\nthe engine's own 0.617 confidence clearing the 0.8 threshold by 0.183. At 0.85\nthe same Arabic text would have carried no warning at all.\n\nFound by driving all three captured fixtures through the running server rather\nthan by reading the code, which is the only way it could have been found: the\nbranch is unreachable for every response in the repo.\n\n`checkTranscriptLanguage()` reads the text instead. Function-word density is\ncrude on purpose -- the separation is an order of magnitude, measured over the\nthree real responses:\n\n  real English (en-IN, p=0.846)      42.5% English function words\n  romanized Arabic (en-IN, p=0.617)   3.9%\n  Devanagari Hindi (hi-IN, p=0.999)  76.3% Devanagari characters\n\nIt appends a limitation and never blocks or edits a transcript, refuses to\njudge anything under 120 tokens, and says nothing for `unknown` (auto-detect\nalready carries its own limitation). Verified end to end: the misdetected\nlecture's stored provenance now reads \"The transcript does not read as English:\nonly 4.3% of its words are common English function words.\"\n\nAlso: `language_probability` gets a structured home on ProcessingProvenance.\nIt survived only as prose inside `limitations`, so \"show me every lecture\ntranscribed below 0.8\" -- the exact sweep that would surface this class of\nfailure -- was not a query anyone could write.\n\nPlus two things the verification needed and found missing: `scripts/setup-storage.mts`,\nwhich package.json referenced and which did not exist (it lists buckets rather\nthan probing, because a missing bucket comes back as status 400 with statusCode\n\"404\" as a *string* in a different field, which is what broke Lab v0's version);\nand `scripts/verify-languages.mts`, which drives the Hindi and misdetected\nfixtures end to end -- 33 checks, and it pins median segment duration at 17.4s\nso the chunk-grouping regression cannot come back unnoticed.\n\nNew suite scripts/test-provenance.mts: 16 checks against the real fixtures.\n\nAlso records the 2026-08-22 decision in .knowledge/decisions.md. Building the\nProduct Platform crosses the frozen walkthrough protocol's stopping rule\ncompletely -- `extraction_candidates.kind` encodes the domain model in a check\nconstraint before the walkthrough that was meant to validate it. That was\nflagged before work began and needed to be written down, with its cost stated,\nrather than left in a chat log.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>",
+      "is_auto_save": false
+    },
+    {
+      "sha": "2d0a7dd8735026eca583b8ba5084e6041432ed6a",
+      "short": "2d0a7dd",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:40:01+05:30",
+      "subject": "ClassMind V1: verify the end-to-end workflow, and fix what verifying it exposed",
+      "body": "The product platform built up to this point had never been driven. Lint, tsc\nand build all passed, which says nothing about whether a faculty member can get\nfrom an upload to a student reading a confirmed deadline. Two things were\nneeded to find out, and running it found a real defect.\n\n**A fixture transcription provider** (`src/lib/transcription/fixture.ts`),\nselected by `TRANSCRIPTION_PROVIDER=fixture`. It replays three verbatim Sarvam\nBatch responses captured during Lab v0 RUN 1 and exported once to\n`fixtures/transcription/` -- the product never reads Lab v0's `runs` table. The\nresponse bytes are real, so normalization, evidence offsets and provenance are\nall exercised against a genuine transcript rather than against a synthesised\none; only the network call and the queue delay are simulated. Sarvam stays the\ndefault so nothing can fall back to replay by accident, and every provenance\nrecord written this way says REPLAYED, NOT TRANSCRIBED in its limitations.\n\n**An end-to-end driver** (`scripts/e2e.mts`) that drives the running server over\nHTTP exactly as a browser does: sign in, create a course, add context, upload\n10.5 MB of real audio through the signed URL, transcribe, poll, extract,\nconfirm/edit/reject, then re-enter as a student and ask a question. 67 checks,\n0 failures. The load-bearing ones are negative: a student's lecture payload\ncarries zero candidates, a student cannot rule on one or trigger extraction,\nand the anon key cannot read any of the four tables directly.\n\n**The defect it exposed.** The rules engine read an 18-minute university\ncourse-outline lecture as 2 generic guidance items. It missed the entire\nmodule-by-module syllabus and the prescribed textbook -- the only two things in\nthat lecture a student actually needs. The lexicon was built from a Class-12\ncoaching lecture, so it knew \"homework\", \"DPP\" and \"notes on Telegram\" and had\nno rule for a lecturer walking through a syllabus.\n\nFixed by adding two rules, both at suppression \"none\" because every sentence\nthey exist to catch is first-person-plural and veto A would delete all of them:\n\n  exam_scope.course_coverage      gated on a curricular unit noun, so\n                                  \"we will look at the compressor\" stays silent\n                                  while \"in the second module we discuss...\"\n                                  fires\n  announcement.prescribed_material  a named textbook plus a prescription cue,\n                                  so \"buy this\" is separated from \"a book exists\"\n\nSame lecture now yields 21 candidates. Method version bumped 1.0.0 -> 1.1.0:\na stored candidate names the version that produced it, and two rule sets\nsharing one version string would make every earlier accuracy number unreadable.\n\nExtraction suite 65 -> 75 cases, including the negative gates.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>",
+      "is_auto_save": false
+    }
+  ],
+  "changes": {
+    "summary": "33 files changed, 3362 insertions(+), 69 deletions(-)",
+    "files": [
+      {
+        "path": "HANDOFF.md",
+        "status": "modified",
+        "insertions": 143,
+        "deletions": 24,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/.knowledge/decisions.md",
+        "status": "modified",
+        "insertions": 54,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/.knowledge/progress.md",
+        "status": "modified",
+        "insertions": 54,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/.knowledge/sessions/2026-08-22-classmind-v1-build-and-verification.md",
+        "status": "modified",
+        "insertions": 138,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/ClassMinds Log.docx",
+        "status": "modified",
+        "insertions": null,
+        "deletions": null,
+        "binary": true
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/.env.example",
+        "status": "modified",
+        "insertions": 14,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/.gitignore",
+        "status": "modified",
+        "insertions": 3,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/fixtures/transcription/course-outline-en.json",
+        "status": "modified",
+        "insertions": 183,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/fixtures/transcription/fft-lecture-misdetected.json",
+        "status": "modified",
+        "insertions": 273,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/fixtures/transcription/physics-class12-hi.json",
+        "status": "modified",
+        "insertions": 504,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/package.json",
+        "status": "modified",
+        "insertions": 5,
+        "deletions": 2,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/scripts/e2e.mts",
+        "status": "modified",
+        "insertions": 424,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/scripts/setup-storage.mts",
+        "status": "modified",
+        "insertions": 57,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/scripts/test-extraction.mts",
+        "status": "modified",
+        "insertions": 114,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/scripts/test-provenance.mts",
+        "status": "modified",
+        "insertions": 130,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/scripts/verify-languages.mts",
+        "status": "modified",
+        "insertions": 508,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/_components/CoursesClient.tsx",
+        "status": "modified",
+        "insertions": 11,
+        "deletions": 2,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/_components/FacultyWorkspace.tsx",
+        "status": "modified",
+        "insertions": 5,
+        "deletions": 11,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/_components/Input.tsx",
+        "status": "modified",
+        "insertions": 16,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/_components/KnowledgePanel.tsx",
+        "status": "modified",
+        "insertions": 60,
+        "deletions": 10,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/_components/LectureClient.tsx",
+        "status": "modified",
+        "insertions": 46,
+        "deletions": 11,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/_components/LectureProgress.tsx",
+        "status": "modified",
+        "insertions": 110,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/_components/LectureUpload.tsx",
+        "status": "modified",
+        "insertions": 10,
+        "deletions": 1,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/api/lectures/[id]/route.ts",
+        "status": "modified",
+        "insertions": 42,
+        "deletions": 1,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/courses/[id]/lectures/[lectureId]/page.tsx",
+        "status": "modified",
+        "insertions": 9,
+        "deletions": 1,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/lib/extraction/rules.ts",
+        "status": "modified",
+        "insertions": 92,
+        "deletions": 2,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/lib/provenance/build.ts",
+        "status": "modified",
+        "insertions": 26,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/lib/provenance/language-check.ts",
+        "status": "modified",
+        "insertions": 136,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/lib/transcription/fixture.ts",
+        "status": "modified",
+        "insertions": 167,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/lib/transcription/index.ts",
+        "status": "modified",
+        "insertions": 17,
+        "deletions": 3,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/middleware.ts",
+        "status": "modified",
+        "insertions": 3,
+        "deletions": 1,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/types/provenance.ts",
+        "status": "modified",
+        "insertions": 8,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/~$assMinds Log.docx",
+        "status": "modified",
+        "insertions": null,
+        "deletions": null,
+        "binary": true
+      }
+    ]
+  },
+  "working_tree": {
+    "clean": false,
+    "uncommitted": [],
+    "staged": [],
+    "untracked": [
+      "AI-Memory/Inbox/classmind/"
+    ]
+  },
+  "diff": {
+    "stored": false,
+    "path": null,
+    "size_bytes": 397663,
+    "omitted_reason": "Patch is 397663 bytes, over the 262144-byte cap. Most of it is fixtures/transcription/*.json -- three captured Sarvam responses totalling ~247 KB, which are data rather than reviewable change.",
+    "binary_files": [
+      "Projects/classmind/ClassMinds Log.docx",
+      "Projects/classmind/~$assMinds Log.docx"
+    ],
+    "regenerate_command": "git diff -M 84c68de..fab2e38"
+  },
+  "related_sessions": [
+    "AI-Memory/Inbox/_platform/2026-08-21T0449Z-reconcile-docs-and-first-capture"
+  ]
+}

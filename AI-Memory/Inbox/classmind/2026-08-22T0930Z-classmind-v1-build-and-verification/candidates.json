@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "generated_by": "hand-authored, following End-Session/1.0.0 § 7.2",
+  "generated_at": "2026-08-22T09:28:05Z",
+  "session_id": "2026-08-22T0930Z-classmind-v1-build-and-verification",
+  "project": "classmind",
+  "extraction_meta": {
+    "context_completeness": "partial",
+    "candidates_emitted": 4,
+    "candidates_discarded_no_basis": 3,
+    "note": "Context is partial: this session continues one that hit its usage limit, and the earlier half's conversation is unavailable. Candidates here are grounded only in what happened after the resume, all of it verifiable from the repository.\n\nThree were discarded for having a topic but no reusable finding: that the extraction lexicon is physics-shaped (already a comment in rules.ts, and project-local); that Supabase's SDK reports a missing bucket as statusCode \"404\" as a string (a vendor quirk already captured on 2026-08-21 and now handled in setup-storage.mts); and that a 12s chunk-grouping window suits Sarvam's output (a tuning value, not a finding)."
+  },
+  "candidates": [
+    {
+      "id": "cand-001",
+      "type": "mistake",
+      "title": "A guard written from a bug report's description, never run against the input that caused the bug",
+      "body": "A post-mortem described a failure as \"the engine returned the wrong language\". The guard written from that sentence compared the engine's reported language code against the configured one. On the actual failing response the engine reported the CORRECT code -- it was the transcript text that was in another language -- so the branch was unreachable for exactly the input it existed for, and it looked correct in review because it reads like a fix for the described problem.\n\nThe general shape: a bug report is a human summary of a failure, and a guard written against the summary tests the summary. The failing input is the specification. Keep it, commit it as a fixture, and make the suite assert that the guard fires on it -- otherwise the only evidence the guard works is that it sounds like it should.\n\nA second-order symptom worth watching for: a guard that is dead code cannot be distinguished from a guard that is working, because both produce no output on every passing input.",
+      "confidence": "high",
+      "basis": "src/lib/provenance/build.ts compared raw.language_code against descriptor.configuredLanguage. All three captured Sarvam responses agree with their configured language, including fft-lecture-misdetected, which reported en-IN while returning romanized Arabic (language_probability 0.617). The branch never executed for any response in the repository. Found by driving the fixtures through the running server, not by reading the code.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v1/src/lib/provenance/build.ts",
+        "Projects/classmind/product/classmind-v1/fixtures/transcription/fft-lecture-misdetected.json",
+        "Projects/classmind/product/classmind-v1/scripts/test-provenance.mts",
+        "Projects/classmind/.knowledge/sessions/2026-08-22-classmind-v1-build-and-verification.md"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [
+        "AI-Memory/06_Mistakes/"
+      ],
+      "promoter_notes": "Pairs naturally with cand-002: both are the same failure to run real input, one in a guard and one in an extractor. Consider whether they merge into a single Mistake entry or stay separate -- they have different remedies (keep the failing input as a fixture / test against the target corpus)."
+    },
+    {
+      "id": "cand-002",
+      "type": "learning",
+      "title": "A lexicon-based extractor degrades to near-zero recall on an off-corpus input, and its output looks the same as correct restraint",
+      "body": "A cue-matching extractor tuned on one corpus returned 2 items from an 18-minute lecture of a different kind, where the right answer was around 20. Nothing in the output signalled the problem: no error, no low-confidence flag, no coverage warning. Two conservative-looking candidates are indistinguishable from an extractor correctly declining to invent -- which was in fact the case for deadlines in that lecture, and was NOT the case for scope and required reading.\n\nThe dangerous property is that a well-built precision-oriented extractor has vetoes and thresholds whose whole job is to emit little, so its failure mode and its success mode produce the same shape of output. Recall failures are invisible from the output alone; only reading the input tells you.\n\nPractical consequence: for any keyword/lexicon method, hold out at least one input from a genuinely different sub-corpus and check the MISSES by hand before trusting the precision story. A per-input candidate-density figure is a cheap smoke alarm -- an order-of-magnitude drop between corpora is worth an investigation even when every emitted item is correct.",
+      "confidence": "high",
+      "basis": "rules v1.0.0 emitted 2 candidates over a 14,943-character, 41-segment university course-outline transcript, both 'guidance: suggested practice or reading'. Reading the transcript showed roughly a dozen module-scope statements and four sentences naming the prescribed textbook. All 65 existing tests passed throughout -- they were written from the same coaching-lecture corpus the lexicon was. After adding two rules, the same input yields 21.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v1/src/lib/extraction/rules.ts",
+        "Projects/classmind/product/classmind-v1/scripts/test-extraction.mts",
+        "Projects/classmind/product/classmind-v1/fixtures/transcription/course-outline-en.json"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [
+        "AI-Memory/02_Learnings/",
+        "AI-Memory/06_Mistakes/"
+      ],
+      "promoter_notes": "The reusable half is about evaluating recall when the method is precision-tuned, not about lecture transcripts. If it is promoted, strip the ClassMind specifics; the numbers belong in the basis, not the body."
+    },
+    {
+      "id": "cand-003",
+      "type": "pattern",
+      "title": "Replay captured real provider responses behind the provider interface, rather than mocking the provider",
+      "body": "When an external paid service sits behind an interface, the usual test double is a hand-written stub returning a plausible payload. That tests the stub. The alternative: capture real responses once, store them verbatim as fixtures, and implement a second provider that replays them through the same interface, selected by an environment variable with the real provider as the default.\n\nWhat this buys that a stub does not: every downstream stage -- parsing, normalization, offset arithmetic, provenance -- runs against bytes the real service actually produced, including its inconsistencies. A captured FAILURE response is the highest-value fixture of all, because it is the one input no one would think to synthesise and the one every guard should be tested against.\n\nThree properties that keep it honest:\n1. The real provider is the DEFAULT. Replay must be asked for explicitly, so no misconfiguration can silently serve replayed data as real.\n2. The replay writes its own provenance saying it is a replay, in the same record the real path would write.\n3. The job identifier encodes which fixture it is, so polling resolves with no server-side state and a restart mid-job recovers instead of orphaning the row.\n\nCost: fixtures go stale when the provider's response shape changes, and nothing detects that except a real call. Re-capture periodically; a replay suite that has diverged from the live API is worse than none, because it is green.",
+      "confidence": "medium",
+      "basis": "Built as src/lib/transcription/fixture.ts to verify ClassMind V1's workflow without paid Sarvam calls. Three captured responses drove 67 end-to-end and 33 language checks. The captured failure response is what exposed cand-001; a synthesised stub would have carried whatever language code its author assumed, which is precisely the assumption that was wrong. Medium rather than high: one project, one provider, and the staleness cost has not yet been paid.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v1/src/lib/transcription/fixture.ts",
+        "Projects/classmind/product/classmind-v1/src/lib/transcription/types.ts",
+        "Projects/classmind/product/classmind-v1/scripts/e2e.mts"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [
+        "AI-Memory/03_Patterns/",
+        "AI-Memory/09_Tools/"
+      ],
+      "promoter_notes": "Draft is right; Validated needs a second, independent project. Worth holding until a non-ASR provider (payments, email, LLM) has used it, since the claim is provider-agnostic and only one provider has tested it."
+    },
+    {
+      "id": "cand-004",
+      "type": "open_question",
+      "title": "An edit-triggered autosave hook commits other agents' in-progress work when subagents run in parallel",
+      "body": "scripts/autosave.sh runs on PostToolUse for Write|Edit and stages everything (git add -A), not just the file that changed. With parallel subagents this means agent A's file write commits agent B's half-finished work under the message 'Auto-save: <A's file>.ts'. Observed repeatedly today: a deliberate route change was swept into 'Auto-save: route.ts' before its own commit could be written, and the reasoning for it had to be carried in a later message instead.\n\nThis is the same hook the 2026-08-21 entry recorded from the opposite side (cand-001 there: it does not fire for shell commits). Together the two say the hook's trigger and its scope are both wrong: it fires on the wrong events AND acts on more than the event names.\n\nNot proposing a fix -- there are at least three (stage only the changed path; serialise commits behind a lock; disable the hook while subagents run) and the trade-offs are the operator's call. Recording it because the consequence is that git history stops being a record of intent, which is the one thing TEAM.md § 0 says the repository is for.",
+      "confidence": "high",
+      "basis": "Between 84c68de and HEAD this session, the majority of commits are 'Auto-save:' messages naming a single component file while containing unrelated changes. The lecture route change was committed as '10deb6c Auto-save: route.ts' by a subagent's write to a different file, before its own commit was attempted; that commit then reported 'nothing to commit, working tree clean'.",
+      "evidence_refs": [
+        "scripts/autosave.sh",
+        ".claude/settings.json",
+        "evidence.json#commits",
+        "AI-Memory/Inbox/_platform/2026-08-21T0449Z-reconcile-docs-and-first-capture/candidates.json#cand-001"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [
+        "AI-Memory/Inbox/_platform/2026-08-21T0449Z-reconcile-docs-and-first-capture/candidates.json#cand-001"
+      ],
+      "promoter_notes": "Strong candidate for merging with the 2026-08-21 cand-001 into one Mistake about hook-based safety nets: define the net by the state to be protected, not by the tool calls expected to reach it, and scope its action to what actually changed."
+    }
+  ]
+}
