@@ -98,7 +98,16 @@ export default function LectureUpload({
           // Extraction runs immediately after transcription. It produces
           // CANDIDATES only -- nothing is visible to a student until a human
           // rules on it.
-          await post(`/api/lectures/${lectureId}/extract`).catch(() => undefined);
+          try {
+            await post(`/api/lectures/${lectureId}/extract`);
+          } catch (err) {
+            // Swallowing this used to leave the panel saying "candidates
+            // extracted" when none were. The transcript is safe either way --
+            // only the proposal step failed, and the lecture page can retry it.
+            throw new Error(
+              `Transcribed, but extraction failed: ${err instanceof Error ? err.message : String(err)} Open the lecture to run it again.`,
+            );
+          }
           setPhase("done"); onComplete(); return;
         }
         if (s === "failed") throw new Error("Transcription failed.");
