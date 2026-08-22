@@ -72,12 +72,17 @@ function hasCue(text: string, cues: readonly CompiledCue[]): boolean {
 
 // Returns the matched substring rather than the cue term, so a title can show
 // what was actually said ("DPP", not "dpp").
+//
+// Longest match wins: "unit test" and "test" both match the same words, and a
+// review queue row reading "Unit Test" is worth more to a reviewer than one
+// reading "Test". Ties go to the earlier cue in the list.
 function findCue(text: string, cues: readonly CompiledCue[]): string | null {
+  let best: string | null = null;
   for (const cue of cues) {
     const m = cue.re.exec(text);
-    if (m) return m[0];
+    if (m && (best === null || m[0].length > best.length)) best = m[0];
   }
-  return null;
+  return best;
 }
 
 function countCues(text: string, cues: readonly CompiledCue[]): number {
