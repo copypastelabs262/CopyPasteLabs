@@ -14,6 +14,10 @@ export default function CoursesClient() {
   const [enrolled, setEnrolled] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Separate from `error`, which belongs to the list. A rejected join code
+  // reported at the top of the page reads as "your courses failed to load", and
+  // it used to stay there through every later success.
+  const [formError, setFormError] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
 
   const [code, setCode] = useState("");
