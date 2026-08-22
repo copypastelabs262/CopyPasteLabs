@@ -35,10 +35,15 @@ export default function LectureProgress({
       setNote(b.skipped
         ? (b.message as string)
         : `${b.candidateCount} candidate${b.candidateCount === 1 ? "" : "s"} proposed for review.`);
-      onAdvanced();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+      // Re-read either way. On success the lecture is `ready`; on failure it is
+      // still `transcribed` and needs the retry button back. Both are the
+      // server's answer rather than a guess made here.
+      onAdvanced();
+    }
   }, [lectureId, onAdvanced]);
 
   useEffect(() => {
