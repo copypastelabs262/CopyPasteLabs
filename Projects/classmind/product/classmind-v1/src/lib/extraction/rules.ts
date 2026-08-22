@@ -545,6 +545,7 @@ function narrationVeto(s: Signals, level: SuppressionLevel = "full"): VetoResult
   if (s.inclusiveNarration && !s.addresseeDative) {
     return { vetoed: true, reason: "inclusive_first_person_without_addressee" };
   }
+  if (level === "addressee") return { vetoed: false, reason: null };
   // B. Domain vocabulary density. Two or more distinct subject terms in one
   //    sentence means the sentence is about the subject, not about coursework.
   //    A WORK term (assignment / DPP / project) overrides this, because
