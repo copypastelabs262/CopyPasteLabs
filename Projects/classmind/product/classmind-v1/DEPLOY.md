@@ -29,9 +29,9 @@ Via the CLI instead, from inside the app directory:
 
 ```
 vercel login
-vercel link          # answer "no" to "in which directory is your code located?" default only if it offers the wrong path
-vercel               # preview deploy
-vercel --prod        # production deploy
+vercel link      # when it asks "In which directory is your code located?", give this app's path
+vercel           # preview deploy
+vercel --prod    # production deploy
 ```
 
 `vercel login` is interactive. In Claude Code, run it yourself with `! vercel login` so the
@@ -91,6 +91,17 @@ Preview deployments get a new URL per commit. If you want OAuth to work on previ
 signed URL and never passes through a Vercel function, which is what keeps uploads clear of
 Vercel's 4.5 MB request body limit. Run `npm run setup:db` once against the project if the
 `lectures` bucket does not exist yet.
+
+### Function region — worth getting right, not cosmetic
+
+Vercel defaults new projects to **Washington DC (`iad1`)**. If the Supabase project is in Mumbai
+(`ap-south-1`), which is the sensible region for an Indian college, then every database query and
+**the entire 50 MB audio transfer in the transcribe route** crosses the Atlantic twice.
+
+Check the Supabase project's region under **Settings → General**, then set the matching Vercel
+region under **Project → Settings → Functions → Function Region** — `bom1` for Mumbai. This is
+the difference between a transcribe submission that finishes in seconds and one that flirts with
+the 60-second ceiling.
 
 ---
 

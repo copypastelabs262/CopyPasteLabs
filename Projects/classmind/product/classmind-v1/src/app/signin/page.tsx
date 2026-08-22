@@ -1,18 +1,33 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { browserClient } from "@/lib/supabase/browser";
 
+// SignInForm reads ?error= through useSearchParams, which pushes everything up
+// to the nearest Suspense boundary into client-side rendering. Without one that
+// boundary is the whole route and the production build fails outright.
 export default function SignInPage() {
+  return (
+    <Suspense fallback={<p className="mx-auto max-w-sm py-10 text-sm text-zinc-500">Loading…</p>}>
+      <SignInForm />
+    </Suspense>
+  );
+}
+
+function SignInForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState<"faculty" | "student">("faculty");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // /auth/callback reports every OAuth failure by bouncing back with ?error=.
+  // Seeded into state rather than read on each render so that the next thing
+  // the user does clears it, instead of pinning a stale message to the page.
+  const [error, setError] = useState<string | null>(searchParams.get("error"));
   const [notice, setNotice] = useState<string | null>(null);
 
   async function submit(e: React.FormEvent) {
@@ -50,11 +65,45 @@ export default function SignInPage() {
     }
   }
 
+  async function signInWithGoogle() {
+    setBusy(true); setError(null); setNotice(null);
+    // Built from the live origin so the same code works on localhost and on any
+    // deployed domain -- a hardcoded URL would silently send production users to
+    // a dev host. The callback creates the profile row for a Google user, who
+    // never sees the faculty/student toggle, so forward the selected role.
+    const redirectTo = new URL("/auth/callback", window.location.origin);
+    redirectTo.searchParams.set("role", role);
+    const { error } = await browserClient().auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: redirectTo.toString() },
+    });
+    // Only reachable when the handoff never happened. On success the browser has
+    // already left this page, so there is no busy state left to reset.
+    if (error) { setError(error.message); setBusy(false); }
+  }
+
   return (
     <div className="mx-auto max-w-sm py-10">
       <h1 className="text-xl font-semibold">
         {mode === "signin" ? "Sign in" : "Create an account"}
       </h1>
+
+      <button
+        type="button" onClick={signInWithGoogle} disabled={busy}
+        className="mt-6 w-full rounded-md border border-zinc-300 px-4 py-2.5 font-medium hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+      >
+        Continue with Google
+      </button>
+      <p className="mt-2 text-xs text-zinc-500">
+        Google must be enabled as a provider in the Supabase project; until it is,
+        this button fails with a provider error.
+      </p>
+
+      <div className="mt-6 flex items-center gap-3">
+        <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
+        <span className="text-xs uppercase tracking-wide text-zinc-500">or</span>
+        <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
+      </div>
 
       <form onSubmit={submit} className="mt-6 space-y-4">
         {mode === "signup" ? (
