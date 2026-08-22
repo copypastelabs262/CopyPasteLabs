@@ -108,7 +108,7 @@ export default function LectureClient({
         </Link>
         <h1 className="mt-2 text-xl font-semibold">{lecture.title}</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          {lecture.status}
+          {STATUS_LABEL[lecture.status] ?? lecture.status}
           {lecture.providerStatus ? ` · ${lecture.providerStatus}` : ""} ·{" "}
           {formatBytes(lecture.fileSizeBytes)}
           {lecture.languageCode ? ` · sent as ${lecture.languageCode}` : ""}
@@ -116,6 +116,11 @@ export default function LectureClient({
         </p>
         {lecture.errorMessage ? (
           <p className="mt-2 text-sm text-red-600 dark:text-red-400">{lecture.errorMessage}</p>
+        ) : null}
+        {/* Owner only: both routes behind this are owner-guarded, and a student
+            has nothing to advance anyway. */}
+        {isOwner ? (
+          <LectureProgress lectureId={lectureId} status={lecture.status} onAdvanced={refresh} />
         ) : null}
       </header>
 
