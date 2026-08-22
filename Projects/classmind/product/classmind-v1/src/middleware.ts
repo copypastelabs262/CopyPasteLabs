@@ -26,5 +26,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\.(?:svg|png|jpg|jpeg|gif|webp|mp3)$).*)"],
+  // `\\.` and not `\.`: this is a string, not a regex literal, so `\.` collapses
+  // to a bare `.` and the extension test silently becomes "any character".
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp3)$).*)"],
 };
