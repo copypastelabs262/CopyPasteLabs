@@ -797,7 +797,7 @@ function evaluateSentence(
   const out: Scored[] = [];
   RULES.forEach((rule, ruleIndex) => {
     if (!rule.fires(s)) return;
-    if (rule.narrationProne && veto.vetoed) return;
+    if (narrationVeto(s, rule.suppression).vetoed) return;
     const confidence = score(rule, s);
     if (confidence < MIN_CONFIDENCE) return;
 
