@@ -71,11 +71,16 @@ function section(title: string) {
 
 const svc = createClient(PROJECT_URL, SERVICE, { auth: { persistSession: false } });
 
+// Route payloads are read untyped on purpose. The whole job of this script is
+// to assert on what the server ACTUALLY returns; giving the responses a local
+// type would mean checking them against this file's beliefs instead. Same
+// reasoning, and the same shape, as scripts/e2e.mts.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Payload = any;
+
 interface ApiResult {
   status: number;
-  // Route payloads are deliberately read untyped: the point of this script is
-  // to check what the server really returns, not what a type says it returns.
-  json: any;
+  json: Payload;
 }
 
 async function api(
