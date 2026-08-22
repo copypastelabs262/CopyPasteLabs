@@ -3,6 +3,7 @@ import {
   createServiceRoleClient,
   getSupabaseConfigStatus,
 } from "@/lib/supabase/server";
+import LabConsole from "./_components/LabConsole";
 
 // A real Hinglish sentence, not a generic Devanagari sample — this is the
 // kind of code-switched line the pipeline actually has to survive.
@@ -39,40 +40,38 @@ export default async function Home() {
   const supabase = await checkSupabaseConnection();
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-16">
-      <h1 className="text-2xl font-semibold">ClassMind — Lab v0</h1>
-      <p className="mt-1 text-sm text-zinc-500">
-        Lecture Ingestion · Milestone 1: environment scaffold
-      </p>
+    <main className="mx-auto max-w-3xl px-6 py-12">
+      <header className="mb-10">
+        <h1 className="text-2xl font-semibold">ClassMind — Lab v0</h1>
+        <p className="mt-1 text-sm text-zinc-500">
+          Lecture Ingestion · audio in, transcript out. Experiment Platform, not the product.
+        </p>
+      </header>
 
-      <section className="mt-10 space-y-2">
-        <h2 className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-          Devanagari render check
-        </h2>
-        <p lang="hi" className="text-lg">
-          {DEVANAGARI_TEST_STRING}
-        </p>
-        <p className="text-xs text-zinc-500">
-          Rendered directly, not printed to a console — this is the check
-          that catches Windows silently corrupting it.
-        </p>
-      </section>
+      <LabConsole />
 
-      <section className="mt-10 space-y-2">
-        <h2 className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-          Supabase connectivity
-        </h2>
-        {supabase.ok ? (
-          <p className="text-green-700">Connected.</p>
-        ) : (
-          <p className="text-amber-700">Not connected — {supabase.reason}</p>
-        )}
-        <p className="text-xs text-zinc-500">
-          Checked with the service-role key, server-side only — proves the
-          URL/key pair works regardless of any bucket policy, since no
-          bucket exists yet (that&apos;s Milestone 2).
-        </p>
-      </section>
+      <footer className="mt-16 space-y-4 border-t border-zinc-200 pt-6 text-xs text-zinc-500 dark:border-zinc-800">
+        <div>
+          <span className="uppercase tracking-wide">Devanagari render check</span>
+          <p lang="hi" className="mt-1 text-base text-zinc-700 dark:text-zinc-300">
+            {DEVANAGARI_TEST_STRING}
+          </p>
+          <p className="mt-1">
+            Rendered from disk, not printed to a console — the check that catches
+            Windows silently corrupting it.
+          </p>
+        </div>
+        <div>
+          <span className="uppercase tracking-wide">Supabase</span>{" "}
+          {supabase.ok ? (
+            <span className="text-green-700 dark:text-green-400">Connected.</span>
+          ) : (
+            <span className="text-amber-700 dark:text-amber-400">
+              Not connected — {supabase.reason}
+            </span>
+          )}
+        </div>
+      </footer>
     </main>
   );
 }

@@ -1,0 +1,17 @@
+-- Lab v0, Milestone 2. Fixes a blocker found on 2026-08-21: public.runs was
+-- created with no DML privileges for any PostgREST role, so every Lab v0 route
+-- failed with `42501 permission denied for table runs` before a Sarvam call
+-- could ever be attempted.
+--
+-- create_runs_table granted nothing. Only `postgres` held SELECT/INSERT/UPDATE/
+-- DELETE; service_role, anon and authenticated held only REFERENCES, TRIGGER and
+-- TRUNCATE -- none of which permits reading or writing a row.
+--
+-- service_role only, deliberately. anon and authenticated are left with no DML
+-- because only the server-side service-role client touches this table, and RLS
+-- stays enabled with zero policies. Granting anon here would silently undo the
+-- deny-by-default design that create_runs_table went out of its way to state.
+--
+-- Privileges only: this migration alters no column, no constraint, no RLS
+-- setting and no policy.
+grant select, insert, update, delete on public.runs to service_role;

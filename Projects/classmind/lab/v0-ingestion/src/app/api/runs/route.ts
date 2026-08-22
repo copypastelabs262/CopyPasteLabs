@@ -33,6 +33,43 @@ function validate(body: Partial<CreateRunRequestBody>): string | null {
   return null;
 }
 
+// Lists runs for the Lecture Library, newest first. Deliberately minimal:
+// no search, no filters, no pagination beyond a hard cap, and no joins. The
+// transcript is NOT normalized here -- the library shows metadata only, and
+// GET /api/runs/[id] is what a reader opens for the transcript itself.
+const LIBRARY_LIMIT = 100;
+
+export async function GET() {
+  const supabase = createServiceRoleClient();
+
+  const { data, error } = await supabase
+    .from("runs")
+    .select(
+      "id, status, original_filename, file_size_bytes, created_at, completed_at, provider_status, provenance",
+    )
+    .order("created_at", { ascending: false })
+    .limit(LIBRARY_LIMIT);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({
+    runs: (data ?? []).map((row) => ({
+      runId: row.id,
+      status: row.status,
+      originalFilename: row.original_filename,
+      fileSizeBytes: Number(row.file_size_bytes),
+      createdAt: row.created_at,
+      completedAt: row.completed_at,
+      providerStatus: row.provider_status,
+      // Only ever present once a run completed and provenance was written.
+      detectedLanguage:
+        (row.provenance as { language?: string } | null)?.language ?? null,
+    })),
+  });
+}
+
 export async function POST(request: Request) {
   let body: Partial<CreateRunRequestBody>;
   try {

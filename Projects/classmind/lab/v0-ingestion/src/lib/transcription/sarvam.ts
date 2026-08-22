@@ -24,7 +24,16 @@ const JOB_PARAMETERS = {
   // than asserting hi-IN or en-IN and biasing the result.
   language_code: "unknown",
   model: MODEL,
-  mode: "transcribe",
+  // Latin/Roman script output. Saaras v3 offers transcribe | translate |
+  // verbatim | translit | codemix, and only `translit` romanizes:
+  // "mera phone number hai 9840950950". `codemix` keeps Indic words in
+  // Devanagari ("मेरा phone number है") and `translate` would turn the
+  // lecture into English, destroying the code-switching this project exists
+  // to study. Transliteration, never translation.
+  //
+  // Changes future runs only. Runs already stored keep the mode they were
+  // made with -- it is recorded in their provenance.decodingParams.
+  mode: "translit",
   with_timestamps: true,
   with_diarization: false,
 } as const;

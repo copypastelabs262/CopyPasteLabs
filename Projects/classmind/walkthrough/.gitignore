@@ -1,0 +1,10 @@
+# Audio is never committed. Recordings are public URLs; re-fetch them from 00-selection.md.
+*.mp3
+*.mp4
+*.m4a
+*.wav
+*.webm
+*.opus
+
+# Transcripts, annotation sheets, measures and results ARE committed.
+# They are the evidence, and evidence is not disposable.
