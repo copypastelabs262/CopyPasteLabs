@@ -42,6 +42,11 @@ export default function LectureClient({
 
   const audioRef = useRef<HTMLAudioElement>(null);
 
+  // Stable, because LectureProgress schedules its poll timer against it -- an
+  // identity that changed every render would restart the timer every render
+  // and the lecture would never actually be polled.
+  const refresh = useCallback(() => setVersion((v) => v + 1), []);
+
   useEffect(() => {
     let cancelled = false;
     fetch(`/api/lectures/${lectureId}`)
