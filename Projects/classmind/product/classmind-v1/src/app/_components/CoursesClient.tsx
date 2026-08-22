@@ -106,10 +106,11 @@ export default function CoursesClient() {
         <form
           onSubmit={async (e) => {
             e.preventDefault();
+            setFormError(null);
             try {
               await post("/api/courses", { code, title, term, transcriptionLanguage: language });
               setCode(""); setTitle(""); setTerm(""); setReload((v) => v + 1);
-            } catch (err) { setError(err instanceof Error ? err.message : String(err)); }
+            } catch (err) { setFormError(err instanceof Error ? err.message : String(err)); }
           }}
           className="space-y-3 rounded-lg border border-zinc-200 p-5 dark:border-zinc-800"
         >
