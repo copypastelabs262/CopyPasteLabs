@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
   "generated_by": "hand-authored, following End-Session/1.0.0 § 7",
-  "generated_at": "2026-08-22T09:28:05Z",
+  "generated_at": "2026-08-22T09:28:26Z",
   "producer": "claude-opus-5 (Claude Code)",
   "author": "hello@blackcanvasfilms.in",
   "session": {
     "id": "2026-08-22T0930Z-classmind-v1-build-and-verification",
     "topic_slug": "classmind-v1-build-and-verification",
     "started_at": "2026-08-22T09:30:00Z",
-    "ended_at": "2026-08-22T09:28:05Z",
+    "ended_at": "2026-08-22T09:28:26Z",
     "duration_known": false,
     "duration_minutes": null,
     "duration_source": null,
@@ -36,10 +36,80 @@
     "base_short": "84c68de",
     "base_strategy": "operator_supplied",
     "base_source": "HEAD as reported in the git status snapshot at the start of this conversation. merge-base was not usable: the branch auto-pushes after every file edit, so it returns HEAD.",
-    "head": "fab2e38349473a12ff246db8bd70c5757879548e",
-    "head_short": "fab2e38"
+    "head": "0012d72466cea1accc62036c33ac3cd4c0b4ea7e",
+    "head_short": "0012d72"
   },
   "commits": [
+    {
+      "sha": "0012d72466cea1accc62036c33ac3cd4c0b4ea7e",
+      "short": "0012d72",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:58:15+05:30",
+      "subject": "Auto-save: candidates.json, evidence.json, status.json",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "fab2e38349473a12ff246db8bd70c5757879548e",
+      "short": "fab2e38",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:56:07+05:30",
+      "subject": "Auto-save: progress.md",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "e15d6913eaf77dba736ba8307b594f56c799f0cd",
+      "short": "e15d691",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:54:56+05:30",
+      "subject": "Auto-save: 2026-08-22-classmind-v1-build-and-verification.md",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "ab3b4b9a5f1b48ab0bcb12d7004be037f59a9819",
+      "short": "ab3b4b9",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:53:22+05:30",
+      "subject": "Auto-save: HANDOFF.md",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "170516fe622b80989668611cbab077eed5d7c2f5",
+      "short": "170516f",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:51:49+05:30",
+      "subject": "Auto-save: KnowledgePanel.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "55f07981dfa91d8e5f4afb3b317e3618f17ffd31",
+      "short": "55f0798",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:51:44+05:30",
+      "subject": "Auto-save: KnowledgePanel.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "10deb6c7f06db4773d1ff96bf29f4ce8423d83e3",
+      "short": "10deb6c",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:50:30+05:30",
+      "subject": "Auto-save: route.ts",
+      "body": "",
+      "is_auto_save": true
+    },
     {
       "sha": "02e7efb2f39465dd8363ce234c922e680c48ebe5",
       "short": "02e7efb",
@@ -49,6 +119,256 @@
       "subject": "Catch the wrong-language failure by reading the transcript, not the metadata",
       "body": "The guard written for Lab v0's worst failure could not see it. On 2026-08-21\nSarvam returned fluent romanized ARABIC for an English engineering lecture and\nreported `language_code: \"en-IN\"` -- the same code the run was configured with.\n`buildProvenance` compares exactly those two fields, so on the one run it was\nwritten for, it stayed silent. The only thing that flagged that transcript was\nthe engine's own 0.617 confidence clearing the 0.8 threshold by 0.183. At 0.85\nthe same Arabic text would have carried no warning at all.\n\nFound by driving all three captured fixtures through the running server rather\nthan by reading the code, which is the only way it could have been found: the\nbranch is unreachable for every response in the repo.\n\n`checkTranscriptLanguage()` reads the text instead. Function-word density is\ncrude on purpose -- the separation is an order of magnitude, measured over the\nthree real responses:\n\n  real English (en-IN, p=0.846)      42.5% English function words\n  romanized Arabic (en-IN, p=0.617)   3.9%\n  Devanagari Hindi (hi-IN, p=0.999)  76.3% Devanagari characters\n\nIt appends a limitation and never blocks or edits a transcript, refuses to\njudge anything under 120 tokens, and says nothing for `unknown` (auto-detect\nalready carries its own limitation). Verified end to end: the misdetected\nlecture's stored provenance now reads \"The transcript does not read as English:\nonly 4.3% of its words are common English function words.\"\n\nAlso: `language_probability` gets a structured home on ProcessingProvenance.\nIt survived only as prose inside `limitations`, so \"show me every lecture\ntranscribed below 0.8\" -- the exact sweep that would surface this class of\nfailure -- was not a query anyone could write.\n\nPlus two things the verification needed and found missing: `scripts/setup-storage.mts`,\nwhich package.json referenced and which did not exist (it lists buckets rather\nthan probing, because a missing bucket comes back as status 400 with statusCode\n\"404\" as a *string* in a different field, which is what broke Lab v0's version);\nand `scripts/verify-languages.mts`, which drives the Hindi and misdetected\nfixtures end to end -- 33 checks, and it pins median segment duration at 17.4s\nso the chunk-grouping regression cannot come back unnoticed.\n\nNew suite scripts/test-provenance.mts: 16 checks against the real fixtures.\n\nAlso records the 2026-08-22 decision in .knowledge/decisions.md. Building the\nProduct Platform crosses the frozen walkthrough protocol's stopping rule\ncompletely -- `extraction_candidates.kind` encodes the domain model in a check\nconstraint before the walkthrough that was meant to validate it. That was\nflagged before work began and needed to be written down, with its cost stated,\nrather than left in a chat log.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>",
       "is_auto_save": false
+    },
+    {
+      "sha": "c72a1bddd1c642f5cc65eae1bd99d096f1926295",
+      "short": "c72a1bd",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:47:22+05:30",
+      "subject": "Auto-save: LectureClient.tsx, build.ts, language-check.ts +1 more (4 files)",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "ad538ff9d79a7baf14837217f00b40e991438742",
+      "short": "ad538ff",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:46:11+05:30",
+      "subject": "Auto-save: middleware.ts",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "d00db002efce2f0bc8daf2a0c325f661c568831e",
+      "short": "d00db00",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:46:05+05:30",
+      "subject": "Auto-save: CoursesClient.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "c4cc26cfa5e96fbcdb7ff6d5cef49129870cff6f",
+      "short": "c4cc26c",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:45:48+05:30",
+      "subject": "Auto-save: CoursesClient.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "252aca7f688b4e9b80485a7d91378de898b2faa2",
+      "short": "252aca7",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:45:40+05:30",
+      "subject": "Auto-save: CoursesClient.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "5b11b6f5c2a7bef4b03ec940347caad4adc022e9",
+      "short": "5b11b6f",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:45:34+05:30",
+      "subject": "Auto-save: CoursesClient.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "f7e7ed6e625af8eb79eadc20a139a50052ddd976",
+      "short": "f7e7ed6",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:45:22+05:30",
+      "subject": "Auto-save: CoursesClient.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "5808074b446ef2ba2541f4064029e3597c305d38",
+      "short": "5808074",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:45:16+05:30",
+      "subject": "Auto-save: LectureUpload.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "b334f0c844653ffa1143c28841567a6c7f4c0230",
+      "short": "b334f0c",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:45:08+05:30",
+      "subject": "Auto-save: KnowledgePanel.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "f9ce0423cb3ce03e84a3863cc9c10b6ee72cb989",
+      "short": "f9ce042",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:44:58+05:30",
+      "subject": "Auto-save: KnowledgePanel.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "717853f9bc430bf009fcc53ee4009f9874993a10",
+      "short": "717853f",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:44:52+05:30",
+      "subject": "Auto-save: KnowledgePanel.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "462192783636343be644b7e7eb72f11a18311ae5",
+      "short": "4621927",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:44:44+05:30",
+      "subject": "Auto-save: KnowledgePanel.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "8d15c4b498bae5be4c1b4178a157786effbccdfe",
+      "short": "8d15c4b",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:44:36+05:30",
+      "subject": "Auto-save: decisions.md, page.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "3004a713b639fd0db3041ddecede8d5a660bf1d5",
+      "short": "3004a71",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:44:28+05:30",
+      "subject": "Auto-save: LectureClient.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "40c1835321ea803c6e4040312f007699224c5a9a",
+      "short": "40c1835",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:44:22+05:30",
+      "subject": "Auto-save: LectureClient.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "f1f2dba62c5772d7381df21dac20c6f3a3cd0d33",
+      "short": "f1f2dba",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:44:13+05:30",
+      "subject": "Auto-save: LectureClient.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "dc51e86dc5747a6b099ee87f67f6f9c9c79fc7d3",
+      "short": "dc51e86",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:44:06+05:30",
+      "subject": "Auto-save: LectureClient.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "d215bff3f29dfe0b11d423e35463ddd3bbb178c6",
+      "short": "d215bff",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:43:53+05:30",
+      "subject": "Auto-save: LectureClient.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "60ebba95ebaa597c18b4970ea7574b4062323973",
+      "short": "60ebba9",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:43:47+05:30",
+      "subject": "Auto-save: LectureClient.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "9f532bb59ca170aec31fbe4cf36078f41ee1d679",
+      "short": "9f532bb",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:43:41+05:30",
+      "subject": "Auto-save: FacultyWorkspace.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "db0c5af753c4e788fd2d37970fc80f5a7a26ecf6",
+      "short": "db0c5af",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:43:29+05:30",
+      "subject": "Auto-save: package.json, setup-storage.mts, FacultyWorkspace.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "0a5eee4e36ae1c51ff41f0579045d3f944e273b2",
+      "short": "0a5eee4",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:43:22+05:30",
+      "subject": "Auto-save: setup-storage.mts, LectureProgress.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "5cd023de5bc8de54ca4d6158783fe2d5de374822",
+      "short": "5cd023d",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:43:00+05:30",
+      "subject": "Auto-save: LectureProgress.tsx, setup-storage.mts",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "97ec0543586ca64581fd32b739f308a46cec8287",
+      "short": "97ec054",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:42:40+05:30",
+      "subject": "Auto-save: Input.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "0c1c9d6f240374e155914147264d8d2ff2889a75",
+      "short": "0c1c9d6",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:41:01+05:30",
+      "subject": "Auto-save: verify-languages.mts",
+      "body": "",
+      "is_auto_save": true
     },
     {
       "sha": "2d0a7dd8735026eca583b8ba5084e6041432ed6a",
@@ -62,8 +382,29 @@
     }
   ],
   "changes": {
-    "summary": "33 files changed, 3362 insertions(+), 69 deletions(-)",
+    "summary": "36 files changed, 3793 insertions(+), 69 deletions(-)",
     "files": [
+      {
+        "path": "AI-Memory/Inbox/classmind/2026-08-22T0930Z-classmind-v1-build-and-verification/candidates.json",
+        "status": "modified",
+        "insertions": 95,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "AI-Memory/Inbox/classmind/2026-08-22T0930Z-classmind-v1-build-and-verification/evidence.json",
+        "status": "modified",
+        "insertions": 322,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "AI-Memory/Inbox/classmind/2026-08-22T0930Z-classmind-v1-build-and-verification/status.json",
+        "status": "modified",
+        "insertions": 14,
+        "deletions": 0,
+        "binary": false
+      },
       {
         "path": "HANDOFF.md",
         "status": "modified",
@@ -298,23 +639,21 @@
     ]
   },
   "working_tree": {
-    "clean": false,
+    "clean": true,
     "uncommitted": [],
     "staged": [],
-    "untracked": [
-      "AI-Memory/Inbox/classmind/"
-    ]
+    "untracked": []
   },
   "diff": {
     "stored": false,
     "path": null,
-    "size_bytes": 397663,
-    "omitted_reason": "Patch is 397663 bytes, over the 262144-byte cap. Most of it is fixtures/transcription/*.json -- three captured Sarvam responses totalling ~247 KB, which are data rather than reviewable change.",
+    "size_bytes": 427245,
+    "omitted_reason": "Patch is 427245 bytes, over the 262144-byte cap. Most of it is fixtures/transcription/*.json -- three captured Sarvam responses totalling ~247 KB, which are data rather than reviewable change.",
     "binary_files": [
       "Projects/classmind/ClassMinds Log.docx",
       "Projects/classmind/~$assMinds Log.docx"
     ],
-    "regenerate_command": "git diff -M 84c68de..fab2e38"
+    "regenerate_command": "git diff -M 84c68de..0012d72"
   },
   "related_sessions": [
     "AI-Memory/Inbox/_platform/2026-08-21T0449Z-reconcile-docs-and-first-capture"
