@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import CandidateReview, { type Candidate, type Review } from "./CandidateReview";
+import ActionableReview from "./ActionableReview";
 import LectureProgress from "./LectureProgress";
 import TaughtPanel from "./TaughtPanel";
 import DeleteLecture from "./DeleteLecture";
 import { mmss } from "./KnowledgePanel";
+import type { KnowledgeUnit } from "./KnowledgeUnit";
 import { formatBytes, STATUS_LABEL } from "./Input";
 
 interface Segment { startMs: number; endMs: number; charStart: number; charEnd: number; text: string }
@@ -33,14 +34,26 @@ export default function LectureClient({
   const [lecture, setLecture] = useState<Lecture | null>(null);
   const [segments, setSegments] = useState<Segment[]>([]);
   const [rawFallback, setRawFallback] = useState<unknown>(null);
-  const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
+  // Layer-1 detections are no longer a review surface -- only their count is,
+  // as a transparency line. Nothing on this page acts on them.
+  const [signalCount, setSignalCount] = useState(0);
   const [isOwner, setIsOwner] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [version, setVersion] = useState(0);
   const [highlight, setHighlight] = useState<number | null>(null);
+
+  // Layer 3, fetched once for the whole page.
+  //
+  // Both the read-only panel and the review queue read the same units, so they
+  // share one request: two independent fetches of the same endpoint could
+  // disagree for a second after a verdict, and an item vanishing from one panel
+  // while still sitting in the other is exactly the confusion this rework
+  // exists to remove.
+  const [units, setUnits] = useState<KnowledgeUnit[]>([]);
+  const [unitsError, setUnitsError] = useState<string | null>(null);
+  const [unitsLoading, setUnitsLoading] = useState(true);
 
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -59,12 +72,28 @@ export default function LectureClient({
         setLecture(b.lecture); setIsOwner(Boolean(b.isOwner));
         setSegments(b.transcript?.segments ?? []);
         setRawFallback(b.rawTranscriptionResponse ?? null);
-        setCandidates(b.candidates ?? []); setReviews(b.reviews ?? []);
+        setSignalCount((b.candidates ?? []).length);
         setAudioUrl(b.audioUrl ?? null); setError(null);
       })
       .catch((e: unknown) => { if (!cancelled) setError(e instanceof Error ? e.message : String(e)); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
+  }, [lectureId, version]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/lectures/${lectureId}/knowledge`)
+      .then((r) => r.json().then((b) => ({ ok: r.ok, b })))
+      .then(({ ok, b }) => {
+        if (cancelled) return;
+        if (!ok) throw new Error(b.error ?? "Could not load the lecture knowledge.");
+        setUnits(b.units ?? []); setUnitsError(null);
+      })
+      .catch((e: unknown) => { if (!cancelled) setUnitsError(e instanceof Error ? e.message : String(e)); })
+      .finally(() => { if (!cancelled) setUnitsLoading(false); });
+    return () => { cancelled = true; };
+    // `version` is the refresh signal: a verdict or a re-extraction changes
+    // what is stored, so this re-reads rather than going stale.
   }, [lectureId, version]);
 
   // Seek audio and scroll the transcript to a moment. This is the durable
@@ -149,21 +178,27 @@ export default function LectureClient({
 
       {isOwner ? (
         <>
-          {/* What was taught comes BEFORE the review queue. A reviewer facing
-              thirty candidates needs to know what the lecture was about first:
-              the queue is the work, this is the map. */}
-          <TaughtPanel lectureId={lectureId} version={version} onSeek={seek} />
+          {/* The queue comes first now, and it is short. Under the old model it
+              held every topic and definition as well, so the map had to come
+              before the work; a queue of one or two obligations is the work. */}
+          <ActionableReview units={units} onSeek={seek} onReviewed={refresh} />
 
-          <CandidateReview
-            candidates={candidates} reviews={reviews}
-            onSeek={seek} onReviewed={refresh}
-          />
+          <TaughtPanel units={units} loading={unitsLoading} error={unitsError} onSeek={seek} />
+
+          {/* Layer 1 to Layer 3 in one line. The detection count is not
+              actionable and is not offered as one -- it is here so a lecturer
+              can see that thirty-odd signals became a handful of ideas rather
+              than wondering where the rest went. */}
+          <p className="text-xs text-zinc-400">
+            {signalCount} detection {signalCount === 1 ? "signal" : "signals"} ·{" "}
+            {units.length} knowledge {units.length === 1 ? "unit" : "units"}
+          </p>
 
           <DeleteLecture
             lectureId={lectureId}
             lectureTitle={lecture.title}
             courseId={courseId}
-            candidateCount={candidates.length}
+            candidateCount={signalCount}
           />
         </>
       ) : null}

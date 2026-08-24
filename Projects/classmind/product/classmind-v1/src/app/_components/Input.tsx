@@ -65,20 +65,18 @@ export const KIND_LABEL: Record<string, string> = {
 };
 
 // The three questions a reader is actually asking. `kind` says what an item is;
-// this says which question it answers, and it is what the review queue and the
-// lecture summary group by.
+// this says which question it answers, and it is how the lecture knowledge
+// panel groups.
+//
+// The kind-to-category mapping that used to live here is gone: the knowledge
+// layer stores `category` on the item itself, decided by the pass that
+// reconstructed it, so a client-side guess from the kind string would be a
+// second, weaker copy of a fact the row already carries.
 export const CATEGORY_LABEL: Record<string, string> = {
   actionable: "What you have to do",
   teaching: "What was taught",
   reference: "Mentioned in passing",
 };
-
-const TEACHING_KINDS = new Set(["lesson_scope", "topic", "definition", "enumeration", "comparison"]);
-
-export function categoryFor(kind: string): "teaching" | "actionable" | "reference" {
-  if (kind === "reference") return "reference";
-  return TEACHING_KINDS.has(kind) ? "teaching" : "actionable";
-}
 
 // Lecture status, in faculty words rather than column values. Lives here rather
 // than beside one of its two callers because the course list and the lecture

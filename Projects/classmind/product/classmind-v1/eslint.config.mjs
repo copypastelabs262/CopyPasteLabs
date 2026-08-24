@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Scratch space: throwaway probes, and browser profiles left behind by
+    // headless-Chrome UI tests. Linting a bundled Chrome extension is slow and
+    // tells us nothing about this codebase.
+    ".scratch/**",
   ]),
 ]);
 

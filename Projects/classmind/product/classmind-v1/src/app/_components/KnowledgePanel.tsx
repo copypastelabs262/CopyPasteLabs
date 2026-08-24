@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import AskPanel from "./AskPanel";
 import { KIND_LABEL } from "./Input";
 
 export interface KnowledgeItem {
@@ -96,9 +97,6 @@ export default function KnowledgePanel({
   const [items, setItems] = useState<KnowledgeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [q, setQ] = useState("");
-  const [answer, setAnswer] = useState<{ message: string; items: KnowledgeItem[] } | null>(null);
-  const [asking, setAsking] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -115,82 +113,48 @@ export default function KnowledgePanel({
   }, [courseId]);
 
   return (
-    <section>
-      <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500">{heading}</h2>
+    <div className="space-y-8">
+      {/* Asking is Layer 4: it answers from reconstructed knowledge units, which
+          is a different store from the confirmed-candidate list below. Kept as
+          one component so faculty and students get the identical answer surface
+          rather than two that drift apart. Above the list, not inside it -- the
+          question is what a reader came for; the list is what they fall back to. */}
+      {showAsk ? <AskPanel courseId={courseId} /> : null}
 
-      {showAsk ? (
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            setAsking(true);
-            try {
-              const r = await fetch(`/api/courses/${courseId}/ask?q=${encodeURIComponent(q)}`);
-              const b = await r.json();
-              setAnswer(r.ok ? { message: b.message, items: b.items ?? [] } : { message: b.error, items: [] });
-            } finally { setAsking(false); }
-          }}
-          className="mt-3 flex gap-2"
-        >
-          <input
-            value={q} onChange={(e) => setQ(e.target.value)}
-            placeholder="When is the assignment due?"
-            className="flex-1 rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-700"
-          />
-          <button
-            disabled={asking || !q.trim()}
-            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
-          >
-            {asking ? "Asking…" : "Ask"}
-          </button>
-        </form>
-      ) : null}
+      <section>
+        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500">{heading}</h2>
 
-      {answer ? (
-        <div className="mt-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
-          <p className="border-b border-zinc-200 p-3 text-sm dark:border-zinc-800">{answer.message}</p>
-          {answer.items.length ? (
-            <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
-              {/* Open by default here, unlike the browsable list. An answer that
-                  hides what it is based on is asking to be taken on trust,
-                  which is the one thing this product refuses to do. */}
-              {answer.items.map((i) => (
-                <KnowledgeCard key={i.candidateId} item={i} courseId={courseId} defaultOpen />
-              ))}
-            </ul>
-          ) : null}
-        </div>
-      ) : null}
+        {loading ? <p className="mt-3 text-sm text-zinc-500">Loading…</p> : null}
+        {error ? <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p> : null}
 
-      {loading ? <p className="mt-3 text-sm text-zinc-500">Loading…</p> : null}
-      {error ? <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+        {!loading && !items.length ? (
+          <p className="mt-3 text-sm text-zinc-500">
+            Nothing confirmed yet. Items appear here only after faculty confirm them.
+          </p>
+        ) : null}
 
-      {!loading && !items.length ? (
-        <p className="mt-3 text-sm text-zinc-500">
-          Nothing confirmed yet. Items appear here only after faculty confirm them.
-        </p>
-      ) : null}
-
-      {/* Grouped by kind rather than listed flat: a student arrives asking one
-          question -- what do I owe, and when -- and a single list of mixed
-          assignments, exam scope and asides makes them read all of it to find
-          out. */}
-      {items.length ? (
-        <div className="mt-3 space-y-6">
-          {byKind(items).map(([kind, group]) => (
-            <div key={kind}>
-              <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-                {KIND_LABEL[kind] ?? kind}
-                <span className="ml-2 font-normal text-zinc-400">{group.length}</span>
-              </h3>
-              <ul className="mt-2 divide-y divide-zinc-200 rounded-lg border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
-                {group.map((i) => (
-                  <KnowledgeCard key={i.candidateId} item={i} courseId={courseId} hideKind />
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      ) : null}
-    </section>
+        {/* Grouped by kind rather than listed flat: a student arrives asking one
+            question -- what do I owe, and when -- and a single list of mixed
+            assignments, exam scope and asides makes them read all of it to find
+            out. */}
+        {items.length ? (
+          <div className="mt-3 space-y-6">
+            {byKind(items).map(([kind, group]) => (
+              <div key={kind}>
+                <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                  {KIND_LABEL[kind] ?? kind}
+                  <span className="ml-2 font-normal text-zinc-400">{group.length}</span>
+                </h3>
+                <ul className="mt-2 divide-y divide-zinc-200 rounded-lg border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+                  {group.map((i) => (
+                    <KnowledgeCard key={i.candidateId} item={i} courseId={courseId} hideKind />
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </section>
+    </div>
   );
 }

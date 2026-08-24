@@ -11,7 +11,9 @@
     "test:extraction": "node scripts/test-extraction.mts",
     "test:provenance": "node scripts/test-provenance.mts",
     "test:e2e": "node --env-file=.env.local scripts/e2e.mts",
-    "test:languages": "node --env-file=.env.local scripts/verify-languages.mts"
+    "test:languages": "node --env-file=.env.local scripts/verify-languages.mts",
+    "test:identity": "node --env-file=.env.local scripts/verify-lecture-identity.mts",
+    "test:knowledge": "node --env-file=.env.local scripts/verify-knowledge-pipeline.mts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",

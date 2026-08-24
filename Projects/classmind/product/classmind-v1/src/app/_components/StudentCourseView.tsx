@@ -1,18 +1,28 @@
 "use client";
 
 import Link from "next/link";
+import AskPanel from "./AskPanel";
 import KnowledgePanel from "./KnowledgePanel";
 import { formatWhen } from "./Input";
 import type { CourseLecture } from "./CourseClient";
 
-// A student sees confirmed knowledge and published lectures. Candidates are not
-// merely hidden here -- the API never sends them to a non-owner.
+// A student sees stored course knowledge and published lectures. Nothing
+// pending is merely hidden here -- the API never sends it to a non-owner.
+//
+// Asking comes first, because it is what a student actually arrives to do:
+// "when is it due", "what did I miss". Browsing the confirmed list is the
+// fallback for when they do not know what to ask.
 export default function StudentCourseView({
   courseId, lectures,
 }: { courseId: string; lectures: CourseLecture[] }) {
   return (
     <div className="space-y-10">
-      <KnowledgePanel courseId={courseId} heading="Confirmed course information" showAsk />
+      <AskPanel courseId={courseId} />
+
+      {/* `showAsk` is deliberately off: AskPanel is already mounted above, and
+          two question boxes on one page is two places to look for the answer. */}
+      <KnowledgePanel courseId={courseId} heading="Confirmed course information" />
+
       <section>
         <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500">Lectures</h2>
         {lectures.length === 0 ? (
