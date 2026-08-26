@@ -14,8 +14,8 @@ import { getReasoningProvider } from "@/lib/reasoning";
 // Three properties make this safe to build on a language model:
 //
 //   BOUNDED INPUT. The model never sees the lecture. It sees one window around
-//   one cluster of candidates, so it cannot pull in unrelated material and
-//   cannot be steered by something said twenty minutes away.
+//   one part of it, so it cannot pull in unrelated material and cannot be
+//   steered by something said twenty minutes away.
 //
 //   VERIFIED OUTPUT. Every quote it returns is checked to occur verbatim in
 //   that window. An item with an unverifiable quote is DISCARDED, not repaired.
@@ -28,6 +28,21 @@ import { getReasoningProvider } from "@/lib/reasoning";
 //
 // Nothing here knows what subject is being taught, who is teaching it, or what
 // language it is in. It is the same pass for every lecture.
+//
+// THE CUE LEXICON IS A HINT, NOT A GATE (v1.1.0).
+//
+// Until v1.0.0 the actionable pass only looked where Layer 1's cue lexicon had
+// already fired. That made a 1,000-line Hinglish word list the hard recall
+// ceiling on assignments: a lecturer who phrased an obligation in words the
+// list did not contain produced no window, so the model was never pointed at
+// that part of the lecture, and the assignment was invisible -- with no error
+// and no empty state to notice it. Twice, a real lecture required new lexicon
+// entries before its assignment could be seen at all.
+//
+// Both passes now sweep the whole lecture. The cue hits are passed into each
+// window as evidence ABOUT that window rather than as permission to look at it,
+// which is what the lexicon is actually good for: it is a cheap, precise,
+// offline prior, and a prior belongs in the prompt, not in the control flow.
 
 export interface ReconstructedEvidence {
   role: string;
@@ -55,46 +70,65 @@ export interface ReconstructionResult {
   version: string;
   // Everything the pass did, kept for the report and for debugging a bad run.
   stats: {
-    clusters: number;
+    cueHits: number;
+    actionableWindows: number;
+    teachingWindows: number;
     windows: number;
     calls: number;
     itemsProposed: number;
     itemsDroppedUnverifiable: number;
+    duplicatesMerged: number;
     failures: string[];
   };
 }
 
 export const RECONSTRUCTION_METHOD = "llm-reconstruct";
-export const RECONSTRUCTION_VERSION = "1.0.0";
+export const RECONSTRUCTION_VERSION = "1.1.0";
 
-// A pause longer than this means the lecturer moved on. Chosen as a property of
-// speech, not of any lecture: instructions belonging to one task are delivered
-// without a topic change between them.
-const CLUSTER_GAP_MS = 90_000;
-// Context on either side of a cluster. Enough to contain the antecedent of a
-// pronoun; short enough that the model cannot wander.
-const CONTEXT_PAD_MS = 45_000;
-// Teaching is consolidated by fixed windows rather than by clustering, because
-// teaching candidates are near-continuous and clustering would produce one
-// cluster spanning the lecture.
-// Three minutes, not five. The window length is set by the MODEL's budget,
-// not by anything pedagogical: sarvam-105b is a reasoning model, and on a
-// 5,600-character excerpt it spent 12,000 characters thinking before writing
-// a single character of answer. Measured at max_tokens 4000: a 5,600-char
-// window finishes with `length` and returns EMPTY content; 3,500 chars
-// finishes with `stop` and returns five well-formed items. Lecture speech
-// runs around 1,100 characters a minute, so three minutes fits with room.
-const TEACHING_WINDOW_MS = 180_000;
+// Three minutes, not five. The window length is set by the MODEL's budget, not
+// by anything pedagogical: sarvam-105b is a reasoning model, and on a
+// 5,600-character excerpt it spent 12,000 characters thinking before writing a
+// single character of answer. Measured at max_tokens 4000: a 5,600-char window
+// finishes with `length` and returns EMPTY content; 3,500 chars finishes with
+// `stop` and returns five well-formed items. Lecture speech runs around 1,100
+// characters a minute, so three minutes fits with room.
+//
+// The same budget binds both passes, so both use it.
+const WINDOW_MS = 180_000;
 const MAX_WINDOW_CHARS = 3_500;
+
+// Teaching windows are laid end to end: teaching is continuous, every window
+// contains some, and a topic split across a boundary still appears whole on one
+// side or the other.
+const TEACHING_STRIDE_MS = WINDOW_MS;
+
+// Actionable windows OVERLAP, and that is load-bearing. An obligation is
+// assembled from statements up to a minute apart -- in the reference lecture,
+// four sentences over 45 seconds -- and a boundary falling between the setup
+// and the pronoun referring back to it ("vo project ko deploy karna hai")
+// destroys exactly the case this layer exists for. A 60-second overlap
+// guarantees any two moments within a minute of each other are read together in
+// at least one window.
+//
+// The overlap also absorbs MAX_WINDOW_CHARS truncation: a window whose text is
+// cut short loses its tail to the character cap, and the next window opens 60
+// seconds before that tail.
+const ACTIONABLE_STRIDE_MS = 120_000;
 
 // The provider caps this at 4096 on the starter tier, and a reasoning model
 // spends most of it thinking. Asking for less simply truncates the answer.
 const MAX_COMPLETION_TOKENS = 4_000;
 
-// Windows are independent, so they run concurrently. Sequentially a
-// 23-minute lecture is nine calls at roughly forty seconds each -- six
-// minutes, past the route's own ceiling. Four at a time fits inside it
-// without asking the provider to absorb a burst.
+// Windows are independent, so they run concurrently.
+//
+// The full sweep roughly doubles the call count: a 23-minute lecture is about
+// eight teaching windows plus twelve actionable ones, which at four at a time
+// and roughly forty seconds a call sits near 200 seconds -- inside the extract
+// route's 300-second ceiling, but no longer far inside it. A 90-minute lecture
+// does NOT fit and will time out; that needs the pipeline moved off the request
+// path, not a bigger number here. Four is left alone deliberately: the right
+// value is a property of the provider's rate limit, which has not been
+// measured, and guessing it trades a known ceiling for an unknown one.
 const CONCURRENCY = 4;
 
 // Runs `work` over `items`, at most CONCURRENCY at a time. Completion order
@@ -134,16 +168,12 @@ function windowFor(t: NormalizedTranscript, fromMs: number, toMs: number): Windo
   return { startMs: first.startMs, endMs: last.endMs, text, charStart: first.charStart };
 }
 
-// Consecutive candidates separated by less than CLUSTER_GAP_MS.
-function clusterByTime(candidates: ExtractionCandidate[]): ExtractionCandidate[][] {
-  const sorted = [...candidates].sort((a, b) => a.evidenceStartMs - b.evidenceStartMs);
-  const out: ExtractionCandidate[][] = [];
-  for (const c of sorted) {
-    const last = out[out.length - 1];
-    if (last && c.evidenceStartMs - last[last.length - 1].evidenceEndMs <= CLUSTER_GAP_MS) last.push(c);
-    else out.push([c]);
-  }
-  return out;
+// Window start offsets covering the whole lecture at the given stride. A stride
+// shorter than WINDOW_MS produces overlapping windows.
+function windowStarts(endMs: number, strideMs: number): number[] {
+  const starts: number[] = [];
+  for (let from = 0; from < endMs; from += strideMs) starts.push(from);
+  return starts;
 }
 
 // ---------------------------------------------------------------------------
@@ -239,6 +269,63 @@ function parseJsonBlock(text: string): unknown {
 }
 
 // ---------------------------------------------------------------------------
+// Duplicate merging
+// ---------------------------------------------------------------------------
+//
+// Overlapping actionable windows mean one assignment can be reconstructed
+// twice, once from each window containing it. A review queue that shows a
+// single assignment as two is a worse product than the recall gap the overlap
+// exists to close, so duplicates are merged before anything is stored.
+
+const DUPLICATE_OVERLAP = 0.5;
+
+function evidenceSpan(item: ReconstructedItem): { from: number; to: number } {
+  let from = Number.POSITIVE_INFINITY;
+  let to = Number.NEGATIVE_INFINITY;
+  for (const e of item.evidence) {
+    if (e.charStart !== null && e.charStart < from) from = e.charStart;
+    if (e.charEnd !== null && e.charEnd > to) to = e.charEnd;
+  }
+  return { from, to };
+}
+
+// Fraction of the SHORTER span that the two share. Measured against the shorter
+// one on purpose: an obligation caught whole in one window and only partly in
+// the next should still merge, and scoring that pair against the longer span
+// would put it under any sensible threshold.
+function overlapRatio(a: { from: number; to: number }, b: { from: number; to: number }): number {
+  const lo = Math.max(a.from, b.from);
+  const hi = Math.min(a.to, b.to);
+  if (hi <= lo) return 0;
+  const shorter = Math.min(a.to - a.from, b.to - b.from);
+  return shorter > 0 ? (hi - lo) / shorter : 0;
+}
+
+// Keeps the best-evidenced version of each obligation.
+//
+// Identity is decided by WHERE the evidence sits, not by what the item is
+// called. The model words a title differently in each window, but the sentences
+// it cites are the same sentences, and those have already been verified into
+// real character positions -- so the transcript itself, rather than a string
+// similarity heuristic, is what decides that two items are one.
+function dedupeByEvidence(items: ReconstructedItem[]): ReconstructedItem[] {
+  // Best first, so the survivor of any pair is the richer reconstruction: more
+  // verified evidence, then higher confidence, then more steps.
+  const ranked = [...items].sort((a, b) =>
+    b.evidence.length - a.evidence.length ||
+    b.confidence - a.confidence ||
+    b.steps.length - a.steps.length,
+  );
+  const kept: { item: ReconstructedItem; span: { from: number; to: number } }[] = [];
+  for (const item of ranked) {
+    const span = evidenceSpan(item);
+    if (kept.some((k) => overlapRatio(k.span, span) >= DUPLICATE_OVERLAP)) continue;
+    kept.push({ item, span });
+  }
+  return kept.map((k) => k.item);
+}
+
+// ---------------------------------------------------------------------------
 // Prompts
 // ---------------------------------------------------------------------------
 
@@ -269,6 +356,10 @@ Statements delivered close together are usually ONE task with several steps, not
 several tasks. Judge by meaning: if a later statement continues, elaborates or
 depends on an earlier one, they belong to the same item. Only emit separate
 items when they are genuinely unrelated obligations.
+
+An obligation is something the STUDENTS must do. A step the lecturer performs in
+a worked example, a hypothetical, and an aside about exam technique are NOT
+obligations, however imperative they sound.
 
 Output shape:
 {"items":[{
@@ -303,6 +394,19 @@ Output shape:
 Do not record the lecturer's filler, greetings, or classroom management.
 If the excerpt teaches nothing, return {"items":[]}.`;
 
+// What to say when the cheap pass found nothing in this window.
+//
+// Sweeping every window with the actionable question invites a model to
+// manufacture an obligation out of ordinary teaching, which is the precision
+// risk the old cue gate was managing by accident. The lexicon's silence is real
+// evidence -- weak, but real -- so it is passed on as evidence: it raises the
+// bar for this window without closing it. That is the whole difference between
+// a hint and a gate.
+const NO_CUE_HINT =
+  "No sentence in this excerpt matched the obligation cues, and most of a " +
+  "lecture contains no obligation at all. Return an empty list unless the " +
+  "excerpt plainly states something the students themselves must do.";
+
 // ---------------------------------------------------------------------------
 // The pass
 // ---------------------------------------------------------------------------
@@ -325,8 +429,9 @@ export async function reconstructLecture(
   const spoken = buildSpoken(transcript);
   const collapsed = collapse(spoken.text);
   const stats = {
-    clusters: 0, windows: 0, calls: 0,
-    itemsProposed: 0, itemsDroppedUnverifiable: 0, failures: [] as string[],
+    cueHits: 0, actionableWindows: 0, teachingWindows: 0, windows: 0, calls: 0,
+    itemsProposed: 0, itemsDroppedUnverifiable: 0, duplicatesMerged: 0,
+    failures: [] as string[],
   };
   const out: ReconstructedItem[] = [];
 
@@ -391,33 +496,49 @@ export async function reconstructLecture(
     }
   }
 
-  // --- actionable: cluster, because obligations arrive in bursts -------------
-  const actionable = candidates.filter((c) => categoryOf(c.kind) === "actionable");
-  const clusters = clusterByTime(actionable);
-  stats.clusters = clusters.length;
-  await inParallel(clusters, async (cluster) => {
-    const win = windowFor(
-      transcript,
-      cluster[0].evidenceStartMs - CONTEXT_PAD_MS,
-      cluster[cluster.length - 1].evidenceEndMs + CONTEXT_PAD_MS,
-    );
+  const end = transcript.segments.at(-1)?.endMs ?? 0;
+
+  // --- actionable: full sweep, overlapping windows, cues as a hint ----------
+  const actionableCues = candidates.filter((c) => categoryOf(c.kind) === "actionable");
+  stats.cueHits = actionableCues.length;
+
+  await inParallel(windowStarts(end, ACTIONABLE_STRIDE_MS), async (from) => {
+    const win = windowFor(transcript, from, from + WINDOW_MS);
     if (!win) return;
-    await runWindow(
-      ACTIONABLE_SYSTEM, win, "actionable",
-      `Sentences flagged as possible obligations in this excerpt:\n${cluster.map((c) => `- "${c.evidenceText.trim()}"`).join("\n")}`,
+    stats.actionableWindows += 1;
+    // Which flagged sentences fall inside THIS window. The lexicon still
+    // speaks; it just no longer decides whether the model is allowed to look.
+    const inWindow = actionableCues.filter(
+      (c) => c.evidenceEndMs >= win.startMs && c.evidenceStartMs <= win.endMs,
     );
+    const hint = inWindow.length
+      ? `Sentences flagged as possible obligations in this excerpt:\n${inWindow.map((c) => `- "${c.evidenceText.trim()}"`).join("\n")}`
+      : NO_CUE_HINT;
+    await runWindow(ACTIONABLE_SYSTEM, win, "actionable", hint);
   });
 
   // --- teaching: fixed windows, because teaching is continuous --------------
-  const end = transcript.segments.at(-1)?.endMs ?? 0;
-  const starts: number[] = [];
-  for (let from = 0; from < end; from += TEACHING_WINDOW_MS) starts.push(from);
-  await inParallel(starts, async (from) => {
-    const win = windowFor(transcript, from, from + TEACHING_WINDOW_MS);
+  await inParallel(windowStarts(end, TEACHING_STRIDE_MS), async (from) => {
+    const win = windowFor(transcript, from, from + WINDOW_MS);
     if (!win) return;
-    stats.windows += 1;
+    stats.teachingWindows += 1;
     await runWindow(TEACHING_SYSTEM, win, "teaching", "Record what is taught in this excerpt.");
   });
 
-  return { items: out, method: RECONSTRUCTION_METHOD, version: RECONSTRUCTION_VERSION, stats };
+  stats.windows = stats.actionableWindows + stats.teachingWindows;
+
+  // Only the actionable pass overlaps, so only it can double-report. Teaching
+  // windows are laid end to end and are left exactly as the model returned them.
+  const actionableItems = out.filter((i) => i.category === "actionable");
+  const others = out.filter((i) => i.category !== "actionable");
+  const merged = dedupeByEvidence(actionableItems);
+  stats.duplicatesMerged = actionableItems.length - merged.length;
+
+  // Lecture order, so the review queue and the knowledge panel read the way the
+  // lecture was delivered.
+  const items = [...merged, ...others].sort(
+    (a, b) => (a.evidence[0]?.startMs ?? 0) - (b.evidence[0]?.startMs ?? 0),
+  );
+
+  return { items, method: RECONSTRUCTION_METHOD, version: RECONSTRUCTION_VERSION, stats };
 }
