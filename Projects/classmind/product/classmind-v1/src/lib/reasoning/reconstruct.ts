@@ -121,14 +121,25 @@ const MAX_COMPLETION_TOKENS = 4_000;
 
 // Windows are independent, so they run concurrently.
 //
-// The full sweep roughly doubles the call count: a 23-minute lecture is about
-// eight teaching windows plus twelve actionable ones, which at four at a time
-// and roughly forty seconds a call sits near 200 seconds -- inside the extract
-// route's 300-second ceiling, but no longer far inside it. A 90-minute lecture
-// does NOT fit and will time out; that needs the pipeline moved off the request
-// path, not a bigger number here. Four is left alone deliberately: the right
-// value is a property of the provider's rate limit, which has not been
-// measured, and guessing it trades a known ceiling for an unknown one.
+// THE FULL SWEEP DOUBLES THE CALL COUNT AND LOWERS THE LENGTH CEILING. Measured
+// (calls = actionable + teaching, wall clock at four at a time, ~40s a call):
+//
+//     23 min   12 + 8  = 20 calls   ~200s   fits
+//     36 min   18 + 12 = 30 calls   ~300s   at the limit
+//     50 min   25 + 17 = 42 calls   ~440s   TIMES OUT
+//     90 min   45 + 30 = 75 calls   ~760s   TIMES OUT
+//
+// Against the extract route's maxDuration of 300, the longest lecture this
+// pipeline can process on the request path is about 36 minutes -- down from
+// roughly 90 before the sweep. That is a real cost of buying assignment recall
+// and it is not fixable here: the answer is to move reconstruction off the
+// request path into a background job, not to raise this number.
+//
+// Four is left alone deliberately. The right value is a property of the
+// provider's rate limit, which has not been measured, and guessing it trades a
+// known ceiling for an unknown one -- a 429 storm mid-lecture loses windows
+// silently, which is the same class of invisible failure this change exists to
+// remove.
 const CONCURRENCY = 4;
 
 // Runs `work` over `items`, at most CONCURRENCY at a time. Completion order
