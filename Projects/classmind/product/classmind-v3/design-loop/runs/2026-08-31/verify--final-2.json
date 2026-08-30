@@ -1,0 +1,27 @@
+{
+  "at": "2026-08-30T22:10:43.529Z",
+  "allOk": true,
+  "checks": [
+    {
+      "name": "typescript",
+      "command": "npx tsc --noEmit",
+      "ok": true,
+      "durationMs": 2451,
+      "tail": ""
+    },
+    {
+      "name": "eslint",
+      "command": "npx eslint .",
+      "ok": true,
+      "durationMs": 6281,
+      "tail": ""
+    },
+    {
+      "name": "build",
+      "command": "npx next build",
+      "ok": true,
+      "durationMs": 8382,
+      "tail": "▲ Next.js 16.3.0 (Turbopack)\n- Environments: .env.local\n✓ Running next.config.ts took 28ms\n\n  Creating an optimized production build ...\n✓ Compiled successfully in 1946ms\n  Running TypeScript ...\n  Finished TypeScript in 3.1s ...\n  Collecting page data using 11 workers ...\n  Generating static pages using 11 workers (0/12) ...\n  Generating static pages using 11 workers (3/12) \r\n  Generating static pages using 11 workers (6/12) \r\n  Generating static pages using 11 workers (9/12) \r\n✓ Generating static pages using 11 workers (12/12) in 171ms\n  Finalizing page optimization ...\n\nRoute (app)\n┌ ƒ /\n├ ƒ /_not-found\n├ ƒ /api/candidates/[id]/review\n├ ƒ /api/courses\n├ ƒ /api/courses/[id]\n├ ƒ /api/courses/[id]/ask\n├ ƒ /api/courses/[id]/context\n├ ƒ /api/courses/[id]/knowledge\n├ ƒ /api/courses/[id]/lectures\n├ ƒ /api/courses/[id]/units\n├ ƒ /api/enroll\n├ ƒ /api/knowledge/[id]/review\n├ ƒ /api/lectures/[id]\n├ ƒ /api/lectures/[id]/extract\n├ ƒ /api/lectures/[id]/knowledge\n├ ƒ /api/lectures/[id]/poll\n├ ƒ /api/lectures/[id]/transcribe\n├ ƒ /api/me/overview\n├ ƒ /api/profile\n├ ƒ /auth/callback\n├ ƒ /courses\n├ ƒ /courses/[id]\n├ ƒ /courses/[id]/lectures/[lectureId]\n├ ƒ /privacy\n├ ƒ /signin\n└ ƒ /terms\n\n\nƒ Proxy (Middleware)\n\nƒ  (Dynamic)  server-rendered on demand\n\n⚠ The \"middleware\" file convention is deprecated. Please use \"proxy\" instead.\n\n  To migrate automatically, run:\n  npx @next/codemod@canary middleware-to-proxy .\n\n  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy"
+    }
+  ]
+}
