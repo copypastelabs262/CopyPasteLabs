@@ -166,6 +166,21 @@ export default function TeacherHome({
                         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink-soft">
                           {error.message}
                         </p>
+
+                        {/* The card ends in a verb. Retrying transcription is a
+                            paid call and an operator decision, so the honest
+                            action is the lecture page, which owns recovery. */}
+                        <div className="mt-4">
+                          <ButtonLink
+                            href={`/courses/${lecture.courseId}/lectures/${lecture.id}`}
+                            size="sm"
+                            tone="secondary"
+                          >
+                            Open lecture
+                            <ChevronRightIcon size={14} />
+                          </ButtonLink>
+                        </div>
+
                         <TechnicalDisclosure error={error} />
                       </li>
                     );
