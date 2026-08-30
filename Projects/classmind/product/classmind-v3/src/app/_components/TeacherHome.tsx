@@ -304,7 +304,7 @@ export default function TeacherHome({
 function CourseRow({ course }: { course: OverviewCourse }) {
   const meta = [
     course.isOwner ? "Teaching" : "Student",
-    course.term,
+    termLabel(course.term),
     plural(course.lectureCount, "lecture", "lectures"),
     course.processingCount ? `${course.processingCount} processing` : null,
   ]
