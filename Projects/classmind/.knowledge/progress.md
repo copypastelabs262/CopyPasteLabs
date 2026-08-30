@@ -7,6 +7,278 @@ Entries are snapshots of what was true when written and are never rewritten. Whe
 resolves something an earlier one recorded as blocked, the earlier line gets a dated marker
 pointing forward — it does not get edited away.
 
+## 2026-08-30 (evening) — The Sarvam balance was emptied by testing, and nothing was counting
+
+**What happened.** The operator topped up the Sarvam account during the day's session, uploaded
+nothing, and by **13:21 UTC** the account was empty. Lecture `03f38b9e` ("CC Lec1.mp3", course
+`fb7c7416`, created 13:20 UTC in v2) records the moment:
+
+    Sarvam POST failed: 402 {"error":{"message":"No credits available.",
+    "code":"insufficient_quota_error","request_id":"20260830_db200386-..."}}
+
+A second upload (`90356152`) hit the same 402 minutes later. Those two are the **victims**, not the
+cause — by then the money was already gone.
+
+**Where it went, from the evidence that survives.** No live ASR job succeeded after 2026-08-22:
+`lectures` holds exactly one non-fixture `provider_job_id` in its whole history
+(`20260822_1e44ad2c`). So the spend was **not** transcription. It was the **reasoning** path.
+`classmind-v1/.scratch/dev.log` records three `POST /api/lectures/{id}/extract 200` at **63 s, 62 s
+and 56 s**, plus a `GET /ask` at **11.1 s**. A 60-second extract is Layer-2 reconstruction issuing
+`sarvam-105b` chat completions, one per window, four at a time. The e2e test accounts
+(`faculty.test@`, `student.test@`) last signed in at **12:34 UTC**, so suites were still being
+driven ~45 minutes before the balance ran out. The dev logs only cover the most recent server run,
+so **three extracts is a floor, not a total.**
+
+**The trap, stated plainly, because it is not obvious from reading the code.**
+`TRANSCRIPTION_PROVIDER=fixture` makes a run look free and is not.
+`src/lib/reasoning/index.ts` has **no fixture provider** — `getReasoningProvider()` returns Sarvam
+unconditionally. Replay removes the ASR call and leaves every reconstruction call intact. Every
+suite that reaches `/extract` or `/ask` — `test:quarantine` included, which is exactly the one run
+today and the one whose header advertises `TRANSCRIPTION_PROVIDER=fixture` — bills real tokens.
+
+**What is now in force.** Root `CLAUDE.md` gains a section, *"Spending the operator's money"*, and
+both `classmind-v1/CLAUDE.md` and `classmind-v2/CLAUDE.md` open with the paid/free suite split.
+A session must ask before any run that touches a paid endpoint, name the endpoint and the expected
+call count, and re-ask for each run — approval is per run, not per session.
+
+**Still missing, and this is the real defect.** Nothing in the product counts what it spends. There
+is no token accounting in the schema (`knowledge_items.model_raw` is empty), no per-run cost line
+in any suite's output, and no session log recording what a paid run cost. A `costEstimate` key
+exists in lecture `provenance` for ASR and has no equivalent for reasoning. Until
+`reconstructLecture` reports calls and tokens and a suite prints them, this recurs — the guard just
+added is a rule, and a rule nobody can measure against is the same shape of defect as the advisory
+language check that let the wrong-language transcript through.
+
+## 2026-08-30 — A transcript guard that can see the failure it was written for; and a documentation gap that became a correctness gap
+
+**Done:** Priority 1 shipped in v1 and verified. `src/lib/provenance/transcript-validation.ts`
+replaces `language-check.ts` and answers a different question: not *"does this transcript match
+the language the run was configured for?"* but *"is this plausibly any language this product
+serves?"* It is **configuration-independent**, it **judges at any length**, and a rejected
+transcript is **quarantined before extraction can read it**. Migration
+`20260830100000_transcript_quarantine.sql` adds the `quarantined` status and a
+`transcript_validation` verdict column, and was **applied to the live Supabase project by the
+operator**. Verified: transcript guard 33/33, extraction 76/76, and quarantine end-to-end 29/29
+against a running server with real auth and the live database — the last of those driving the real
+route handlers, because the 2026-08-22 failure was not a guard that judged wrongly.
+
+**The four defects in the old guard are worth recording for their shape, not their detail.** Each
+is a way for a check to exist, look reasonable in review, and be incapable of firing:
+
+- **It compared two fields that agree by construction.** The mismatch check asked whether the
+  engine's reported language matched the configured one. On the run it was written for, Sarvam
+  reported `en-IN` because `en-IN` was what it was sent. **A guard that depends on the setting it
+  is meant to check cannot detect a failure in that setting.**
+- **Its second signal does not exist in production.** `language_probability` is null on every live
+  batch response. The confidence heuristic worked only on the captured fixtures, which happen to
+  carry it, so it could never have fired against a real call — and its fixture success is what made
+  it look tested.
+- **Its third signal was switched off by a size threshold.** A 120-token floor meant the one check
+  that reads the actual text refused to judge the exact 65-token clip that failed. The signal was
+  not weak: 0.000 English function words against 0.427 for the genuine English clip in the same
+  run. **A threshold that turns a check off on small samples creates a blind spot precisely where
+  the cheapest failures live.** The replacement scores the rate with a Wilson interval and rejects
+  only when the optimistic end is still below threshold — sample size now changes how much evidence
+  is demanded, never whether the question is asked.
+- **Its verdict was advisory and nothing consumed it.** The old file said so in its own header: it
+  "only ever appends a limitation for a human to weigh. It never blocks a transcript." **A verdict
+  no code path reads is not a guard**, and that is why 21 candidates were extracted from a lecture
+  nobody gave.
+
+**`scripts/e2e.mts` has been silently aborting since 2026-08-24.** It reads `ask.json.items`;
+commit `f0fc84e` rewrote `/api/courses/[id]/ask` to return `sources`. On a run where the ask
+succeeds, `ask.json.items.length` throws a `TypeError`, `main().catch` turns it into a one-line
+failure, and **17 of the suite's 64 checks never execute** — including the whole section titled
+*"24. No unverified information reaches students"*. It fails in exactly the case where the product
+works, which is why it does not read like a product bug.
+
+Nobody noticed for six days. **The documentation gap caused the correctness gap.** The 2026-08-24
+and 2026-08-26 sessions left no session log and no entry here, so nothing said the routes had been
+rewritten, nothing said the suite had not been re-run, and no reader — Shiv, Darsh, or a later
+session — had any reason to look. Two lines of test code were wrong; the reason they stayed wrong
+is that the record was dark. That is the concrete cost of skipping the write-up, and it is exactly
+the cost `TEAM.md` §0 predicts.
+
+**Also done:** the eight-day gap in the record is closed. Three reconstructed session logs
+(2026-08-22 evening, 2026-08-24, 2026-08-26), each carrying a banner saying it was written
+retroactively and flagging its inferences as inferences; four entries here; and one
+`AI-Memory/Inbox/` capture. Nothing was written to permanent `AI-Memory/`.
+
+**In progress:** A **ClassMind v2** app has been forked to
+`Projects/classmind/product/classmind-v2/` for a UI/MVP sprint. It runs on port 3200 and is
+independent of v1. **v1 is unchanged apart from the Priority 1 work above** — the fork exists so
+that UI iteration cannot destabilise the pipeline the capstone's evidence comes from. The cost is
+two codebases to keep in step, and the point at which they diverge irreconcilably has not been
+decided.
+
+The Priority 1 work is in the working tree and **not yet committed** as of this entry. Anyone
+reading `origin/master` will find `f81956f` (2026-08-26) as the newest commit and none of the guard
+in it.
+
+**Blocked:**
+
+- **Reconstruction caps at roughly 36 minutes on the request path.** Measured on 2026-08-26: 50
+  minutes needs 42 calls and ~440 s, past the `maxDuration` ceiling. **A 50-minute lecture cannot
+  be processed at all**, and most real lectures are longer than 36 minutes. Not fixable by tuning;
+  reconstruction has to move off the request path into a background job.
+- **Transcript/audio identity is unsolved.** The guard now catches a transcript that is in the
+  wrong *language*; nothing proves a transcript belongs to the *audio it is stored against*.
+  Lecture `5ced44b6-e156-4ddb-9146-14035d366620` still carries a foreign transcript, deliberately
+  left as it was on 2026-08-22 because overwriting a stored raw response is an operator decision.
+- **Duplicate-processing has never actually been verified.** Its only test asserts
+  `again.json?.skipped === true`, and `f0fc84e` removed `skipped` from the extract route's response
+  — correctly, since re-running now legitimately does work. The check has been asserting a key the
+  route does not return ever since, so "re-running the same method does not duplicate" is an
+  untested claim.
+- Unchanged from before: the walkthrough is still unrun, the college partnership has not started,
+  and the Privacy Policy and Terms state the consent gap rather than closing it — there is still no
+  consent mechanism and no age verification.
+
+**Next:** Fix the two test assertions and re-run `npm run test:e2e` end to end, before anything
+else. Until that suite completes, the student-safety checks are unverified claims. Then decide,
+in writing, between moving reconstruction to a background job and accepting the 36-minute ceiling —
+that decision has been implicit since 2026-08-26 and belongs in `decisions.md`.
+
+## 2026-08-26 — Reconstruction v1.1.0: assignment recall bought with the maximum lecture length
+
+**Done (2026-08-26, recorded here on 2026-08-30):** Reconstruction v1.1.0. Until this change,
+Layer 2's actionable pass only looked at windows around sentences Layer 1's cue lexicon had already
+flagged — which made a roughly 1,000-line Hinglish word list the **hard recall ceiling on
+assignments**. A lecturer phrasing an obligation in words the list did not contain produced no
+window, so the model was never pointed at that part of the lecture and the assignment was
+invisible, with no error and no empty state. The project's own history records this happening
+twice: two batches of lexicon terms were added only *after* a real lecture came back empty, and
+both times the symptom was indistinguishable from a lecture that genuinely had no assignment.
+
+Both passes now sweep the whole lecture, and cue hits are passed into each window as evidence
+*about* that window rather than as permission to look at it. The lexicon is a cheap, precise,
+offline prior, and a prior belongs in the prompt, not in the control flow. Actionable windows
+overlap by 60 s (180 s window, 120 s stride) because an obligation is assembled from statements up
+to a minute apart; overlapping reconstructions are merged on where their evidence sits rather than
+on what the model called the item. Version bumped to 1.1.0 so runs before and after stay
+comparable.
+
+**The cost was measured, not estimated, and it is large.** The sweep doubles the call count: 23 min
+/ 20 calls / ~200 s fits; 36 min / 30 calls / ~300 s sits at the `maxDuration` limit; 50 min and
+90 min both time out. **The ceiling drops from roughly 90 minutes to roughly 36.** Concurrency was
+deliberately left at 4 rather than raised on a guess, because the provider rate limit has not been
+measured and guessing it trades a known ceiling for silent 429 losses.
+
+Detail in
+[`sessions/2026-08-26-reconstruction-v1-1-0-cue-lexicon-as-hint.md`](sessions/2026-08-26-reconstruction-v1-1-0-cue-lexicon-as-hint.md).
+
+**In progress:** Nothing.
+
+**Blocked:** The 36-minute ceiling is now the binding constraint on real classroom use and is not
+fixable by tuning. Everything blocked on 2026-08-24 remained blocked. The end-to-end suite had been
+aborting since 2026-08-24 and this session did not run it, so that went unnoticed for two more
+days.
+
+**Next:** Move reconstruction off the request path, or accept the ceiling in writing.
+*(Neither was done. On 2026-08-30 the transcript guard took priority as the more serious
+correctness problem, and the ceiling is still open.)*
+
+## 2026-08-24 — A knowledge layer that reconstructs what a lecture meant; and, unnoticed, a broken end-to-end suite
+
+**Done (2026-08-24, recorded here on 2026-08-30):** The knowledge layer. Sentence-level extraction
+cannot represent a real assignment: in the reference lecture one assignment spans four sentences
+over 45 seconds, and the fourth is only interpretable given the third. A one-span
+`extraction_candidates` row cannot hold that shape, so the product had been emitting two unrelated
+assignments instead of one.
+
+Three layers now sit on top of the candidates, and **candidates are not replaced** — they stay the
+immutable Layer 1 record and the baseline every future extraction method is compared against, which
+is the comparison the capstone exists to make. Layer 2 (`src/lib/reasoning/`) reconstructs items
+from a bounded window around one candidate cluster: the model never sees the whole lecture, every
+quote it returns is verified verbatim against that window, and an item with an unverifiable quote
+is **discarded rather than repaired** — which makes "never invent" a property of the pipeline
+instead of a line in a prompt. Layer 3 (`src/lib/knowledge/`) stores the result, derived but never
+recomputed, so a student asking the same question twice gets the same answer.
+
+Review moved from per-sentence to per-item, and only actionable kinds are gated behind a human;
+topics and concepts publish automatically. The reasoning is asymmetric cost — a professor cannot
+review thirty topics after every lecture, a mislabelled topic wastes a moment, and a wrong deadline
+costs a grade. That is a real policy choice about who is accountable for what a student reads, and
+it has no `decisions.md` entry.
+
+Schema: `knowledge_items` + `knowledge_evidence`, many spans per item, which is the entire point of
+the second table. Migration `20260823090000_knowledge_layer.sql` was already applied to the live
+project. Detail in
+[`sessions/2026-08-24-knowledge-layer-reconstruction.md`](sessions/2026-08-24-knowledge-layer-reconstruction.md).
+
+**Verified at the time:** `next build` clean across all 24 routes, `eslint` clean. That was the
+whole list.
+
+**In progress:** Nothing.
+
+**Blocked:** The wrong-language transcript defect, reproduced live on 2026-08-22, was untouched by
+this session. Lecture `5ced44b6` still carried a foreign transcript. No consent mechanism.
+*(2026-08-30: this session also broke `scripts/e2e.mts` and the duplicate-processing check, by
+renaming two response keys without re-running the suite that reads them. Neither was visible on the
+day; both are recorded in the 2026-08-30 entry above and in this session's log. Left here as the
+forward pointer, not as a claim about what was known at the time.)*
+
+**Next:** Run the end-to-end suite against the rewritten routes.
+*(Not done here or on 2026-08-26; done on 2026-08-30, which is when the breakage was found.)*
+
+## 2026-08-22 (evening) — Deployed, given a legal surface, and given its first live Sarvam call — which reproduced the failure it was supposed to have fixed
+
+**Done (2026-08-22 evening, recorded here on 2026-08-30):** Four things, in one continuous evening.
+Full detail in
+[`sessions/2026-08-22-evening-deploy-identity-and-lecture-knowledge.md`](sessions/2026-08-22-evening-deploy-identity-and-lecture-knowledge.md).
+
+*Deployed* to `https://copy-paste-labs.vercel.app`, and found the deployment that already existed
+was broken while looking fine: a Production build marked Ready that served 404 on every path,
+because Root Directory was unset, so Vercel found no `package.json` at the repository root,
+detected no framework, and built nothing in two seconds. Region was **measured, not assumed** — the
+Supabase project is in AWS `ap-south-1` and the functions were in `iad1`; five calls to
+`/api/courses` gave a median of 1545 ms from `iad1` against 389 ms from `bom1`, so the functions
+moved to `bom1`. 67 end-to-end and 33 language checks green **against the deployed app**, not
+localhost.
+
+*A Privacy Policy and Terms of Service* at `/privacy` and `/terms`, linked from a footer on every
+page, required by Google's OAuth consent review and written from what the code actually does. Three
+disclosures a template would have missed: this system is designed **not to delete** and has no
+automatic expiry of anything; classroom recordings carry the voices of students who may be minors
+and the app has no age verification and no consent mechanism, so it says "do not use with minors
+yet"; and faculty upload recordings of other people, which the app cannot obtain consent for, so
+the obligation is put on the uploader explicitly rather than left unowned. Neither document has
+been reviewed by a lawyer and both say so.
+
+*The lecture-identity fix verified on production*, 30/30 against production and 30/30 against
+localhost, with the guard tested rather than assumed — a file named to match a fixture slug was
+uploaded through the production bundle and refused, leaving nothing stored. Blast radius measured:
+22 of 27 lectures carried a replayed transcript, 21 were the session's own test uploads, and
+exactly one was a real user lecture, which had extracted 21 candidates from a thermodynamics
+transcript. Zero of those were confirmed and zero students were enrolled — the confirmation gate
+did its job while the layer beneath it was wrong.
+
+*Teaching extraction.* A real 23-minute college lecture produced exactly one candidate, and no
+tuning would have helped: every `CandidateKind` the schema allowed was a category of **action**, so
+twenty-two minutes of teaching had nowhere to be stored even if something had detected it. The same
+lecture now yields 32 items. The teaching pass matches sentence *shapes* rather than subject words,
+and is composed with the actionable pass rather than merged into it, because the two have opposite
+error costs — an obligation should be missed rather than invented; a topic is cheap to
+over-produce and expensive to miss.
+
+**The evening's most important result is a disproof.** Making the first live Sarvam call reproduced
+the romanized-Arabic misdetection on an English lecture **with `language_code` sent explicitly as
+`en-IN`** — which disproves the fix recorded on 2026-08-21, since stating the language does not
+prevent it. All three guards stayed silent, each for a different reason, and those three reasons
+are what the 2026-08-30 rebuild was designed against.
+
+**In progress:** Nothing.
+
+**Blocked:** The wrong-language defect, now reproduced live and with every existing guard shown
+useless against it. The one real lecture carrying a foreign transcript, deliberately left alone.
+No consent mechanism behind the two documents that describe its absence. Preview deployments have
+no Supabase configuration and fail at request time, noted in `DEPLOY.md` rather than silently
+widened. The walkthrough is still unrun and the college partnership has not started.
+
+**Next:** The wrong-language guard, which by the end of the evening had a measured diagnosis and no
+fix. And this entry, which was not written for eight days.
+*(The guard was rebuilt on 2026-08-30. The record was restored the same day.)*
+
 ## 2026-08-22 — ClassMind V1 exists and its end-to-end workflow is verified; running it found two real defects
 
 **Done:** The Product Platform is built and, for the first time, actually driven. A faculty
@@ -56,10 +328,22 @@ fixture — the case the lexicon covers most heavily and has the least evidence 
 Arabic bug is **still unfixed in Lab v0**; only the product guards against it. The walkthrough is
 still unrun, the college partnership has not started, and there is no consent/data-protection
 position.
+*(2026-08-22 evening: the first live Sarvam calls were made, clearing the "no live Sarvam call"
+blocker — and the first one reproduced the Arabic misdetection. "Only the product guards against
+it" overstated what the product did: its guard was advisory and length-gated, and it stayed silent
+on the 65-token clip that failed. A Privacy Policy and Terms now exist, which state the consent gap
+rather than closing it; the app still has no consent mechanism. 2026-08-30: a romanized-Hinglish
+ASR fixture now exists — an excerpt of the real 23-minute cloud-computing lecture, at
+`fixtures/transcription/cloud-computing-hinglish.json` — and the language guard has been rebuilt so
+that it blocks rather than advises. Everything else in this paragraph is still true. Left in place
+as the record of what was true then.)*
 
 **Next:** **One real lecture, recorded by an actual lecturer, through a live Sarvam call.** Not
 more features. The product's whole claim is that a student can trust what they read, and every
 number behind that claim currently comes from three found recordings and a replay.
+*(Done 2026-08-22 evening: two 40-second clips cut from two different lectures went through live
+Sarvam against production, and a real 23-minute college lecture was processed end to end. Left in
+place as the record of what was true then.)*
 
 ## 2026-08-21 — Milestone 2's build finished on 2026-08-19; the documents caught up today
 

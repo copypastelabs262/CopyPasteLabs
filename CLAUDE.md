@@ -59,6 +59,46 @@ Full rationale and the conditions for revisiting this in `TEAM.md` §0.
 
 ---
 
+## Spending the operator's money
+
+**Never call a paid third-party API without asking first.** For ClassMind that means Sarvam —
+both of them, and the second one is the one that gets forgotten:
+
+| Path | Endpoint | Billed |
+|---|---|---|
+| Transcription (ASR) | Sarvam Batch / Saarika | per hour of audio |
+| **Reasoning** | `api.sarvam.ai/v1/chat/completions` (`sarvam-105b`) | **per token, on every window** |
+
+`TRANSCRIPTION_PROVIDER=fixture` **does not make a run free.** It replaces the ASR call only.
+`src/lib/reasoning/index.ts` has no fixture provider at all, so a single `POST
+/api/lectures/{id}/extract` runs Layer-2 reconstruction and bills real tokens for every window,
+fixture mode or not. Anything that reaches `extract`, `/ask`, or `reconstructLecture` costs money.
+So do the suites that drive them: `test:quarantine`, `test:e2e`, `test:knowledge`, `test:identity`,
+`test:languages`.
+
+Free, run these freely: `test:extraction`, `test:transcript`, `test:reconstruction`,
+`test:knowledge-plan` — pure functions over stored fixtures, no network.
+
+**The rule.** Before running anything on the paid list — a suite, a script, a `curl`, a click
+through the UI, a browser-driven walkthrough — stop and ask Shyam, in the same message, with:
+
+1. which endpoint (ASR or reasoning),
+2. how many calls you expect and over what length of transcript,
+3. why replay or a stored fixture cannot answer the question instead.
+
+Then wait for a yes. **Approval is per run, not per session** — a yes to one suite is not a yes to
+re-running it after a fix, and not a yes to a different one.
+
+**Why this exists.** On 2026-08-30 the balance went from freshly topped up to
+`402 insufficient_quota_error` inside one working day, with no lecture uploaded by the operator and
+no session record of what had been spent. Testing did it. The cost was invisible because it was
+never printed, never counted, and never asked about.
+
+Record what a paid run actually cost — calls made and over what — in the session log. An
+unmeasured cost is the one that repeats.
+
+---
+
 ## The knowledge pipeline
 
 Knowledge reaches permanent `AI-Memory/` by exactly one route:
