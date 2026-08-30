@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "session_id": "2026-08-30T2157Z-design-master-loop-observatory",
+  "project": "classmind",
+  "generated_by": "End-Session/1.0.0 (hand-authored)",
+  "generated_at": "2026-08-30T21:57:00Z",
+  "candidates": [
+    {
+      "id": "cand-001",
+      "type": "learning",
+      "title": "A position:fixed decorative background paints only the first viewport in any full-page rendering",
+      "body": "A fixed-position background layer (atmosphere, gradient, glow field) covers exactly the viewport, not the document. Live scrolling hides this, because the layer follows the viewport. But any full-page rendering — a full-page screenshot, print, some PDF exports — composites the whole document at once, and everything below the first viewport-height shows the plain body background with a hard horizontal seam where the layer stops. The seam lands at an arbitrary y (the capture viewport height), so it cuts through whatever content happens to sit there.\n\nThe fix that keeps both worlds correct: make the layer absolutely positioned over the whole document (position:absolute; inset:0 inside a position:relative body) instead of fixed. Gradients then anchor to the document top — usually the more natural read anyway — and full-page renders are continuous. If the design genuinely needs viewport-anchored light, accept that full-page evidence will lie, and say so where the evidence is judged.",
+      "confidence": "high",
+      "basis": "The design loop's gate judge flagged 'a full-width tonal band boundary cutting through step 04' at y≈900 on the landing full-page capture (2026-08-31 run, iter-2); 900px was exactly the capture viewport height. Switching .cm-atmosphere from fixed to absolute removed the seam in the iter-3 captures at all three breakpoints, confirmed by the same judge's re-review.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v3/src/app/globals.css (.cm-atmosphere)",
+        "Projects/classmind/product/classmind-v3/design-loop/runs/2026-08-31/iter-2/landing--desktop--dark.png",
+        "Projects/classmind/product/classmind-v3/design-loop/runs/2026-08-31/iter-3/landing--desktop--dark.png"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-002",
+      "type": "pattern",
+      "title": "A design loop that judges the running product from rendered pixels, with paid endpoints blocked at the harness's network layer",
+      "body": "Structure for autonomous UI improvement that stays honest and safe:\n\n1. CAPTURE: a script drives the real running app (real auth, real data) and screenshots every target route × viewport. Force-complete CSS animations at capture time or an entry animation mid-flight masquerades as a contrast bug. Save per-run manifests.\n2. CRITIQUE: independent specialist passes (UX, visual direction, materials/art direction) read the screenshots — not the source — and return structured findings (issue/severity/evidence/why/change/benefit). Separate perspectives surface conflicts a single reviewer smooths over; the orchestrator resolves them in a written decision.\n3. IMPLEMENT against the decision; VERIFY with the free offline checks (types, lint, build); RE-CAPTURE; then a hard-grading gate judge compares before vs after and must be willing to fail the iteration with named blockers. 'Different' is not 'better'.\n4. All state on disk (iteration ledger, findings, evidence) so a run is resumable and the reasoning is auditable later.\n\nThe safety property that made this runnable unattended in a codebase where page interactions can bill real money: the capture harness aborts, at the browser network layer, every request to the app's paid endpoints and to provider hosts, and records blocked attempts in the manifest. The money rule is enforced by code the loop cannot forget, and 'rendering spent nothing' becomes a verifiable claim (the manifest shows zero attempts) instead of an assumption.",
+      "confidence": "medium",
+      "basis": "Built and run to completion on 2026-08-31 in classmind-v3: four iterations, a gate FAIL with three named blockers at iter-2 (all real defects — a card ending without an action, the fixed-position seam, truncation), a PASS at iter-3 after fixes, two further pixel-level regression findings fixed at iter-4. Zero blocked network attempts across all runs. Confidence medium because the pattern has run on exactly one project.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v3/design-loop/",
+        "Projects/classmind/product/classmind-v3/design-loop/state.json",
+        "Projects/classmind/product/classmind-v3/design-loop/runs/2026-08-31/findings/"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-003",
+      "type": "decision",
+      "title": "ClassMind V3 commits to a single dark-first identity ('The Observatory'); the light/dark duality is retired",
+      "body": "V3's visual identity is one designed look: deep charcoal-navy ground with two capped ambient glows, an L2–L5 material hierarchy faking glass over the known backdrop (exactly two backdrop-filters app-wide), Fraunces/Inter/JetBrains Mono as three voices, lamplight amber reserved for the trace motif (timestamps, attention edges, playhead). prefers-color-scheme is no longer honoured; prefers-reduced-motion and contrast floors are.\n\nWhy: the previous duality had produced two mediocre themes — a generic light one and a dark one that was an undesigned inversion — and every element of the target identity (glass, depth, controlled light) only reads on a dark ground. Maintaining two designed themes doubles every future design decision for a three-founder team.\n\nCost, stated: users who prefer light UIs lose the choice. If long-form transcript reading suffers on dark, the agreed path is a designed 'paper mode' as a reading preference inside the transcript surface — not a return to a full second theme. The role-named token architecture keeps that cheap.",
+      "confidence": "high",
+      "basis": "Decided during the 2026-08-31 design run after the visual-direction specialist recommended committing (and the glass specialist's two-lighting alternative was considered and declined in the recorded decision). The full reasoning and the conflict resolution are in design-loop/runs/2026-08-31/findings/decision-iter-1.md; the before-evidence showing both prior themes is in runs/2026-08-31/before/.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v3/design-loop/runs/2026-08-31/findings/decision-iter-1.md",
+        "Projects/classmind/product/classmind-v3/src/app/globals.css"
+      ],
+      "proposed_scope": "project",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-004",
+      "type": "learning",
+      "title": "Stored provider errors are evidence, not copy: translate at the render boundary, keep the payload one disclosure away",
+      "body": "Storing the raw provider error verbatim is correct — it is the evidence. Rendering it verbatim is a separate decision, and the wrong one: a JSON payload as card body copy leaks vendor and billing internals to a user who can act on none of it, reads as a broken product, and (being one unbroken token-heavy string) breaks small layouts.\n\nThe boundary that works: a single render-side translator maps known error shapes to a human sentence that says what happened, what survived, and what happens next ('Transcription is paused — your recording is stored safely…'), extracts a short support ref (a truncated request id — the full one stays in the payload), and hands the untouched raw string to a collapsed 'Technical details' disclosure in the mono voice. Strings that are already human sentences pass through untranslated, so the same code path serves stored validation verdicts.\n\nTwo traps found by review, not foresight: (1) a call site that previously printed the raw error 'only when it differs from the note' starts double-printing the moment the note becomes friendly — every render site of the stored error must go through the translator; (2) the friendly sentence must keep one visual temperature everywhere — the same failure rendered as calm gray on one screen and three lines of red prose on another reads as two different severities.",
+      "confidence": "high",
+      "basis": "The 2026-08-31 before-capture showed the Sarvam 402 payload (with request_id) rendered twice as body copy on the faculty home and overflowing the card at 390px; all three specialist critiques independently ranked it the top defect. Both traps then actually occurred during the fix: the course page double-printed friendly+raw at iter-1 (caught by my own regression check) and rendered the friendly sentence as red prose at iter-3 (caught by the gate judge).",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v3/src/app/_components/ui/index.tsx (friendlyLectureError, TechnicalDisclosure)",
+        "Projects/classmind/product/classmind-v3/design-loop/runs/2026-08-31/before/home-faculty--desktop--light.png",
+        "Projects/classmind/product/classmind-v3/design-loop/runs/2026-08-31/iter-4/course-faculty--desktop--dark.png"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    }
+  ]
+}
