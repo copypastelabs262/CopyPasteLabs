@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import FacultyWorkspace from "./FacultyWorkspace";
 import StudentCourseView from "./StudentCourseView";
-import { Button, Card, Page, PageHeader, Skeleton } from "@/app/_components/ui";
+import { Button, Card, Page, PageHeader, Skeleton, termLabel } from "@/app/_components/ui";
 import { AlertIcon, CheckIcon, KeyIcon } from "@/app/_components/ui/icons";
 
 export interface CourseLecture {
