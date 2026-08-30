@@ -16,6 +16,7 @@ import {
   friendlyLectureError,
   lectureStatusLabel,
   lectureStatusTone,
+  termLabel,
 } from "@/app/_components/ui";
 import {
   AudioIcon,
