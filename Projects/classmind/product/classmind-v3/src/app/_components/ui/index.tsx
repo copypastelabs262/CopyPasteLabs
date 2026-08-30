@@ -370,7 +370,7 @@ export function Field({
 }
 
 const CONTROL_CLASS =
-  "w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[15px] text-ink transition-colors " +
+  "w-full rounded-xl border border-line bg-surface-sunken/70 px-3.5 py-2.5 text-[15px] text-ink transition-colors " +
   "placeholder:text-ink-faint hover:border-ink-faint/60 focus:border-accent disabled:opacity-50 " +
   "aria-[invalid=true]:border-danger";
 
