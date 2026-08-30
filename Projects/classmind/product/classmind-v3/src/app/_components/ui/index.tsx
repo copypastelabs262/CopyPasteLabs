@@ -592,7 +592,7 @@ export function Dialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="motion-rise max-h-[90dvh] w-full overflow-y-auto rounded-t-3xl border border-line bg-surface-raised p-6 shadow-lift outline-none sm:max-w-lg sm:rounded-2xl"
+        className="glass-overlay motion-rise max-h-[90dvh] w-full overflow-y-auto rounded-t-3xl p-6 outline-none sm:max-w-lg sm:rounded-2xl"
       >
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
