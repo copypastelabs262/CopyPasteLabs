@@ -703,7 +703,10 @@ export interface FriendlyError {
 export function friendlyLectureError(raw: string | null | undefined): FriendlyError {
   if (!raw) return { message: "Processing failed.", ref: null, raw: null };
 
-  const ref = raw.match(/request_id"?\s*[:=]\s*"?([A-Za-z0-9_-]{6,})/)?.[1]?.slice(0, 24) ?? null;
+  // Short on purpose: the ref is for a human to read to support, and the full
+  // id is always in the raw payload below it. A 40-character token wraps
+  // mid-string on a phone, which is worse than a shorter handle.
+  const ref = raw.match(/request_id"?\s*[:=]\s*"?([A-Za-z0-9_-]{6,})/)?.[1]?.slice(0, 12) ?? null;
   const lower = raw.toLowerCase();
 
   if (lower.includes("insufficient_quota") || lower.includes("no credits")) {
