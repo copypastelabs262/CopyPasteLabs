@@ -576,7 +576,9 @@ export function Dialog({
       // would hand a fixed, inset-0 box a top margin, which pushes the backdrop
       // down the screen and shortens it. Neutralising the margin means where a
       // Dialog is declared in the tree stops being a layout decision.
-      className="motion-fade fixed inset-0 z-50 m-0! flex items-end justify-center bg-black/40 backdrop-blur-[2px] sm:items-center sm:p-6"
+      // Scrim is opacity-only — blur belongs to the panel (L4), never to a
+      // full-viewport layer.
+      className="motion-fade fixed inset-0 z-50 m-0! flex items-end justify-center bg-black/60 sm:items-center sm:p-6"
       // mousedown, not click: a click fires on the element the pointer is
       // released over, so selecting text inside the panel and releasing on the
       // backdrop would close the dialog and discard what was typed.
