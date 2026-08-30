@@ -239,26 +239,34 @@ export function EmptyState({
   // language of an unfinished mock, and a new account sees more empty states
   // than full ones — they should read as a calm system awaiting input, not as
   // a missing feature, and they should never dominate the screen they sit on.
+  // The action sits beside the text only when there is room for both; on a
+  // phone it drops below, because a fixed-width button beside a fluid column
+  // crushes the sentence into a ten-character ribbon.
   return (
-    <div className="glass-2 flex items-center gap-4 rounded-2xl px-5 py-5 text-left sm:px-6">
-      {icon ? (
-        <div
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink-soft"
-          style={{
-            background: "rgba(148,163,184,0.09)",
-            boxShadow: "0 0 24px -6px rgba(94,141,255,0.14)",
-          }}
-        >
-          {icon}
-        </div>
-      ) : null}
-      <div className="min-w-0 flex-1">
-        <p className="text-[15px] leading-snug font-medium tracking-[-0.008em] text-ink">{title}</p>
-        {description ? (
-          <p className="mt-1 max-w-xl text-sm leading-relaxed text-ink-soft">{description}</p>
+    <div className="glass-2 rounded-2xl px-5 py-5 text-left sm:px-6">
+      <div className="flex items-center gap-4">
+        {icon ? (
+          <div
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink-soft"
+            style={{
+              background: "rgba(148,163,184,0.09)",
+              boxShadow: "0 0 24px -6px rgba(94,141,255,0.14)",
+            }}
+          >
+            {icon}
+          </div>
         ) : null}
+        <div className="min-w-0 flex-1">
+          <p className="text-[15px] leading-snug font-medium tracking-[-0.008em] text-ink">
+            {title}
+          </p>
+          {description ? (
+            <p className="mt-1 max-w-xl text-sm leading-relaxed text-ink-soft">{description}</p>
+          ) : null}
+        </div>
+        {action ? <div className="hidden shrink-0 sm:block">{action}</div> : null}
       </div>
-      {action ? <div className="shrink-0">{action}</div> : null}
+      {action ? <div className={cx("mt-4 sm:hidden", icon && "pl-14")}>{action}</div> : null}
     </div>
   );
 }
