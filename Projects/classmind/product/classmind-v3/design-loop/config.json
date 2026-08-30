@@ -1,0 +1,31 @@
+{
+  "baseUrl": "http://localhost:3400",
+  "colorScheme": "light",
+  "viewports": {
+    "desktop": { "width": 1440, "height": 900 },
+    "tablet": { "width": 820, "height": 1180 },
+    "mobile": { "width": 390, "height": 844 }
+  },
+  "accounts": {
+    "student": { "email": "student.test@classmind.local", "password": "ClassMindTest!2026" },
+    "faculty": { "email": "faculty.test@classmind.local", "password": "ClassMindTest!2026" }
+  },
+  "targets": [
+    { "name": "landing", "path": "/", "role": "anon" },
+    { "name": "signin", "path": "/signin", "role": "anon" },
+    { "name": "home-student", "path": "/courses", "role": "student" },
+    { "name": "home-faculty", "path": "/courses", "role": "faculty" },
+    {
+      "name": "course-student",
+      "path": "/courses",
+      "role": "student",
+      "clickFirst": "main a[href^='/courses/']"
+    },
+    {
+      "name": "course-faculty",
+      "path": "/courses",
+      "role": "faculty",
+      "clickFirst": "main a[href^='/courses/']"
+    }
+  ]
+}
