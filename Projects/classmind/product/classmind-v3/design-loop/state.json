@@ -1,0 +1,25 @@
+{
+  "run": "2026-08-31",
+  "target": {
+    "name": "signed-in-home-flow",
+    "screens": ["landing", "signin", "home-student", "home-faculty"],
+    "regressionScreens": ["course-student", "course-faculty"],
+    "why": "The signed-in home is the screen every user sees every session and the one that answers 'what should I do next'. It currently reads as a generic SaaS dashboard, renders with real local data for both roles, and shares its shell and tokens with every other screen, so identity work here compounds. Course views are captured as regression evidence only — they inherit tokens but are not compositionally redesigned this run."
+  },
+  "safetyGuard": { "maxMajorIterations": 5 },
+  "iterations": [
+    {
+      "n": 0,
+      "label": "before",
+      "capturedAt": "2026-08-31",
+      "evidence": "runs/2026-08-31/before/",
+      "verdict": "IMPROVE",
+      "notes": [
+        "Faculty home renders a raw Sarvam 402 JSON error string, twice, as body text.",
+        "Visual identity is generic: white cards on grey, default blue, no focal point, no depth.",
+        "Student home was an empty state because student.test was unenrolled; enrolled into CC101 (free local write) so the screen renders with real data.",
+        "Money guard verified: zero blocked paid-endpoint attempts during capture (see manifests)."
+      ]
+    }
+  ]
+}

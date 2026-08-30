@@ -1,44 +1,8 @@
 {
   "baseUrl": "http://localhost:3400",
   "scheme": "light",
-  "capturedAt": "2026-08-30T20:30:30.575Z",
+  "capturedAt": "2026-08-30T20:33:47.525Z",
   "shots": [
-    {
-      "target": "landing",
-      "viewport": "desktop",
-      "file": "landing--desktop--light.png",
-      "finalUrl": "http://localhost:3400/"
-    },
-    {
-      "target": "landing",
-      "viewport": "tablet",
-      "file": "landing--tablet--light.png",
-      "finalUrl": "http://localhost:3400/"
-    },
-    {
-      "target": "landing",
-      "viewport": "mobile",
-      "file": "landing--mobile--light.png",
-      "finalUrl": "http://localhost:3400/"
-    },
-    {
-      "target": "signin",
-      "viewport": "desktop",
-      "file": "signin--desktop--light.png",
-      "finalUrl": "http://localhost:3400/signin"
-    },
-    {
-      "target": "signin",
-      "viewport": "tablet",
-      "file": "signin--tablet--light.png",
-      "finalUrl": "http://localhost:3400/signin"
-    },
-    {
-      "target": "signin",
-      "viewport": "mobile",
-      "file": "signin--mobile--light.png",
-      "finalUrl": "http://localhost:3400/signin"
-    },
     {
       "target": "home-student",
       "viewport": "desktop",
@@ -58,40 +22,40 @@
       "finalUrl": "http://localhost:3400/courses"
     },
     {
-      "target": "home-faculty",
+      "target": "course-student",
       "viewport": "desktop",
-      "file": "home-faculty--desktop--light.png",
-      "finalUrl": "http://localhost:3400/courses"
+      "file": "course-student--desktop--light.png",
+      "finalUrl": "http://localhost:3400/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975"
     },
     {
-      "target": "home-faculty",
+      "target": "course-student",
       "viewport": "tablet",
-      "file": "home-faculty--tablet--light.png",
-      "finalUrl": "http://localhost:3400/courses"
+      "file": "course-student--tablet--light.png",
+      "finalUrl": "http://localhost:3400/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975"
     },
     {
-      "target": "home-faculty",
+      "target": "course-student",
       "viewport": "mobile",
-      "file": "home-faculty--mobile--light.png",
-      "finalUrl": "http://localhost:3400/courses"
+      "file": "course-student--mobile--light.png",
+      "finalUrl": "http://localhost:3400/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975"
     },
     {
       "target": "course-faculty",
       "viewport": "desktop",
       "file": "course-faculty--desktop--light.png",
-      "finalUrl": "http://localhost:3400/courses"
+      "finalUrl": "http://localhost:3400/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975"
     },
     {
       "target": "course-faculty",
       "viewport": "tablet",
       "file": "course-faculty--tablet--light.png",
-      "finalUrl": "http://localhost:3400/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975/lectures/03f38b9e-9566-47dc-96d5-1cfcc78baf6f"
+      "finalUrl": "http://localhost:3400/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975"
     },
     {
       "target": "course-faculty",
       "viewport": "mobile",
       "file": "course-faculty--mobile--light.png",
-      "finalUrl": "http://localhost:3400/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975/lectures/03f38b9e-9566-47dc-96d5-1cfcc78baf6f"
+      "finalUrl": "http://localhost:3400/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975"
     }
   ],
   "blocked": []
