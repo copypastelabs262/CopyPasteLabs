@@ -18,8 +18,44 @@
         "Faculty home renders a raw Sarvam 402 JSON error string, twice, as body text.",
         "Visual identity is generic: white cards on grey, default blue, no focal point, no depth.",
         "Student home was an empty state because student.test was unenrolled; enrolled into CC101 (free local write) so the screen renders with real data.",
-        "Money guard verified: zero blocked paid-endpoint attempts during capture (see manifests)."
+        "Money guard verified: zero blocked paid-endpoint attempts during capture (see manifests).",
+        "Specialist reports preserved in runs/2026-08-31/findings/."
       ]
+    },
+    {
+      "n": 1,
+      "label": "iter-1",
+      "capturedAt": "2026-08-31",
+      "evidence": "runs/2026-08-31/iter-1/",
+      "decision": "runs/2026-08-31/findings/decision-iter-1.md",
+      "changes": [
+        "Committed dark identity 'The Observatory': token layer rewritten, L0 atmosphere, L1-L5 material classes (two backdrop-filters app-wide).",
+        "Fraunces/Inter/JetBrains Mono via next/font; mono eyebrows over serif display titles.",
+        "friendlyLectureError + TechnicalDisclosure: raw payloads never render as body copy.",
+        "PipelineTrack: five-segment stage narrative with 'failed here' pinpointing.",
+        "TeacherHome: hero band, amber Attention Beacon (L5), de-duplicated recents, courses rail (12-col asymmetric grid).",
+        "StudentHome: retitled 'Catch up', luminous Ask door panel (link-only, never a live input), compact empty states with forward actions.",
+        "Landing: Trace vignette (answer -> amber 42:17 chip -> waveform with lit playhead), numbered spine.",
+        "Signin restyled onto the token system; dev-tools badge hidden via devIndicators:false."
+      ],
+      "verify": "tsc PASS, eslint PASS",
+      "verdict": "IMPROVE",
+      "notes": [
+        "Course page (regression screen) double-printed the failure: friendly note plus raw JSON from FacultyWorkspace's own error line.",
+        "Landing quote highlight used cm-flash, which rests transparent — invisible."
+      ]
+    },
+    {
+      "n": 2,
+      "label": "iter-2",
+      "capturedAt": "2026-08-31",
+      "evidence": "runs/2026-08-31/iter-2/",
+      "changes": [
+        "FacultyWorkspace: raw payload collapsed into TechnicalDisclosure; human-sounding stall reasons still print as text.",
+        "Landing quote highlight is a static amber trace tint."
+      ],
+      "verify": "tsc PASS, eslint PASS",
+      "verdict": "pending gate review"
     }
   ]
 }
