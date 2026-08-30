@@ -200,27 +200,33 @@ export default function FacultyWorkspace({
                         </p>
                       ) : null}
 
-                      {/* The sentence above already carries the provider message
-                          for a failure, so this only fires when the row holds
-                          something that sentence did not say. Printing both
-                          unconditionally is the same line twice.
-
-                          Coloured by the row's own tone, not always red. Since
-                          publication became conditional, `error_message` on a
-                          `transcribed` lecture is the reason it was not
-                          published -- a stall the lecturer can clear, not a
-                          failure -- and printing it in the failure colour told
-                          them something worse than what happened. */}
-                      {l.error_message && l.error_message !== note ? (
-                        <p
-                          className={cx(
-                            "mt-1.5 text-sm leading-relaxed",
-                            tone === "danger" ? "text-danger" : "text-ink-soft",
-                          )}
-                        >
-                          {l.error_message}
-                        </p>
-                      ) : null}
+                      {/* The sentence above is the human reading of the row's
+                          error. What remains splits by voice: a stored message
+                          that is itself a human sentence (the reason a
+                          transcribed lecture was not published, say) prints as
+                          text when the sentence above did not already say it;
+                          a raw provider payload never prints as body copy --
+                          it collapses into the technical disclosure, mono,
+                          one click away, with the request id extracted. */}
+                      {(() => {
+                        if (!l.error_message) return null;
+                        const err = friendlyLectureError(l.error_message);
+                        return (
+                          <>
+                            {err.raw === null && err.message !== note ? (
+                              <p
+                                className={cx(
+                                  "mt-1.5 text-sm leading-relaxed",
+                                  tone === "danger" ? "text-danger" : "text-ink-soft",
+                                )}
+                              >
+                                {err.message}
+                              </p>
+                            ) : null}
+                            <TechnicalDisclosure error={err} />
+                          </>
+                        );
+                      })()}
 
                       {/* Renders nothing for a lecture that is already done, so the
                           list keeps polling only for the one that is still moving. */}
