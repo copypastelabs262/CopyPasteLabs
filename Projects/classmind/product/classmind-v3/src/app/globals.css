@@ -132,11 +132,15 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* L0 — the atmosphere. A fixed element rather than a body background so
-   scrolling never repaints the gradient, and pointer-events: none so it can
-   never eat a click. The grain kills gradient banding on cheap panels. */
+/* L0 — the atmosphere. Absolutely positioned over the WHOLE document (body is
+   relative), not fixed: a fixed layer only paints the first viewport in any
+   full-page rendering — tall screenshots, print — and the page below it shows
+   a seam where the atmosphere stops. Anchoring the glows to the document top
+   also reads naturally: the light lives where the page begins.
+   pointer-events: none so it can never eat a click; the grain kills gradient
+   banding on cheap panels. */
 .cm-atmosphere {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: -1;
   pointer-events: none;
