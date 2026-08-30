@@ -689,6 +689,15 @@ export function lectureStatusNote(status: string, errorMessage?: string | null):
   }
 }
 
+// A course's term is free text and often a bare numeral ("7"). A naked number
+// in metadata reads as a rendering bug, so the label is added at the render
+// boundary — the stored value stays exactly what the teacher typed.
+export function termLabel(term: string | null | undefined): string | null {
+  const t = term?.trim();
+  if (!t) return null;
+  return /^\d{1,2}$/.test(t) ? `Term ${t}` : t;
+}
+
 /* ---------------------------------------------------------------------------
    Failure, in human words.
 
