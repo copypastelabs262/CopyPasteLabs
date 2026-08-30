@@ -68,12 +68,12 @@ export function PageHeader({
   return (
     <header className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between sm:gap-10">
       <div className="min-w-0">
-        {eyebrow ? <p className="text-sm font-medium text-ink-soft">{eyebrow}</p> : null}
-        <h1 className="mt-1.5 text-[2rem] leading-[1.1] font-semibold tracking-[-0.022em] text-balance text-ink sm:text-[2.5rem]">
+        {eyebrow ? <p className="eyebrow-mono">{eyebrow}</p> : null}
+        <h1 className="font-display mt-2 text-[2.35rem] leading-[1.06] font-medium tracking-[-0.015em] text-balance text-ink sm:text-[3rem]">
           {title}
         </h1>
         {subtitle ? (
-          <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-ink-soft">{subtitle}</p>
+          <p className="mt-3.5 max-w-xl text-[15px] leading-relaxed text-ink-soft">{subtitle}</p>
         ) : null}
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
