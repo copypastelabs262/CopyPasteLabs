@@ -215,12 +215,7 @@ export default function FacultyWorkspace({
                         return (
                           <>
                             {err.raw === null && err.message !== note ? (
-                              <p
-                                className={cx(
-                                  "mt-1.5 text-sm leading-relaxed",
-                                  tone === "danger" ? "text-danger" : "text-ink-soft",
-                                )}
-                              >
+                              <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">
                                 {err.message}
                               </p>
                             ) : null}
