@@ -161,8 +161,11 @@ export type ButtonSize = "sm" | "md" | "lg";
 // still a real action; `ghost` is for actions that are noise until you want
 // them; `danger` is reserved for irreversible.
 const BUTTON_TONE: Record<ButtonTone, string> = {
-  primary: "bg-accent text-accent-ink shadow-soft hover:bg-accent-strong",
-  secondary: "border border-line bg-surface-raised text-ink hover:bg-surface-sunken",
+  // The primary action is allowed to emit light — it may be the screen's one
+  // glowing element, so its glow stays inside the app-wide 0.16 alpha budget.
+  primary:
+    "bg-accent-fill text-accent-ink shadow-[0_0_0_1px_rgba(94,141,255,0.25),0_10px_30px_-10px_rgba(94,141,255,0.16)] hover:bg-accent-strong",
+  secondary: "glass-3 text-ink",
   ghost: "text-ink-soft hover:bg-surface-sunken hover:text-ink",
   danger: "bg-danger text-danger-ink hover:bg-danger-strong",
 };
