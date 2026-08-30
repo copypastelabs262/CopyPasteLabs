@@ -135,12 +135,12 @@ export function Card({
   return (
     <div
       className={cx(
-        "rounded-2xl border border-line bg-surface-raised",
+        "rounded-2xl",
+        // L2 at rest; interactive cards move up one material level and answer
+        // hover with light. focus-within so a card reached by keyboard shows
+        // the same "this one" a mouse gets for free.
+        interactive ? "glass-3 focus-within:border-accent" : "glass-2",
         padded && "p-5 sm:p-6",
-        // focus-within, not just hover: a card whose link is reached by keyboard
-        // has to show the same "this one" that a mouse gets for free.
-        interactive &&
-          "transition-[box-shadow,border-color] duration-200 hover:border-ink-faint/40 hover:shadow-soft focus-within:border-accent",
         className,
       )}
     >
