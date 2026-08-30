@@ -77,7 +77,10 @@ export default async function Home() {
               <p className="text-sm leading-relaxed text-ink-soft">
                 Prepare the virtualization case study before Friday&rsquo;s class &mdash; your
                 lecturer called it{" "}
-                <span className="cm-flash rounded px-0.5 text-ink">
+                <span
+                  className="rounded px-1 text-ink"
+                  style={{ background: "rgba(232,177,92,0.14)" }}
+                >
                   &ldquo;the one thing I will assume you have read.&rdquo;
                 </span>
               </p>
