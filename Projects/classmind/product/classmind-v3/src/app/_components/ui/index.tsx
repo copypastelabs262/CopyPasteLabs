@@ -749,7 +749,7 @@ export function TechnicalDisclosure({ error }: { error: FriendlyError }) {
   return (
     <details className="mt-3 text-[13px]">
       <summary className="cursor-pointer text-ink-faint transition-colors hover:text-ink-soft">
-        Technical details{error.ref ? <> &middot; ref <code className="chip-mono">{error.ref}</code></> : null}
+        Technical details{error.ref ? <> &middot; ref <code className="chip-mono whitespace-nowrap">{error.ref}</code></> : null}
       </summary>
       {error.raw ? (
         <pre className="mt-2 max-h-40 overflow-auto rounded-lg bg-surface-sunken/80 p-3 font-mono text-xs leading-relaxed break-all whitespace-pre-wrap text-ink-faint">
