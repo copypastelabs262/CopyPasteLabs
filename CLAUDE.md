@@ -61,6 +61,31 @@ Full rationale and the conditions for revisiting this in `TEAM.md` §0.
 
 ## Spending the operator's money
 
+### LOCKED RULE — Sarvam is transcription only
+
+Decided 2026-08-30, by the operator, permanently.
+
+> **Sarvam converts newly uploaded audio into a transcript. Nothing else.** Once a transcript is
+> successfully stored, no processing step may call Sarvam again for that lecture unless the operator
+> explicitly re-transcribes or re-uploads it.
+
+Forbidden on Sarvam, without exception: knowledge extraction · assignment detection · contextual
+reconstruction · lecture consolidation · reference resolution · student Q&A · answer generation or
+styling · any experiment over an already-stored transcript.
+
+All of those go through the reasoning-provider abstraction. The Sarvam *reasoning* adapter stays in
+the tree as a disabled adapter for future evaluation only: **no silent fallback to it, and no paid
+Sarvam reasoning by default.** A missing reasoning provider is an error, never a reason to reach
+for Sarvam.
+
+The cost of this rule, recorded so nobody rediscovers it as a surprise: `sarvam-105b` is measurably
+the *best* model available for romanized Hinglish (56.1 vs Gemini Flash's 54.1 on Indi-RomCoM at
+75% code-mixing). The rule trades ~2 points of quality for the ability to iterate at all. That is
+the right trade while cost is the binding constraint, and the provider abstraction is what lets it
+be revisited when it stops being.
+
+---
+
 **Never call a paid third-party API without asking first.** For ClassMind that means Sarvam —
 both of them, and the second one is the one that gets forgotten:
 
