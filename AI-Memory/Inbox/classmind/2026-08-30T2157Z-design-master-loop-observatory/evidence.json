@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "session_id": "2026-08-30T2157Z-design-master-loop-observatory",
+  "project": "classmind",
+  "secondary_projects": [],
+  "generated_by": { "producer": "claude", "tool": "End-Session/1.0.0 (hand-authored)" },
+  "generated_at": "2026-08-30T21:57:00Z",
+  "repository": { "branch": "master", "upstream": "origin/master" },
+  "session_boundary": {
+    "base": "9948172",
+    "head": "see final session-capture commit",
+    "base_strategy": "last_intentional_commit — the newest non-Auto-save commit at session start ('Reasoning becomes provider-independent…'). No prior entry recorded a head SHA usable as base."
+  },
+  "context_completeness": "full",
+  "duration_known": false,
+  "duration_minutes": null,
+  "duration_source": "unavailable",
+  "working_tree_note": "scripts/autosave.sh committed continuously during the session (Auto-save: prefixed commits). The FIRST auto-save of this session also swept in files left uncommitted by earlier sessions (classmind-v1 transcript-guard work, the classmind-v3 copy itself, the 2026-08-30T1108Z inbox entry). The commit range base..head therefore contains work from more than this session; this session's own changes are confined to Projects/classmind/product/classmind-v3/**, Projects/classmind/.knowledge/{sessions,progress.md}, and this Inbox entry.",
+  "changes_summary": {
+    "created": [
+      "Projects/classmind/product/classmind-v3/design-loop/ (capture.mts, verify.mts, config.json, state.json, README.md, .gitignore, runs/2026-08-31/** — 63 screenshots in 5 labelled sets, findings/, manifests, verify results)"
+    ],
+    "modified": [
+      "Projects/classmind/product/classmind-v3/package.json (name classmind-v3, port 3400, design:* scripts)",
+      "Projects/classmind/product/classmind-v3/next.config.ts (devIndicators: false)",
+      "Projects/classmind/product/classmind-v3/src/app/globals.css (token layer rewritten: The Observatory)",
+      "Projects/classmind/product/classmind-v3/src/app/layout.tsx (fonts, atmosphere, L1 chrome)",
+      "Projects/classmind/product/classmind-v3/src/app/page.tsx (landing: Trace vignette, numbered spine)",
+      "Projects/classmind/product/classmind-v3/src/app/signin/page.tsx (restyled onto token system)",
+      "Projects/classmind/product/classmind-v3/src/app/_components/ui/index.tsx (materials, friendlyLectureError, TechnicalDisclosure, PipelineTrack, termLabel, EmptyState, Dialog, buttons, pills)",
+      "Projects/classmind/product/classmind-v3/src/app/_components/TeacherHome.tsx (hero band, Attention Beacon, de-dup, rail)",
+      "Projects/classmind/product/classmind-v3/src/app/_components/StudentHome.tsx (Catch up, Ask door panel, compact empties)",
+      "Projects/classmind/product/classmind-v3/src/app/_components/FacultyWorkspace.tsx (error voice + disclosure)",
+      "Projects/classmind/product/classmind-v3/src/app/_components/AskPanel.tsx (state-communicating submit)",
+      "Projects/classmind/product/classmind-v3/src/app/_components/CourseClient.tsx (termLabel in subtitle)",
+      "Projects/classmind/.knowledge/progress.md (entry prepended)"
+    ],
+    "session_docs": [
+      "Projects/classmind/.knowledge/sessions/2026-08-31-design-master-loop-and-the-observatory-redesign.md",
+      "AI-Memory/Inbox/classmind/2026-08-30T2157Z-design-master-loop-observatory/"
+    ]
+  },
+  "verification": {
+    "typescript": "pass",
+    "eslint": "pass",
+    "next_build": "pass (26 routes; runs recorded in design-loop/runs/2026-08-31/verify--final.json and verify--final-2.json)",
+    "paid_endpoints": "zero requests — enforced and logged by the capture harness's network guard; manifests in design-loop/runs/2026-08-31/*/manifest--*.json",
+    "classmind_v2": "untouched — no path under Projects/classmind/product/classmind-v2/ modified this session"
+  },
+  "diff": {
+    "stored": false,
+    "omitted_reason": "session spans many Auto-save commits mixed with pre-session sweep; per-file summary above, regenerate against git",
+    "regenerate_command": "git diff 9948172..HEAD -- Projects/classmind/product/classmind-v3"
+  }
+}
