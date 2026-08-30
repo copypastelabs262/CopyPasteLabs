@@ -176,10 +176,16 @@ export default function AskPanel({
         />
         {/* One dominant action, and it is full width where a thumb has to reach
             it. `size="lg"` matches the input's height so the pair reads as one
-            control on a wide screen. */}
+            control on a wide screen.
+
+            Quiet until there is a question. A half-faded primary is ambiguous
+            between disabled and broken; a secondary that turns into the
+            glowing primary the moment text exists says what the state is and
+            what typing buys — and the disabled guard stays, because an empty
+            ask is still a paid call refused. */}
         <Button
           type="submit"
-          tone="primary"
+          tone={q.trim() ? "primary" : "secondary"}
           size="lg"
           disabled={asking || !q.trim()}
           className="w-full sm:w-auto"
