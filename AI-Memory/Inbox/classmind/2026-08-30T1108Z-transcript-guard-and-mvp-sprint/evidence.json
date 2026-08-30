@@ -1,0 +1,673 @@
+{
+  "schema_version": 1,
+  "generated_by": "hand-authored, following End-Session/1.0.0 sections 5.2 and 5.3",
+  "generated_at": "2026-08-30T11:08:26Z",
+  "producer": "claude-opus-5 (Claude Code)",
+  "author": "hello@blackcanvasfilms.in",
+  "session": {
+    "id": "2026-08-30T1108Z-transcript-guard-and-mvp-sprint",
+    "topic_slug": "transcript-guard-and-mvp-sprint",
+    "started_at": "2026-08-30T08:52:17Z",
+    "ended_at": "2026-08-30T11:08:26Z",
+    "duration_known": true,
+    "duration_minutes": 136,
+    "duration_source": "session_start_marker",
+    "context_completeness": "partial",
+    "operator_note": "The commit range recorded here contains NO commits made during this session. It spans 2026-08-22 to 2026-08-26 and is the work the record had gone dark on; this session read those commits and reconstructed session logs and progress.md entries from them, which is why they are the evidence for this entry. This session's own engineering work -- the transcript guard, the quarantine state, the two new test suites, and the ClassMind v2 fork -- is UNCOMMITTED and appears under working_tree, not under commits. Context is partial: the transcript-guard build and its 33/33, 76/76 and 29/29 test results happened earlier in the day and outside this capture's conversation; those numbers are recorded as reported by the operator, and only the code they refer to was read here."
+  },
+  "project": {
+    "primary": "classmind",
+    "primary_detection": "changed_path_attribution",
+    "secondary": [],
+    "secondary_reason": null
+  },
+  "repo": {
+    "name": "CopyPasteLabs",
+    "remote": "https://github.com/copypastelabs262/CopyPasteLabs.git",
+    "branch": "master",
+    "upstream": "origin/master",
+    "ahead": 0,
+    "behind": 0
+  },
+  "session_boundary": {
+    "base": "0012d72466cea1accc62036c33ac3cd4c0b4ea7e",
+    "base_short": "0012d72",
+    "base_strategy": "previous_inbox_entry",
+    "base_source": "AI-Memory/Inbox/classmind/2026-08-22T0930Z-classmind-v1-build-and-verification/evidence.json -> session_boundary.head",
+    "head": "f81956fbedcda8a7c4b729395dfab8f72a27ab23",
+    "head_short": "f81956f"
+  },
+  "commits": [
+    {
+      "sha": "f81956fbedcda8a7c4b729395dfab8f72a27ab23",
+      "short": "f81956f",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-26T13:27:22+05:30",
+      "subject": "Reconstruction v1.1.0: the cue lexicon is a hint, not a gate",
+      "body": "Supersedes the \"Auto-save: reconstruct.ts\" commit, which carried this change\nwith no explanation.\n\nTHE BUG THIS FIXES IS A SILENT ONE. Until now the actionable pass only ran on\nwindows around sentences Layer 1's cue lexicon had already flagged:\n\n    const actionable = candidates.filter(c => categoryOf(c.kind) === \"actionable\");\n    const clusters = clusterByTime(actionable);   // Layer 2 only looked HERE\n\nThat made a 1,000-line Hinglish word list the hard recall ceiling on\nassignments. A lecturer phrasing an obligation in words the list did not\ncontain produced no window, so the model was never pointed at that part of the\nlecture -- and the assignment was invisible, with no error, no warning and no\nempty state for anyone to notice. rules.ts records this happening twice: the\n\"research paper / case study / literature survey\" terms and the entire\nimperative lexicon were both added AFTER a real lecture came back empty.\n\nBoth passes now sweep the whole lecture. Cue hits are passed into each window\nas evidence ABOUT that window instead of as permission to look at it -- which\nis what the lexicon is genuinely good at. It is a cheap, precise, offline\nprior, and a prior belongs in the prompt, not in the control flow. Where no cue\nfired, the prompt says so and raises the bar for that window rather than\nskipping it. Teaching already worked this way and needed no change.\n\nActionable windows OVERLAP by 60s (180s window, 120s stride). An obligation is\nassembled from statements up to a minute apart -- four sentences over 45s in\nthe reference lecture -- so a boundary falling between the setup and the\npronoun referring back to it would destroy the exact case this layer exists\nfor. Verified: guaranteed co-read distance is 61s.\n\nOverlap means one assignment can be reconstructed twice, so items are merged on\nWHERE their evidence sits rather than on what they are called -- the model\nwords a title differently per window, but cites the same sentences, and those\nare already verified character positions. Verified against six cases including\nshort-span-inside-long and zero-width spans.\n\nCOST, MEASURED, NOT ESTIMATED. The sweep doubles the call count and lowers the\nmaximum lecture length this pipeline can handle on the request path:\n\n    23 min   20 calls   ~200s   fits\n    36 min   30 calls   ~300s   at the maxDuration limit\n    50 min   42 calls   ~440s   TIMES OUT\n    90 min   75 calls   ~760s   TIMES OUT\n\nThe ceiling drops from roughly 90 minutes to roughly 36. That is the price of\nassignment recall and it is not fixable by tuning: reconstruction needs to move\noff the request path into a background job. Concurrency is deliberately left at\n4 -- the right value depends on the provider rate limit, which has not been\nmeasured, and guessing it trades a known ceiling for silent 429 losses.\n\nVersion bumped to 1.1.0 so runs before and after remain comparable, per the\nsame contract extraction_method carries.\n\nVerified: tsc clean, next build clean, eslint clean, overlap and dedupe\nchecked numerically.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>",
+      "is_auto_save": false
+    },
+    {
+      "sha": "a5b5c71e6baefe910afa1486a01fa2811b84ed87",
+      "short": "a5b5c71",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-26T12:30:50+05:30",
+      "subject": "Auto-save: reconstruct.ts",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "f0fc84e557f61375d52f8ba184daf6da44f6c415",
+      "short": "f0fc84e",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-24T13:10:51+05:30",
+      "subject": "Knowledge layer: reconstruct what a lecture MEANT, not which sentences looked interesting",
+      "body": "Sentence-level extraction cannot represent a real assignment. In the reference\nlecture one assignment spans four sentences over 45 seconds, and the fourth\n(\"vo project ko cloud pe deploy karna hai\") is only interpretable given the\nthird. A one-span extraction_candidates row cannot hold that shape, so the\nproduct emitted two unrelated assignments instead of one.\n\nThree layers now sit on top of the candidates. Candidates are NOT replaced:\nthey remain the immutable Layer-1 record and the baseline any future\nextraction method is compared against.\n\n  Layer 2, src/lib/reasoning -- reconstructs items from a bounded window around\n  one candidate cluster. The model never sees the whole lecture, so it cannot\n  pull in unrelated material or be steered by something said twenty minutes\n  away. Every quote it returns is verified verbatim against that window, and an\n  item with an unverifiable quote is DISCARDED rather than repaired -- which\n  makes \"never invent\" a property of the pipeline instead of a line in a\n  prompt. The schema requires an `unspecified` field, so a model asked what was\n  NOT said has somewhere to put the gap rather than filling it.\n\n  Layer 3, src/lib/knowledge -- stores the result. Knowledge is derived but not\n  recomputed: it costs a model call to produce, it must stay citable months\n  later, and a student asking the same question twice must get the same answer.\n\n  Review moves from per-sentence to per-item. Only actionable kinds\n  (assignment, deadline, exam_instruction) are gated behind a human; topics and\n  concepts go live automatically. A professor cannot review thirty topics after\n  every lecture, and the cost of being wrong is not symmetric -- a mislabelled\n  topic wastes a moment, a wrong deadline costs a grade.\n\nSchema: knowledge_items + knowledge_evidence, many spans per item, which is the\nentire point of the second table. Already applied to the live Supabase project\n(kkjyfojcahlopsfpcdbw), so this deploy does not need a migration step.\n\nUI: CandidateReview is replaced by ActionableReview + KnowledgeUnit, and the\n/api/lectures/[id]/taught route is superseded by /api/lectures/[id]/knowledge.\nAdds npm run test:knowledge and test:identity.\n\nVerified before pushing: next build clean across all 24 routes, eslint clean.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>",
+      "is_auto_save": false
+    },
+    {
+      "sha": "4cacb72dbb898a14529556753496dfef9f12bf70",
+      "short": "4cacb72",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T19:55:57+05:30",
+      "subject": "Lecture knowledge: extract what was TAUGHT, not only what was assigned",
+      "body": "A real 23-minute college lecture on cloud computing produced exactly one\ncandidate: the deployment assignment in its final minute. The matcher was not\nat fault and no tuning would have helped. Every value CandidateKind allowed --\nassignment, deadline, exam_scope, announcement, guidance -- is a category of\nACTION, so there was no shape in the schema in which \"the lecturer defined a\nunified manager\" could be stored even if something had detected it. Twenty-two\nminutes of teaching had nowhere to go.\n\nSame lecture now yields 32 items: 26 teaching, 5 actionable, 1 reference.\n\nTEACHING EXTRACTION IS STRUCTURAL, NOT KEYWORD-BASED\n\nsrc/lib/extraction/teaching.ts matches the six sentence shapes a lecturer uses\nto signal teaching -- agenda, topic boundary, enumeration, naming, contrast,\nHinglish recap -- each with a capture group for the SUBJECT. A cloud-computing\nword list would have scored well here and zero on a chemistry lecture; \"the\nnext topic we have is\" and \"there are two types of\" are the same in both. Those\nshapes occur more than thirty times in this one transcript.\n\nComposed with `rules` rather than merged into it, because the two have opposite\nerror costs: an obligation should be missed rather than invented, while a\nteaching topic is cheap to over-produce and expensive to miss. Keeping them as\nseparate passes keeps those thresholds independently tunable. `rules` stays\nregistered unchanged as the actionable-only baseline.\n\nTHE ACTIONABLE HALF WAS ALSO WEAK, AND THAT WAS A GRAMMAR GAP\n\nThe assignment was set across five sentences and only the one containing\n\"karna hai\" was caught. The lexicon was built entirely from the\ninfinitive-plus-auxiliary construction and was deaf to the imperative -- a\nlecturer saying \"questions likho, search karo, find out karo\" is setting work\nwithout ever using it. Added imperative mood, the addressed-deliverable case\n(\"Assignment for you\", which had scored 0.44 against a 0.45 floor because a\nshort-sentence penalty applied to a complete three-word sentence), and marks.\n\nWorth recording: the first version of the imperative lexicon included the\ninfinitives karna/likhna/banana, and that immediately resurrected the exact\nfalse positive the suppression rules exist to kill -- \"derive karna hai\" became\nhomework. The verb form IS the signal. Infinitives are now excluded by name.\n\n\"WHAT ALL WAS TAUGHT?\"\n\nNew route /api/lectures/[id]/taught, answered from STORED knowledge and never\nby re-reading the transcript -- a product that re-derives its answer from 22,000\ncharacters on every question has no stored knowledge, only a summariser. The\nanswer is a structure, not prose: lesson scope, topics, concepts, breakdowns,\ncomparisons, assignments, references, each with the timestamp and the verbatim\nsentence it came from. Faculty see unreviewed items badged `unconfirmed`;\nstudents see only what a human has confirmed.\n\nCONFIRM WAS NOT BROKEN UNDERNEATH\n\nReported as \"0 pending · 1 ruled but the card is still there\". The verdict was\nwritten, the item became course knowledge, and a refresh preserved it -- the\nqueue simply rendered `[...pending, ...ruled]`, so nothing ever left it. A queue\nwhose items never leave is not a queue, and from outside \"it worked\" and \"it did\nnothing\" looked identical. Ruled items now move to a collapsed section, and\npending is grouped by category. Teaching and references get a bulk confirm;\nactionable deliberately does not, because a deadline must be read one at a time.\n\nDELETE\n\nRemoves the audio, the row, and every candidate and verdict beneath it via the\nexisting cascades. Confirmation requires typing the lecture title, because a\ndialog dismissed by reflex is not a confirmation and deleting the wrong lecture\nis precisely the failure a reflexive click produces. Storage first, row second:\nobject removal is idempotent so a retry after a half-failure succeeds, while the\nreverse order would strand audio nothing points at.\n\nAlso: the review queue and the summary now show only the MOST RECENT extraction\nrun rather than the newest version per method. Switching methods is now a real\nevent, and highest-version-per-method would have shown both sets at once.\n\nVERIFIED ON THE REAL LECTURE, NOT A FIXTURE\n\nStored rows checked against a fresh in-memory extraction: same count, every\nproduced item stored, nothing in the database the extractor did not produce,\nevidence text and confidence identical, all 32 char spans slicing back exactly,\nevery timestamp inside a real segment.\n\nBrowser-driven over CDP: 24 checks on the lecture page and 10 on deletion,\nincluding that deleting a throwaway lecture in the same course leaves the real\none with all its rows, its audio and a working page.\n\nlint 0, typecheck 0, build clean, extraction suite 76, provenance suite 16.\n\nRequires migration 20260822180000_lecture_knowledge.sql, already applied.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>",
+      "is_auto_save": false
+    },
+    {
+      "sha": "63d3fb4d2640a86f416829731bcce000a937aac0",
+      "short": "63d3fb4",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T18:36:36+05:30",
+      "subject": "Verified on production: two recordings now produce two independent transcripts",
+      "body": "Follow-up record for the lecture-identity fix. The diff landed under\n729b180 Auto-save; this carries the reasoning and the verification results.\n\nACCEPTANCE CRITERION MET\n\nscripts/verify-lecture-identity.mts, two 40-second clips cut from two different\nlectures, run against https://copy-paste-labs.vercel.app with real Sarvam:\n30 checks, 0 failures. Same suite against localhost: 30/30. Two different audio\nfiles, two different runs, two different transcription results.\n\nTHE GUARD WAS TESTED, NOT ASSUMED\n\nBuilt the production bundle, started it with VERCEL=1 and\nTRANSCRIPTION_PROVIDER=fixture, and uploaded a file named to match a fixture\nslug — the exact path that caused the original failure. Result: HTTP 500 with\n\"Replay would attach a transcript from a different recording to this lecture,\nso it is refused\", the lecture left at pending_upload, provider_job_id null,\nraw_transcription_response null. No foreign transcript stored.\n\nBLAST RADIUS\n\n22 of 27 lectures carry a replayed transcript. 21 are this session's own test\nuploads. Exactly one is a real user lecture: \"Cloud computing\"\n(5ced44b6-e156-4ddb-9146-14035d366620), which extracted 21 candidates from a\nthermodynamics transcript.\n\nZero of those candidates were confirmed, and zero students are enrolled in that\ncourse. The confirmation gate did the job it exists for while the layer beneath\nit was wrong: a bad transcript produced a bad review queue, not a false answer\nto a student. That is not a defence of the bug — the transcript should never\nhave been foreign — but it is the difference between an embarrassment and a\nretraction.\n\nThe row is left as it is. Re-transcribing overwrites a stored raw response, and\nwhether to do that is the operator's call, not a side effect of a bug fix.\n\nA SEPARATE DEFECT FOUND BY MAKING THE FIRST LIVE CALL — NOT FIXED, BY INSTRUCTION\n\nClip B is an English DSP lecture. Sarvam returned romanized ARABIC for it on a\nlive call, with language_code sent explicitly as \"en-IN\". This is the 2026-08-21\nLab v0 failure reproducing, and it disproves the fix recorded for it: stating\nthe language does NOT prevent the misdetection.\n\nWorse, all three guards stayed silent:\n\n  language mismatch   the engine reported en-IN, matching what was sent\n  low confidence      live batch responses carry NO language_probability at all\n                      (it is null) — the heuristic only ever worked on the\n                      captured fixtures, which have it\n  transcript text     65 tokens, below the 120-token floor, so it refused to\n                      judge\n\nThe text check would have caught it easily on merit: English function-word\nratio 0.015 against 0.427 for the genuine English clip in the same run. The\nfloor, not the signal, is what failed.\n\nReported rather than fixed: the instruction was to fix the identity pipeline\nonly and build nothing else.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>",
+      "is_auto_save": false
+    },
+    {
+      "sha": "729b18091d181dd20e62f065c62b3814a5d08b4a",
+      "short": "729b180",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T18:27:48+05:30",
+      "subject": "Auto-save: verify-lecture-identity.mts, route.ts, build.ts +1 more (4 files)",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "ee21211a0c8b6ed223706cf1c26d20531d23e302",
+      "short": "ee21211",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T18:25:08+05:30",
+      "subject": "Auto-save: index.ts",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "e9b71e569ca44b21d249915f63d88ec03720353a",
+      "short": "e9b71e5",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T17:46:22+05:30",
+      "subject": "Add public Privacy Policy and Terms of Service at /privacy and /terms",
+      "body": "Google's OAuth consent screen requires both as public links on the app's own\ndomain, and it reviews them.\n\nWritten from what the code actually does rather than from a template. Where the\nsoftware has a gap, the document says so, because a policy describing a system\nnobody built is worse than no policy — it is a promise that will be broken. The\nthree disclosures that a template would have missed:\n\n  Retention.  This system is designed not to delete. Raw audio and the raw ASR\n              response are preserved permanently and rejected extractions are\n              retained, both deliberately — the evidence trail is the product,\n              and it breaks if the source is thrown away. There is no automatic\n              expiry of anything. That is unusual enough to need saying plainly.\n\n  Children.   Classroom recordings carry the voices of students who may be under\n              18. The DPDP Act 2023 requires verifiable parental consent for\n              children's data, and this app implements no age verification and no\n              consent mechanism. Stated as a \"do not use with minors yet\", not\n              papered over.\n\n  Consent.    Faculty upload recordings of other people. The app cannot obtain\n              or verify that consent, so the terms put that obligation on the\n              uploader explicitly rather than leaving it unowned.\n\nThe terms also state the thing students most need to hear: a confirmed item is\none faculty member's judgment about one sentence, not an official notice, and\nthe institution's own channels win where they disagree.\n\nBoth are linked from a footer on every page — an anonymous visitor must be able\nto reach them, which is exactly what Google's review checks.\n\nNeither document has been reviewed by a lawyer, and both say so at the top.\nThey close the \"no consent/data-protection position\" gap that progress.md has\ncarried as a blocker since 2026-07-29 only in the sense of being honest about\nit; they do not make the app fit for real student data.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>",
+      "is_auto_save": false
+    },
+    {
+      "sha": "5ddf64257ceb32aeec4d0d73f9cdbc2d209be3f1",
+      "short": "5ddf642",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T17:42:43+05:30",
+      "subject": "Auto-save: page.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "c4ed3444549e52427231403964ea93b0ed2f2d47",
+      "short": "c4ed344",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T17:42:12+05:30",
+      "subject": "Auto-save: page.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "ea3eb5655380b62dafa3142165ce7752bf5c6a6f",
+      "short": "ea3eb56",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T17:41:40+05:30",
+      "subject": "Auto-save: Legal.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "731868973f3b45a534ad414608f514b6236bc91d",
+      "short": "7318689",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T16:58:31+05:30",
+      "subject": "Deployed to Vercel: https://copy-paste-labs.vercel.app",
+      "body": "Live and verified against production: 67 end-to-end checks and 33 language\nchecks, both green. That includes the full workflow — upload 10.5 MB of real\naudio through a signed URL, transcribe, extract, confirm/edit/reject, then\nre-enter as a student, ask a question and open the evidence — plus the negative\nchecks that matter, run against the deployed app rather than localhost.\n\nTHE PROJECT WAS ALREADY BROKEN AND LOOKED FINE\n\nThe existing Git integration had produced a Production deployment marked Ready\nthat served 404 on every path. Root Directory was unset, so Vercel found no\npackage.json at the repository root, detected no framework, built nothing in\n2 seconds and deployed an empty site. Fixed Root Directory and the framework\npreset via the API so Git pushes work, not just manual deploys.\n\nA second thing worth writing down: `vercel --prod` from inside the app\ndirectory fails on this project, and correctly so. The CLI uploads the current\ndirectory as the deployment root and Vercel then applies Root Directory inside\nthat upload, so it looks for the path nested under itself. Deploy by pushing to\nmaster, or run the CLI from the repository root.\n\nTHE SERVERLESS FIXES ALL HELD, IN THE REAL ENVIRONMENT\n\n- Provenance written by a production function carries a real 40-character SHA\n  from VERCEL_GIT_COMMIT_SHA, with no \"commitHash could not be resolved\"\n  limitation. That branch would have degraded every record silently.\n- The fixture provider ran inside a real serverless function, which is the only\n  proof that outputFileTracingIncludes actually put the JSON in the bundle.\n- The 28 MB upload path completed inside the 60s function ceiling.\n\nREGION — MEASURED, NOT ASSUMED\n\nThis Supabase project resolves to 2406:da1a:… — AWS ap-south-1, Mumbai — and\nVercel had functions in iad1, Washington DC. Five calls to /api/courses, a\ntwo-query endpoint:\n\n  iad1   median 1545 ms   (1140-2328)\n  bom1   median  389 ms   (151-1299, high end is a cold start)\n\nFour times faster. Moved to bom1 and redeployed. The transcribe route moves a\nwhole audio object between Supabase and the provider, so this was not a\nmicro-optimisation.\n\nENV VARS\n\nThe Supabase integration had already wired the correct project — confirmed via\n`vercel env pull`, because Vercel marks these sensitive and they can never be\nread back through the API. Added SARVAM_API_KEY and TRANSCRIPTION_PROVIDER.\n\nEverything is Production-only, so preview deployments have no Supabase config\nand will fail at request time until the targets are widened. Noted in DEPLOY.md\nrather than silently widened.\n\nSTILL TRUE AND STILL IMPORTANT: the deployment runs in replay mode. No live\nSarvam call has ever been made from this app. Every lecture uploaded right now\nreplays one of three captured transcripts, and says so in a visible panel.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>",
+      "is_auto_save": false
+    },
+    {
+      "sha": "6279dda75275b30d3588b2a052e9e485ce931827",
+      "short": "6279dda",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T16:51:20+05:30",
+      "subject": "Auto-save: .gitignore",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "61da164bdee443c9995a18c0fc602c67e50369ea",
+      "short": "61da164",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T15:44:03+05:30",
+      "subject": "Make ClassMind V1 deployable to Vercel, and add Google sign-in",
+      "body": "Two requests, one commit, because the OAuth redirect URLs and the deployment\ndomain are the same problem.\n\nVERCEL — three things would have failed in production only\n\n1. `getCommitHash()` shelled out to `git`. Vercel builds ship with no .git\n   directory and no git binary, so the execFileSync path always throws there and\n   every provenance record would have carried \"commitHash could not be\n   resolved\" — silently degrading the one field Constitution IV is strictest\n   about. It now reads VERCEL_GIT_COMMIT_SHA first, which is necessarily clean\n   because a deployment is built from a pushed commit.\n\n2. The fixture provider reads its JSON with readdirSync. Nothing imports those\n   files, so Next's dependency tracer could not see them and the serverless\n   bundle would have shipped without them — ENOENT on the first transcribe, in\n   production, with no local reproduction. `outputFileTracingIncludes` names\n   them. Verified by grepping the built .nft.json trace: all three fixtures are\n   in the transcribe function's bundle.\n\n3. The transcribe route pulls a whole audio object out of Supabase Storage and\n   pushes it to the provider — two large transfers in one request, and the only\n   route in the app that is not milliseconds. It declares maxDuration = 60,\n   which is the Hobby ceiling and accepted on every plan. A timeout is\n   recoverable: the lecture stays pending_upload with its audio already stored.\n\nUploads were already safe — audio goes browser to Storage through a signed URL\nand never touches a function, so Vercel's 4.5 MB request body limit does not\napply. That was a design decision made earlier for other reasons and it happens\nto be what makes this deployable at all.\n\nVerified the way that mattered: `next start` on the production build, with\n`E2E_BASE_URL` pointed at it. 67 checks, 0 failures — the fixture provider\nincluded, in production mode.\n\nGOOGLE SIGN-IN\n\n`/auth/callback` exchanges the code for a session on the cookie-bound client\n(a fresh client would succeed and leave the user signed out), then creates a\nprofiles row ONLY if none exists — this route runs on every Google sign-in and\na blind upsert would overwrite a name or role the user had since changed.\n\nEvery failure path redirects to /signin?error= with a readable message: the\nuser is mid-navigation and there is no UI here to show an error in. `next` is\nvalidated against open redirects — `//evil.com` and `/\\evil.com` both start\nwith a slash and both leave the site, which is the textbook bug on this exact\nendpoint. The redirect origin comes from x-forwarded-host so a proxied\ndeployment does not bounce users to an internal hostname.\n\nThe profile-creation path could not be exercised without a live provider, so it\nwas verified directly against the database instead: a fresh user has no profile\nrow, both roles insert, an invalid role is rejected by the check constraint, and\nthe row cascades away with the user.\n\nDEPLOY.md and README.md carry the setup: Root Directory (the one setting that\nbreaks a naive deploy — this app is four levels down in a multi-project repo),\nthe environment variables, the Supabase redirect allow-list and why the wildcard\nis mandatory, the Google Cloud Console redirect URI that people most often get\nwrong, and function region — Vercel defaults to Washington DC and a Mumbai\nSupabase project would put the Atlantic in the middle of a 50 MB transfer.\n\ntsc 0, eslint 0, build clean across 20 routes. Suites: extraction 75,\nprovenance 16, e2e 67 (dev and prod builds), languages 33.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>",
+      "is_auto_save": false
+    },
+    {
+      "sha": "34483ae04deb17fe0cc836a3ff44bb6ae476cd15",
+      "short": "34483ae",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T15:40:22+05:30",
+      "subject": "Auto-save: DEPLOY.md, README.md, page.tsx",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "ffc21b6ecdea3f505e011a2d7cce869f8044980e",
+      "short": "ffc21b6",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T15:38:54+05:30",
+      "subject": "Auto-save: DEPLOY.md, next.config.ts, route.ts +2 more (5 files)",
+      "body": "",
+      "is_auto_save": true
+    },
+    {
+      "sha": "b9b2599b9c8b40e9c5792f6953043d3f0686dbd8",
+      "short": "b9b2599",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T15:03:51+05:30",
+      "subject": "UI layer: fix 13 defects found by actually rendering it in a browser",
+      "body": "The UI had never been opened. Typecheck, lint and build all passed on it, which\nfound none of the following. A parallel agent audited every component against\nthe API payloads it consumes, fixed what was wrong, and then drove real\nheadless Chrome over CDP with a genuine Supabase session, because the client\nhalf cannot be verified any other way.\n\nTHE ONE THAT BROKE THE DEFINITION OF DONE\n\nProcessing never advanced outside the upload widget. LectureClient never polled\n/poll and never offered /extract. Close the upload tab or reload the page and\nthe lecture sat at `transcribing` forever; a lecture that did reach\n`transcribed` had no affordance anywhere in the UI to run extraction. The\nbackend was complete and correct the whole time — there was simply no way for a\nfaculty member to reach it after a refresh. Fixed with a LectureProgress\ncomponent that polls while in flight and offers recovery when stalled;\nobserved advancing untouched from \"Transcribing · Queued\" to \"Published ·\n21 candidates proposed for review\" in 9 seconds.\n\nTHE REST\n\n- Every plain lecture visit auto-sought and autoplayed, because\n  `Number(searchParams.get(\"t\") ?? \"\")` is `Number(\"\")` is `0`, and\n  `Number.isFinite(0)` is true.\n- Evidence clicks off a segment boundary moved the audio and left the\n  transcript still — the lookup matched exact segment starts only. Now snaps to\n  the nearest segment.\n- The deep-link jump re-fired on every refetch, restarting audio under the\n  reader mid-poll.\n- Extraction failure was reported as success: `.catch(() => undefined)`\n  followed by \"Done — candidates extracted\".\n- The middleware matcher had `\"\\.\"` inside a *string*, which collapses to `\".\"`\n  — the extension test matched any character.\n- `useSearchParams` had no Suspense boundary, which this Next version requires.\n- Confirmed knowledge rendered as one flat list rather than grouped by kind.\n- Ask results hid their supporting evidence behind a toggle, and the button\n  submitted empty queries.\n- Course-form errors were written into the course-list error slot, so they\n  rendered at the top of the page and never cleared.\n\nLeft open deliberately: sign-up only persists the chosen role when Supabase\nreturns a session immediately, so with email confirmation on the role defaults\nto faculty. Nothing in the UI branches on role — every surface branches on\nisOwner — so this is inert until it isn't.\n\nFINAL STATE\n\ntsc 0, eslint 0, next build clean across 19 routes. Four suites, 191 checks,\nall green: extraction 75, provenance 16, end-to-end 67, languages 33.\n\nThis commit is empty of diff for the UI files — autosave had already taken them\none at a time under `Auto-save: <component>.tsx`. It carries the reasoning,\nwhich those 20-odd commits do not.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>",
+      "is_auto_save": false
+    },
+    {
+      "sha": "afd7382ae057a455447f586481f3af2f9354313e",
+      "short": "afd7382",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:59:51+05:30",
+      "subject": "Session record for 2026-08-22 (empty commit: the content landed under Auto-save)",
+      "body": "This commit adds no files. Everything it describes is already in the tree — the\nautosave hook, firing on a subagent's file write, committed it as `02be8dc\nAuto-save: candidates.json, evidence.json, session.md +1 more` before this\nmessage could be attached to it. The charter asks for one intentional commit\nper session whose message explains why, because for two of the three founders\nthe log IS the communication channel. So the message is recorded here even\nthough the diff is empty.\n\nWHAT LANDED\n\nClassMind V1 stopped being code that compiled and became a workflow that runs.\nFour suites, all green: extraction 75, provenance 16, end-to-end 67,\nlanguages 33.\n\nRunning it for the first time found two defects, neither reachable by reading,\ntypechecking or building:\n\n1. The extraction engine read an 18-minute university course-outline lecture as\n   2 generic guidance items, missing the entire module-by-module syllabus and\n   the prescribed textbook. Its lexicon had been built from a Class-12 coaching\n   lecture. Two rules later: 21 candidates.\n\n2. Worse: the provenance guard written for Lab v0's Arabic wrong-language\n   failure could not see that failure. Sarvam had reported `language_code:\n   \"en-IN\"` — the correct code — and only the transcript text was wrong. The\n   guard compares reported against configured, so the branch was unreachable\n   for the one input it existed for. Only the engine's 0.617 confidence caught\n   it, clearing the 0.8 threshold by 0.183.\n\nBoth are the same mistake: code written against a description of a problem\nrather than against the input that caused it.\n\nDOCUMENTS\n\nHANDOFF.md § 0 was actively dangerous — it still said nothing was committed and\nHEAD was 53c39a6, false for two days. Rewritten; § 10 marked superseded rather\nthan edited; new § 11 covers how to run the product, the suites, the fixture\nprovider, the data model and the limitations.\n\ndecisions.md records the 2026-08-22 decision to build the Product Platform\nbefore the walkthrough runs. It crosses the frozen protocol's stopping rule\ncompletely, not on the technicality the 2026-08-11 entry could defend:\n`extraction_candidates.kind` enumerates the domain model in a check constraint,\nbefore the walkthrough meant to validate it. Cost stated rather than argued\naway.\n\nInbox entry classmind/2026-08-22T0930Z-classmind-v1-build-and-verification,\n4 candidates, 3 discarded for having a topic but no basis.\n\nALSO CARRIED HERE: the lecture route now returns only the newest extraction\nversion per method with a `supersededCount`, because bumping rules to 1.1.0\nmeans a re-extracted lecture would otherwise show a reviewer the same sentence\ntwice. Its own commit was also lost to autosave, as `10deb6c Auto-save:\nroute.ts`.\n\n32 of this session's 34 commits are `Auto-save:` messages naming one file while\ncontaining others. That is captured as cand-004, and this empty commit is the\nworkaround, not the fix.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>",
+      "is_auto_save": false
+    },
+    {
+      "sha": "02be8dc7e1cd6e9d7301db6066257b1c25ec8b90",
+      "short": "02be8dc",
+      "author_name": "copypastelabs262",
+      "author_email": "copypastelabs262@gmail.com",
+      "authored_at": "2026-08-22T14:58:53+05:30",
+      "subject": "Auto-save: candidates.json, evidence.json, session.md +1 more (4 files)",
+      "body": "",
+      "is_auto_save": true
+    }
+  ],
+  "changes": {
+    "summary": {
+      "modified": 28,
+      "added": 26,
+      "deleted": 1,
+      "renamed": 0,
+      "copied": 0,
+      "total_files": 55,
+      "insertions": 4935,
+      "deletions": 420
+    },
+    "files": [
+      {
+        "path": "AI-Memory/Inbox/classmind/2026-08-22T0930Z-classmind-v1-build-and-verification/candidates.json",
+        "change_type": "modified",
+        "insertions": 1,
+        "deletions": 1,
+        "binary": false
+      },
+      {
+        "path": "AI-Memory/Inbox/classmind/2026-08-22T0930Z-classmind-v1-build-and-verification/evidence.json",
+        "change_type": "modified",
+        "insertions": 351,
+        "deletions": 12,
+        "binary": false
+      },
+      {
+        "path": "AI-Memory/Inbox/classmind/2026-08-22T0930Z-classmind-v1-build-and-verification/session.md",
+        "change_type": "added",
+        "insertions": 74,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "AI-Memory/Inbox/classmind/2026-08-22T0930Z-classmind-v1-build-and-verification/status.json",
+        "change_type": "modified",
+        "insertions": 1,
+        "deletions": 1,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/.gitignore",
+        "change_type": "modified",
+        "insertions": 3,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/DEPLOY.md",
+        "change_type": "added",
+        "insertions": 264,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/README.md",
+        "change_type": "added",
+        "insertions": 72,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/eslint.config.mjs",
+        "change_type": "modified",
+        "insertions": 4,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/next.config.ts",
+        "change_type": "modified",
+        "insertions": 13,
+        "deletions": 1,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/package.json",
+        "change_type": "modified",
+        "insertions": 3,
+        "deletions": 1,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/scripts/test-extraction.mts",
+        "change_type": "modified",
+        "insertions": 19,
+        "deletions": 3,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/scripts/verify-knowledge-pipeline.mts",
+        "change_type": "added",
+        "insertions": 254,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/scripts/verify-languages.mts",
+        "change_type": "modified",
+        "insertions": 8,
+        "deletions": 3,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/scripts/verify-lecture-identity.mts",
+        "change_type": "added",
+        "insertions": 234,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/_components/ActionableReview.tsx",
+        "change_type": "added",
+        "insertions": 242,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/_components/AskPanel.tsx",
+        "change_type": "added",
+        "insertions": 176,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/_components/CandidateReview.tsx",
+        "change_type": "deleted",
+        "insertions": 0,
+        "deletions": 214,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/_components/DeleteLecture.tsx",
+        "change_type": "added",
+        "insertions": 89,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/_components/Input.tsx",
+        "change_type": "modified",
+        "insertions": 23,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/_components/KnowledgePanel.tsx",
+        "change_type": "modified",
+        "insertions": 43,
+        "deletions": 79,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/_components/KnowledgeUnit.tsx",
+        "change_type": "added",
+        "insertions": 166,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/_components/LectureClient.tsx",
+        "change_type": "modified",
+        "insertions": 59,
+        "deletions": 8,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/_components/Legal.tsx",
+        "change_type": "added",
+        "insertions": 58,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/_components/StudentCourseView.tsx",
+        "change_type": "modified",
+        "insertions": 13,
+        "deletions": 3,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/_components/TaughtPanel.tsx",
+        "change_type": "added",
+        "insertions": 106,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/api/candidates/[id]/review/route.ts",
+        "change_type": "modified",
+        "insertions": 6,
+        "deletions": 1,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/api/courses/[id]/ask/route.ts",
+        "change_type": "modified",
+        "insertions": 36,
+        "deletions": 20,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/api/knowledge/[id]/review/route.ts",
+        "change_type": "added",
+        "insertions": 61,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/api/lectures/[id]/extract/route.ts",
+        "change_type": "modified",
+        "insertions": 57,
+        "deletions": 11,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/api/lectures/[id]/knowledge/route.ts",
+        "change_type": "added",
+        "insertions": 36,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/api/lectures/[id]/poll/route.ts",
+        "change_type": "modified",
+        "insertions": 29,
+        "deletions": 7,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/api/lectures/[id]/route.ts",
+        "change_type": "modified",
+        "insertions": 93,
+        "deletions": 30,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/api/lectures/[id]/transcribe/route.ts",
+        "change_type": "modified",
+        "insertions": 12,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/auth/callback/route.ts",
+        "change_type": "added",
+        "insertions": 101,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/layout.tsx",
+        "change_type": "modified",
+        "insertions": 10,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/privacy/page.tsx",
+        "change_type": "added",
+        "insertions": 154,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/signin/page.tsx",
+        "change_type": "modified",
+        "insertions": 52,
+        "deletions": 3,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/app/terms/page.tsx",
+        "change_type": "added",
+        "insertions": 143,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/lib/extraction/index.ts",
+        "change_type": "modified",
+        "insertions": 49,
+        "deletions": 4,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/lib/extraction/rules.ts",
+        "change_type": "modified",
+        "insertions": 100,
+        "deletions": 7,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/lib/extraction/teaching.ts",
+        "change_type": "added",
+        "insertions": 473,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/lib/extraction/types.ts",
+        "change_type": "modified",
+        "insertions": 45,
+        "deletions": 1,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/lib/knowledge/answer.ts",
+        "change_type": "added",
+        "insertions": 100,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/lib/knowledge/read.ts",
+        "change_type": "added",
+        "insertions": 112,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/lib/knowledge/store.ts",
+        "change_type": "added",
+        "insertions": 105,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/lib/provenance/build.ts",
+        "change_type": "modified",
+        "insertions": 7,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/lib/provenance/commit.ts",
+        "change_type": "modified",
+        "insertions": 11,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/lib/reasoning/index.ts",
+        "change_type": "added",
+        "insertions": 18,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/lib/reasoning/reconstruct.ts",
+        "change_type": "added",
+        "insertions": 555,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/lib/reasoning/sarvam.ts",
+        "change_type": "added",
+        "insertions": 84,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/lib/reasoning/types.ts",
+        "change_type": "added",
+        "insertions": 33,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/lib/transcription/index.ts",
+        "change_type": "modified",
+        "insertions": 41,
+        "deletions": 10,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/src/types/provenance.ts",
+        "change_type": "modified",
+        "insertions": 12,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/supabase/migrations/20260822180000_lecture_knowledge.sql",
+        "change_type": "added",
+        "insertions": 44,
+        "deletions": 0,
+        "binary": false
+      },
+      {
+        "path": "Projects/classmind/product/classmind-v1/supabase/migrations/20260823090000_knowledge_layer.sql",
+        "change_type": "added",
+        "insertions": 80,
+        "deletions": 0,
+        "binary": false
+      }
+    ]
+  },
+  "working_tree": {
+    "clean": false,
+    "uncommitted": [
+      "Projects/classmind/.knowledge/progress.md",
+      "Projects/classmind/product/classmind-v1/package.json",
+      "Projects/classmind/product/classmind-v1/scripts/test-provenance.mts",
+      "Projects/classmind/product/classmind-v1/src/app/api/lectures/[id]/extract/route.ts",
+      "Projects/classmind/product/classmind-v1/src/app/api/lectures/[id]/poll/route.ts",
+      "Projects/classmind/product/classmind-v1/src/lib/knowledge.ts",
+      "Projects/classmind/product/classmind-v1/src/lib/knowledge/read.ts",
+      "Projects/classmind/product/classmind-v1/src/lib/provenance/build.ts",
+      "Projects/classmind/product/classmind-v1/src/lib/provenance/language-check.ts",
+      "scripts/autosave.sh"
+    ],
+    "staged": [],
+    "untracked": [
+      ".autosave-paused",
+      "Projects/classmind/.knowledge/design/",
+      "Projects/classmind/.knowledge/sessions/2026-08-22-evening-deploy-identity-and-lecture-knowledge.md",
+      "Projects/classmind/.knowledge/sessions/2026-08-24-knowledge-layer-reconstruction.md",
+      "Projects/classmind/.knowledge/sessions/2026-08-26-reconstruction-v1-1-0-cue-lexicon-as-hint.md",
+      "Projects/classmind/product/classmind-v1/fixtures/transcription/cloud-computing-hinglish.json",
+      "Projects/classmind/product/classmind-v1/scripts/test-quarantine-e2e.mts",
+      "Projects/classmind/product/classmind-v1/scripts/test-transcript-guard.mts",
+      "Projects/classmind/product/classmind-v1/src/lib/provenance/transcript-validation.ts",
+      "Projects/classmind/product/classmind-v1/supabase/migrations/20260830100000_transcript_quarantine.sql",
+      "Projects/classmind/product/classmind-v2/",
+      "scripts/autosave.sh.sprint-backup"
+    ]
+  },
+  "diff": {
+    "stored": false,
+    "path": null,
+    "size_bytes": 285302,
+    "omitted_reason": "size_exceeded",
+    "binary_files": [],
+    "regenerate_command": "git diff 0012d72..f81956f"
+  },
+  "related_sessions": [
+    "classmind/2026-08-22T0930Z-classmind-v1-build-and-verification",
+    "_platform/2026-08-21T0449Z-reconcile-docs-and-first-capture"
+  ]
+}

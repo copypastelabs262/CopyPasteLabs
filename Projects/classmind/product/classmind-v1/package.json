@@ -9,11 +9,12 @@
     "lint": "eslint",
     "setup:db": "node --env-file=.env.local scripts/setup-storage.mts",
     "test:extraction": "node scripts/test-extraction.mts",
-    "test:provenance": "node scripts/test-provenance.mts",
     "test:e2e": "node --env-file=.env.local scripts/e2e.mts",
     "test:languages": "node --env-file=.env.local scripts/verify-languages.mts",
     "test:identity": "node --env-file=.env.local scripts/verify-lecture-identity.mts",
-    "test:knowledge": "node --env-file=.env.local scripts/verify-knowledge-pipeline.mts"
+    "test:knowledge": "node --env-file=.env.local scripts/verify-knowledge-pipeline.mts",
+    "test:transcript": "node scripts/test-transcript-guard.mts",
+    "test:quarantine": "node --env-file=.env.local scripts/test-quarantine-e2e.mts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",

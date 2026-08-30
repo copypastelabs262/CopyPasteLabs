@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireUser, requireCourseOwner, errorResponse } from "@/lib/auth";
 import { serviceClient } from "@/lib/supabase/service";
 import { normalizeRawTranscript } from "@/lib/transcript/normalize";
+import { validateTranscript } from "@/lib/provenance/transcript-validation";
 import { getExtractionMethod } from "@/lib/extraction";
 import { reconstructLecture, RECONSTRUCTION_METHOD, RECONSTRUCTION_VERSION } from "@/lib/reasoning/reconstruct";
 import { storeKnowledge } from "@/lib/knowledge/store";
@@ -40,7 +41,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     const { data: lecture } = await svc
       .from("lectures")
-      .select("id, course_id, status, raw_transcription_response")
+      .select("id, course_id, status, raw_transcription_response, transcript_validation")
       .eq("id", id)
       .maybeSingle();
     if (!lecture) return NextResponse.json({ error: "Lecture not found." }, { status: 404 });
@@ -54,6 +55,43 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (!transcript) {
       return NextResponse.json(
         { error: "The transcript could not be normalized, so extraction cannot run." },
+        { status: 409 },
+      );
+    }
+
+    // ---- THE TRANSCRIPT GATE -------------------------------------------
+    //
+    // Nothing below this point may run on a transcript that has not been
+    // validated. The poll route already quarantines a rejected transcript, so
+    // in the normal flow this never fires -- it is here because "the caller
+    // already checked" is precisely the assumption that let a foreign
+    // transcript reach a deployed product. Re-validating costs microseconds
+    // and removes the assumption.
+    //
+    // The stored verdict is preferred when present, so a lecture quarantined
+    // under one version of the guard stays quarantined; a transcript stored
+    // BEFORE the guard existed has no verdict and is validated here, on the
+    // spot, rather than being grandfathered in.
+    const stored = lecture.transcript_validation as { verdict?: string; reason?: string } | null;
+    const validation = stored?.verdict
+      ? stored
+      : validateTranscript(transcript.text);
+
+    if (validation.verdict === "reject" || lecture.status === "quarantined") {
+      await svc.from("lectures").update({
+        status: "quarantined",
+        error_message: validation.reason ?? "The transcript did not pass validation.",
+        transcript_validation: validation,
+      }).eq("id", id);
+      return NextResponse.json(
+        {
+          error:
+            "This lecture is quarantined and no knowledge was extracted from it. " +
+            (validation.reason ?? "Its transcript did not pass validation."),
+          lectureId: id,
+          status: "quarantined",
+          validation,
+        },
         { status: 409 },
       );
     }
@@ -148,6 +186,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         : null,
       knowledge,
       reasoningError,
+      transcriptValidation: validation,
     });
   } catch (err) {
     const { body, status } = errorResponse(err);

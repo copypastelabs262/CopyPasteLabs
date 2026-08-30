@@ -1,0 +1,47 @@
+{
+  "name": "classmind-v3",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3400",
+    "build": "next build",
+    "start": "next start -p 3400",
+    "design:capture": "node --env-file=.env.local design-loop/capture.mts",
+    "design:verify": "node design-loop/verify.mts",
+    "lint": "eslint",
+    "setup:db": "node --env-file=.env.local scripts/setup-storage.mts",
+    "test:extraction": "node scripts/test-extraction.mts",
+    "test:reconstruction": "node --conditions=react-server scripts/test-reconstruction.mts",
+    "test:knowledge-plan": "node --conditions=react-server scripts/test-knowledge-plan.mts",
+    "test:e2e": "node --env-file=.env.local scripts/e2e.mts",
+    "test:languages": "node --env-file=.env.local scripts/verify-languages.mts",
+    "test:identity": "node --env-file=.env.local scripts/verify-lecture-identity.mts",
+    "test:knowledge": "node --env-file=.env.local scripts/verify-knowledge-pipeline.mts",
+    "test:transcript": "node scripts/test-transcript-guard.mts",
+    "test:quarantine": "node --env-file=.env.local scripts/test-quarantine-e2e.mts",
+    "test:replay-gate": "node --env-file=.env.local scripts/test-replay-gate.mts",
+    "test:providers": "node --conditions=react-server scripts/test-provider-registry.mts",
+    "verify:provider": "node --conditions=react-server --env-file=.env.local scripts/verify-provider.mts",
+    "verify:run": "node --conditions=react-server --env-file=.env.local scripts/verify-processing-run.mts"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.4",
+    "@supabase/supabase-js": "^2.112.2",
+    "next": "16.3.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.0",
+    "playwright": "^1.62.1",
+    "supabase": "^2.111.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "generated_by": "hand-authored, following End-Session/1.0.0 section 7",
+  "generated_at": "2026-08-30T11:08:26Z",
+  "session_id": "2026-08-30T1108Z-transcript-guard-and-mvp-sprint",
+  "project": "classmind",
+  "extraction_meta": {
+    "context_completeness": "partial",
+    "candidates_emitted": 5,
+    "candidates_discarded_no_basis": 3,
+    "note": "Context is partial. This capture covers a session whose engineering work (the transcript guard, the quarantine state, two new test suites) happened earlier in the day and outside this conversation, plus a documentation reconstruction of three earlier sessions that left no record. The test results quoted in the candidates below (33/33, 76/76, 29/29) are as reported by the operator; what was read here is the code, the migration and the two broken test assertions, all of which are in the working tree and verifiable.\n\nThree topics were discarded for having no reusable finding behind them. The ClassMind v2 fork is a project fact with no evidence yet that the two-app split works or fails. The ~36-minute reconstruction ceiling is a measured project constraint, already recorded in progress.md, and is a number rather than a finding. The guard's 'script is observed, not inferred' axis (Unicode script detection catching a Chinese sample that tokenizes as a single word and therefore has no lexical statistics) is a real technique but has one instance, inside one language guard, and nothing shows it generalises past that.\n\nDeliberately NOT emitted: the config-echo mechanism of the old guard -- the mismatch check comparing the engine's reported language against the configured one, which agree by construction. That is already captured as cand-001 of the 2026-08-22 entry and re-capturing it would give the Promoter a duplicate to reconcile. The candidates below are the parts of the same failure that entry does not cover."
+  },
+  "candidates": [
+    {
+      "id": "cand-001",
+      "type": "learning",
+      "title": "A heuristic can pass every fixture test and be impossible in production, because the live API omits the field it reads",
+      "body": "A confidence heuristic read `language_probability` off the provider's response and warned when it fell below a threshold. It had tests, and the tests passed, because the captured fixtures all carry that field. Live batch responses carry it as null -- always. The heuristic could therefore never have fired against a real call, and nothing about its test results said so.\n\nThe general shape: a captured fixture is a recording of one response, not a contract. Fields present in a recording may be absent from the live API in the general case (optional in the schema, populated only on some code paths, only on the synchronous endpoint, only for some inputs). A check that reads such a field is tested against a world where the field exists and deployed into a world where it does not.\n\nWhat makes this expensive is that the failure is silent in both directions: the check never fires, and never firing is indistinguishable from nothing being wrong.\n\nCheap mitigations, in order of strength: assert the presence of every field a guard depends on, and fail loudly when it is missing rather than treating absent as fine; prefer signals derived from the payload the API exists to return (here, the transcript text) over metadata the API is free to omit; and capture at least one fixture from the live path, not only from the path the fixtures were originally recorded on.",
+      "confidence": "high",
+      "basis": "On 2026-08-22 the first live Sarvam calls were made from the product. Commit 63d3fb4 records that live batch responses carry NO `language_probability` at all -- it is null -- while all three captured fixtures have it (the misdetected clip carries 0.617). The low-confidence guard was one of three that stayed silent while Sarvam returned romanized Arabic for an English lecture with `language_code` reported as the configured `en-IN`. The replacement guard written on 2026-08-30 reads the transcript text only and depends on no provider metadata at all.",
+      "evidence_refs": [
+        "63d3fb4",
+        "Projects/classmind/product/classmind-v1/src/lib/provenance/transcript-validation.ts",
+        "Projects/classmind/product/classmind-v1/src/lib/provenance/language-check.ts",
+        "Projects/classmind/.knowledge/sessions/2026-08-22-evening-deploy-identity-and-lecture-knowledge.md"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [
+        "AI-Memory/Inbox/classmind/2026-08-22T0930Z-classmind-v1-build-and-verification/candidates.json#cand-001",
+        "AI-Memory/02_Learnings/",
+        "AI-Memory/06_Mistakes/"
+      ],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-002",
+      "type": "learning",
+      "title": "A minimum-sample threshold that skips a check creates a blind spot exactly where the cheapest failures live -- use an interval and judge always",
+      "body": "A text-based check refused to run below 120 tokens, on the reasonable-sounding argument that a short sample is not enough to judge. The input that actually failed was 65 tokens, so the one check capable of catching it declined to look.\n\nThe reasoning behind such a floor is backwards. Less data means more uncertainty, not less obligation to check. The floor also concentrates the blind spot in the cheapest possible inputs -- short clips are what test runs, smoke tests, retries and trial uploads produce, so the skipped region is where failures are most likely to be encountered first and where catching them costs least.\n\nThe fix that keeps the honest part of the argument: score the statistic with a confidence interval and reject only when even the optimistic end of the interval is below threshold. Sample size then changes how much evidence is demanded, never whether the question is asked. A small sample that is unambiguously bad is still rejected; a small sample that is merely uninformative passes, which is what the floor was trying to achieve in the first place.\n\nThis generalises past language detection to any thresholded quality check on a variable-size sample -- spam scores, anomaly rates, error-rate alerts that are muted below N requests.",
+      "confidence": "high",
+      "basis": "Commit 63d3fb4 records the failing clip at 65 tokens against a 120-token floor, and records that the signal itself was not weak: English function-word ratio 0.015 for the Arabic transcript against 0.427 for the genuine English clip in the same run. The floor, not the signal, is what failed. The replacement in transcript-validation.ts scores the rate with a Wilson interval and documents the measured effect: a 40-token clip with zero supported words has a Wilson upper bound of 0.088 and is rejected, while a 40-token clip of genuine Hinglish scores 0.500 and passes.",
+      "evidence_refs": [
+        "63d3fb4",
+        "Projects/classmind/product/classmind-v1/src/lib/provenance/transcript-validation.ts",
+        "Projects/classmind/product/classmind-v1/scripts/test-transcript-guard.mts"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [
+        "AI-Memory/02_Learnings/",
+        "AI-Memory/01_Principles/PRINCIPLES.md"
+      ],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-003",
+      "type": "principle",
+      "title": "A verdict nothing consumes is not a guard: a check needs a state to write and a consumer that refuses to proceed",
+      "body": "A validation module judged whether a transcript was usable and appended its finding to a metadata array \"for a human to weigh\". Its own header said it never blocks and never edits. Nothing downstream read it. When it eventually judged correctly, the pipeline carried on regardless: extraction ran on a transcript from a different language and produced 21 candidates from a lecture nobody had given.\n\nAn advisory check is not a weaker guard, it is a different artefact -- a log line. Turning one into a guard needs three things, and the middle one is usually the one that is missing:\n\n1. A verdict, computed and STORED rather than recomputed on read. Recomputing on read means a record quarantined under one version of the rules is silently released the next time a threshold moves.\n2. A terminal state in the schema that means \"this exists and is not fit to use\", distinct from \"this failed\". Failure means there is nothing to keep; quarantine means the artefact is kept as evidence and is not usable. Without such a state, code has nowhere to record the judgement and defaults to the success path.\n3. A consumer that refuses to proceed. Every path that reads the artefact must check the state, including paths that predate the guard.\n\nAnd it needs a test at the right level. A unit suite proves the judgement is right; it says nothing about whether the pipeline acts on it. Those are separate claims and need separate suites -- the second one driven through the real routes.",
+      "confidence": "high",
+      "basis": "src/lib/provenance/language-check.ts stated in its own header: \"it only ever appends a limitation for a human to weigh. It never blocks a transcript and never edits one.\" On 2026-08-22 a live call produced a romanized-Arabic transcript for an English lecture; it was stored as `transcribed`, extraction ran, and lecture 5ced44b6 accumulated 21 candidates from a foreign transcript. The 2026-08-30 fix required all three parts: migration 20260830100000_transcript_quarantine.sql adds a `quarantined` status and a stored `transcript_validation` column (with a comment stating that re-deriving the verdict on read would silently release rows when a threshold moved); the poll route writes the state in the same UPDATE as the transcript; the extract route refuses on it and re-validates rows transcribed before the guard existed. The two test suites are deliberately separate, and test-quarantine-e2e.mts states why: \"that suite proves the guard's JUDGEMENT is right... It says nothing about whether the pipeline ACTS on that judgement.\"",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v1/supabase/migrations/20260830100000_transcript_quarantine.sql",
+        "Projects/classmind/product/classmind-v1/src/app/api/lectures/[id]/poll/route.ts",
+        "Projects/classmind/product/classmind-v1/src/app/api/lectures/[id]/extract/route.ts",
+        "Projects/classmind/product/classmind-v1/scripts/test-quarantine-e2e.mts",
+        "63d3fb4"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [
+        "AI-Memory/01_Principles/PRINCIPLES.md",
+        "AI-Memory/Inbox/classmind/2026-08-22T0930Z-classmind-v1-build-and-verification/candidates.json#cand-001"
+      ],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-004",
+      "type": "mistake",
+      "title": "A test that asserts a response key the API does not return fails silently, in one of two ways",
+      "body": "One commit renamed two API response keys and did not re-run the suite that reads them. Both resulting failures are invisible without reading the output carefully, and they fail in opposite directions:\n\nUNRUNNABLE. `ask.json.items.length` against a route that now returns `sources` throws a TypeError on undefined. The suite's top-level catch turns that into a single failure line and everything after it never executes -- here, 17 of 64 checks, including an entire section titled \"No unverified information reaches students\". Worse, the throw only happens when the endpoint SUCCEEDS: on failure the preceding `answered === true` short-circuits and the check merely fails. So the suite aborts precisely when the product works, which is the reading least likely to be interpreted as a product bug.\n\nUNFALSIFIABLE. `again.json?.skipped === true` against a route that no longer returns `skipped` cannot pass -- the optional chain protects against the throw, so the check merely reports failure forever. Written the other way round (`!x.someKey`, `x.errors?.length === 0`, `x.warnings === undefined`) the same mistake passes forever, and an assertion that cannot fail is worse than no assertion because it is counted as coverage.\n\nThe cheap defences: assert the shape of a response once, near the top of the suite, so a rename fails one named check instead of corrupting every later one; prefer assertions that must observe a value over assertions satisfied by absence; and treat renaming a response key as a change to a contract with a known consumer list, not as an internal edit.",
+      "confidence": "high",
+      "basis": "Commit f0fc84e (2026-08-24) rewrote /api/courses/[id]/ask to return `sources` where it had returned `items`, and removed `skipped: true` from the extract route's response (correctly -- with Layer 2 present a re-run legitimately does work). scripts/e2e.mts was not changed and was not re-run; it still reads `ask.json.items` at line 346 and asserts `again.json?.skipped === true` at line 236. Verified on 2026-08-30 by reading both routes and the suite: the ask route returns `sources`, the extract route returns no `skipped` key, and main().catch sets exitCode 1 after the TypeError. The commit message for f0fc84e lists its verification in full -- `next build` clean across 24 routes, eslint clean -- and the end-to-end suite is not in that list.",
+      "evidence_refs": [
+        "f0fc84e",
+        "Projects/classmind/product/classmind-v1/scripts/e2e.mts",
+        "Projects/classmind/product/classmind-v1/src/app/api/courses/[id]/ask/route.ts",
+        "Projects/classmind/product/classmind-v1/src/app/api/lectures/[id]/extract/route.ts",
+        "Projects/classmind/.knowledge/sessions/2026-08-24-knowledge-layer-reconstruction.md"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [
+        "AI-Memory/06_Mistakes/",
+        "AI-Memory/Inbox/classmind/2026-08-22T0930Z-classmind-v1-build-and-verification/candidates.json#cand-002"
+      ],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-005",
+      "type": "mistake",
+      "title": "Skipping the session record is how a two-line rename survives six days of unrun safety checks",
+      "body": "Three consecutive sessions shipped substantial work and wrote no session log and no progress entry. The usual argument for skipping the write-up is that the code is what matters and the commits already describe it. This is a counter-example with a measurable cost.\n\nThe rename that broke the end-to-end suite was two lines and a two-minute fix on the day it happened. It survived six days because nothing told anyone it needed checking: no entry said which routes had changed, no entry said which suites had not been re-run, and the next two sessions had no starting-state document that would have raised the question. The suite that did not run includes the checks that assert unconfirmed material never reaches students.\n\nThe finding is not \"write your documentation\". It is that the session record is load-bearing for CORRECTNESS, not only for communication. It is the only artefact that carries \"what I did not verify\" forward. A commit message describes what a change is; it is written by someone who believes the change is finished, and it systematically omits the thing nobody thought to do. The gap between sessions is where that omission has to be caught, and with no record there is no gap -- only a new session with no memory.\n\nWorth noting for anyone weighing the same trade-off: the sessions in question were not careless. Their commit messages are unusually detailed and carry measured numbers. Detailed commits did not substitute for the record, because they cannot state what was left unverified.",
+      "confidence": "high",
+      "basis": "Projects/classmind/.knowledge/progress.md had no entry after 2026-08-22 14:56 and sessions/ had no log after 2026-08-22, while six substantive commits landed between 2026-08-22 16:58 and 2026-08-26 13:27. scripts/e2e.mts has been aborting since f0fc84e on 2026-08-24 and was not re-run until 2026-08-30, when the breakage was found while reconstructing the record. The same failure -- a session ending with no log -- was already recorded on 2026-08-21 for the 2026-08-19 session, where the consequence was an unpushed commit; this is the second occurrence and the first where the cost was a correctness gap rather than a visibility gap.",
+      "evidence_refs": [
+        "Projects/classmind/.knowledge/progress.md",
+        "Projects/classmind/.knowledge/sessions/2026-08-19-milestone-2-component-3.md",
+        "Projects/classmind/product/classmind-v1/scripts/e2e.mts",
+        "f0fc84e",
+        "f81956f"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [
+        "AI-Memory/Inbox/_platform/2026-08-21T0449Z-reconcile-docs-and-first-capture/candidates.json#cand-001",
+        "AI-Memory/Inbox/_platform/2026-08-21T0449Z-reconcile-docs-and-first-capture/candidates.json#cand-004",
+        "AI-Memory/06_Mistakes/"
+      ],
+      "promoter_notes": ""
+    }
+  ]
+}

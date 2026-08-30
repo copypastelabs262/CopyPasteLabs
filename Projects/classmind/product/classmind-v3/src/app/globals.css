@@ -1,0 +1,324 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Tokens.
+
+   Every colour in the product resolves to one of these names. The point is not
+   tidiness -- it is that "what colour is a warning" has exactly one answer, so
+   a screen written by one person and a screen written six months later cannot
+   drift apart.
+
+   Names describe ROLE, not appearance: `--ink` stays "the colour text is"
+   whether that resolves to near-black or near-white. A token called `--grey-900`
+   would have to be renamed the day dark mode inverted it.
+
+   The full light palette is declared here on bare `:root`. Dark mode below
+   redefines only the values that actually change, which is why the dark theme
+   can be designed rather than computed -- it lightens the accent (a mid-blue
+   that reads well on white is muddy on charcoal) and flips which end of the
+   scale a button's label sits on, instead of inverting everything and hoping.
+--------------------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+
+  /* Surfaces, from furthest back to nearest front. */
+  --surface: #fbfbfc;
+  --surface-raised: #ffffff;
+  --surface-sunken: #f2f3f5;
+  --line: #e4e5ea;
+
+  /* Text, in three weights of emphasis. Nothing quieter than --ink-faint
+     exists on purpose: a fourth tier would be text we do not expect anyone to
+     read, which is text that should have been cut. */
+  --ink: #15171c;
+  --ink-soft: #565b66;
+  --ink-faint: #7c828f;
+
+  /* Colour carries meaning, so there are exactly four hues and each one is a
+     sentence: accent = "do this", ok = "finished", warn = "needs you",
+     danger = "this destroys something". A fifth hue would have to mean
+     something, and there is nothing left for it to mean.
+
+     Each hue has three parts: the hue itself (legible as text on --surface),
+     -soft (a tint to sit behind it), and -ink (what is legible ON the hue). */
+  --accent: #2b62e0;
+  --accent-strong: #1f4dbb;
+  --accent-soft: #eaf0fe;
+  --accent-ink: #ffffff;
+
+  --ok: #0f7a52;
+  --ok-soft: #e4f4ec;
+
+  --warn: #8a5300;
+  --warn-soft: #fbf0dd;
+
+  --danger: #b3261e;
+  --danger-strong: #93201a;
+  --danger-soft: #fdeceb;
+  --danger-ink: #ffffff;
+
+  /* Two elevations only. Depth here is a hint that something is a surface,
+     not a decoration -- anything that needs a third shadow to be understood
+     needs a different layout. */
+  --elev-1: 0 1px 2px rgba(16, 18, 24, 0.04), 0 8px 24px -14px rgba(16, 18, 24, 0.12);
+  --elev-2: 0 2px 4px rgba(16, 18, 24, 0.05), 0 18px 40px -18px rgba(16, 18, 24, 0.22);
+
+  /* One family, set once. The system stack is deliberate: no webfont means no
+     flash of fallback text on the first paint of a page whose whole job is to
+     read calmly. */
+  --font-app: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-app-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+}
+
+/* Dark mode is a second design, not an inversion. The surfaces are warm-neutral
+   charcoal rather than black (black plus a shadow reads as a hole), the accent
+   moves lighter so it still separates from the background, and the accent and
+   danger buttons flip to dark labels because their fills are now light. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --surface: #0e1013;
+    --surface-raised: #16181d;
+    --surface-sunken: #1e2127;
+    --line: #282c34;
+
+    --ink: #eef0f4;
+    --ink-soft: #a7adb9;
+    --ink-faint: #7b8290;
+
+    --accent: #7ea6ff;
+    --accent-strong: #9dbaff;
+    --accent-soft: #1a2440;
+    --accent-ink: #0b1020;
+
+    --ok: #4fc48d;
+    --ok-soft: #11291f;
+
+    --warn: #e0a95e;
+    --warn-soft: #2b2113;
+
+    --danger: #f08079;
+    --danger-strong: #f5a09a;
+    --danger-soft: #2e1917;
+    --danger-ink: #2a0f0d;
+
+    --elev-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -14px rgba(0, 0, 0, 0.7);
+    --elev-2: 0 2px 6px rgba(0, 0, 0, 0.45), 0 18px 40px -18px rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* `inline` matters here. It makes the utilities emit `var(--ink)` rather than
+   the value `--ink` held at build time, which is the only reason redefining the
+   tokens inside a media query above changes anything at runtime. */
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-line: var(--line);
+
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
+
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+
+  --color-danger: var(--danger);
+  --color-danger-strong: var(--danger-strong);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-ink: var(--danger-ink);
+
+  --shadow-soft: var(--elev-1);
+  --shadow-lift: var(--elev-2);
+
+  --font-sans: var(--font-app);
+  --font-mono: var(--font-app-mono);
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+--------------------------------------------------------------------------- */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-app);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* One focus ring for the whole product, defined once at the base layer.
+   `:focus-visible` rather than `:focus` so a mouse click on a button does not
+   leave a ring behind, while every keyboard path still shows exactly where it
+   is. Components may thicken this ring; none of them may remove it. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+::placeholder {
+  color: var(--ink-faint);
+}
+
+/* ---------------------------------------------------------------------------
+   Reading
+
+   Lecture prose and generated answers are the one place in this product where
+   someone reads more than a line at a time, and body-UI type (14px, tight) is
+   punishing at that length. 17px at 1.75 with a hard measure limit is the
+   difference between skimming a transcript and giving up on it.
+--------------------------------------------------------------------------- */
+.prose-reading {
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--ink);
+  max-width: 68ch;
+}
+
+.prose-reading p,
+.prose-reading ul,
+.prose-reading ol,
+.prose-reading blockquote {
+  margin-block: 0.9em;
+}
+
+.prose-reading > :first-child {
+  margin-block-start: 0;
+}
+
+.prose-reading > :last-child {
+  margin-block-end: 0;
+}
+
+.prose-reading ul,
+.prose-reading ol {
+  padding-inline-start: 1.35em;
+}
+
+.prose-reading ul {
+  list-style: disc;
+}
+
+.prose-reading ol {
+  list-style: decimal;
+}
+
+.prose-reading li {
+  margin-block: 0.35em;
+}
+
+.prose-reading h2,
+.prose-reading h3 {
+  font-size: 1.05em;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-block: 1.6em 0.5em;
+}
+
+.prose-reading strong {
+  font-weight: 600;
+}
+
+.prose-reading em {
+  font-style: italic;
+}
+
+.prose-reading blockquote {
+  border-inline-start: 2px solid var(--line);
+  padding-inline-start: 1em;
+  color: var(--ink-soft);
+}
+
+.prose-reading code {
+  font-family: var(--font-app-mono);
+  font-size: 0.88em;
+  background: var(--surface-sunken);
+  padding: 0.1em 0.35em;
+  border-radius: 0.35rem;
+}
+
+.prose-reading a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+/* ---------------------------------------------------------------------------
+   Motion
+
+   Two movements, both short and both in one direction. Motion here exists to
+   say "this is new" -- content arriving, a dialog opening -- and nothing else
+   animates, because motion that decorates is motion that has to be watched.
+--------------------------------------------------------------------------- */
+@keyframes cm-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes cm-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.motion-rise {
+  animation: cm-rise 260ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.motion-fade {
+  animation: cm-fade 180ms ease-out both;
+}
+
+/* Honoured globally rather than per-component, so a component added later
+   cannot forget. Durations collapse instead of animations being removed:
+   anything that relies on an `animationend` still fires. */
+/* Evidence highlight. When a student clicks a citation the transcript seeks
+   and the cited span flashes -- the flash is what connects the click to the
+   place it landed. Without it the page jumps and the reader has to hunt for
+   what changed. It fades to transparent so the highlight does not persist and
+   turn the transcript into a page of marker pen. */
+@keyframes cm-flash {
+  from { background-color: var(--warn-soft); }
+  to   { background-color: transparent; }
+}
+.cm-flash { animation: cm-flash 1.8s ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

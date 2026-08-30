@@ -62,8 +62,27 @@ export async function readKnowledge(opts: Options): Promise<KnowledgeUnit[]> {
   }
 
   const lectureIds = [...new Set(items.map((i) => i.lecture_id as string))];
-  const { data: lectures } = await svc.from("lectures").select("id, title").in("id", lectureIds);
+  // status is selected alongside the title because knowledge from a QUARANTINED
+  // lecture must never be served -- see the filter below. Same query, no extra
+  // round trip.
+  const { data: lectures } = await svc.from("lectures").select("id, title, status").in("id", lectureIds);
   const titles = new Map((lectures ?? []).map((l) => [l.id as string, l.title as string]));
+
+  // A lecture whose transcript failed validation is not a source of knowledge.
+  //
+  // The poll and extract gates stop such knowledge being CREATED, and that is
+  // not the same as stopping it being SERVED. Two ways it can exist anyway:
+  // a lecture processed before the guard existed, and a lecture that becomes
+  // quarantined after its knowledge was already stored. Both are real -- one
+  // deployed lecture holds a transcript from a different recording entirely and
+  // its knowledge is live right now.
+  //
+  // Fail CLOSED: this lists the status that may be served rather than the ones
+  // that may not, so a status added later is excluded until someone decides
+  // otherwise. Getting that backwards is how a quarantine leaks.
+  const servable = new Set(
+    (lectures ?? []).filter((l) => l.status === "ready").map((l) => l.id as string),
+  );
 
   const out = items.map((i) => ({
     id: i.id as string,
@@ -81,7 +100,10 @@ export async function readKnowledge(opts: Options): Promise<KnowledgeUnit[]> {
     evidence: byItem.get(i.id as string) ?? [],
   }));
 
-  return opts.forStudent ? out.filter(visibleToStudents) : out.filter((u) => u.status !== "rejected");
+  const fromServableLecture = out.filter((u) => servable.has(u.lectureId));
+  return opts.forStudent
+    ? fromServableLecture.filter(visibleToStudents)
+    : fromServableLecture.filter((u) => u.status !== "rejected");
 }
 
 // Retrieval for question answering.

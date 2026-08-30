@@ -52,11 +52,18 @@ export async function courseKnowledge(courseId: string): Promise<KnowledgeItem[]
   }
 
   const { data: lectures } = await svc
-    .from("lectures").select("id, title").eq("course_id", courseId);
+    .from("lectures").select("id, title, status").eq("course_id", courseId);
   const titles = new Map((lectures ?? []).map((l) => [l.id as string, l.title as string]));
+  // Confirmed or not, an item extracted from a transcript that failed
+  // validation is not knowledge about this course. Listed positively so a new
+  // status is excluded until it is deliberately allowed.
+  const servable = new Set(
+    (lectures ?? []).filter((l) => l.status === "ready").map((l) => l.id as string),
+  );
 
   const out: KnowledgeItem[] = [];
   for (const c of candidates) {
+    if (!servable.has(c.lecture_id as string)) continue;
     const review = latest.get(c.id as string);
     if (!review || review.action === "reject") continue;
 

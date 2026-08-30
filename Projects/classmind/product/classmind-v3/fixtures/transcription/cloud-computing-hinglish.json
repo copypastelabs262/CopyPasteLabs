@@ -1,0 +1,54 @@
+{
+  "slug": "cloud-computing-hinglish",
+  "sourceRunId": null,
+  "sourceFilename": "Cloud computing.mp3",
+  "providerStatus": "Completed",
+  "capturedFrom": "EXCERPT of a real 23-minute college lecture on cloud computing, transcribed live by Sarvam in translit mode. Segments 13-22 of 73, kept CONTIGUOUS so the chunk timings are the provider's real ones rather than invented. Only an excerpt is stored: the full transcript is a real lecturer speaking and does not belong in the repository.",
+  "representativeness": "Chosen as the most code-switched contiguous run in the lecture. supportedRate 0.427 against 0.441 for the full 3757-word lecture, Hindi function-word density 0.210 against 0.140 -- the excerpt is HARDER than the source, not easier. A fixture cut from the fluent English stretches would have flattered the guard.",
+  "timings": "start/end seconds are the provider's real chunk boundaries, rebased so the excerpt begins at 0. Intervals between chunks are unmodified. Spans 3.3 minutes, which is long enough for the reconstruction windower (180s window, 120s stride) to produce more than one window -- an earlier version of this fixture omitted timestamps entirely, and the pipeline read it as a single 0ms segment and stored no knowledge at all. Nothing failed loudly; the suite simply saw no items.",
+  "note": "language_probability is null because live Sarvam batch responses do not carry it at all. That absence is part of what this fixture exists to prove: the confidence heuristic that once guarded this pipeline could never have fired in production.",
+  "rawResponse": {
+    "transcript": "Okay? It allows the administrator to perform monitoring, reporting and root cause analysis. Okay? So this is the thing that it provide. So that is a unified manager. So what are the key phases involved in this provision? Toh first is your resource discovery kyunki ultimately cloud mein important cheez hoti hai resource, resource ko discover karna, jo bhi request aata hai resource ko allocate karna. Okay? So resource discovery kya hota hai? It is a resource pool management, resource provising. These are the three main phases of your resources. Survey kya hota hai ki enable unified manager to learn about a resource that are available for the service. Visibility for each service enable manager to the cloud infrastructure. Abhi alag-alag type ke resources ho sakte hain. Jaise humne physical air mein dekha teen type ke resources hai compute, network and storage. Toh what are the key content in that resource discovery? Compute ke andar kya-kya resources ho sakte hain? So the number of blades, slot location, blade model, CPU speed, memory capacity, memory pool, physical to virtual mapping. These are all the part of the computer system. The network system will switch modern network adapter VLAM, SLAM, reversion to physical mapping, quality of services in zone. These are the component of network category ke hote hain aur storage categories mein kya-kya hota hai? Type of storage system, drive capacity, free capacity, RID level, storage pool, physical to virtual storage mapping. Ye aapko physical to personal. Ye saari categories hai, saare unke component hai. Aage ki slides mein yahi saari chizon pe discuss kiya gaya hai ki what are the storage component, what are the network component and what are the different ideas of them. Ye how to manage this services. Ye theory hai. So the first is your resource pool management. Abhi resource pool kaise aap manage karoge? Aa raha hai samajh mein ye friend? So it is very easy, okay? Toh resource pool mein humne dekha ki teen type ke resources hain, unka category diya gold, silver and bronze. Gold matlab ki jo 3 TB with 1 TB FC 1 TB SATA 1 TB and RID 115. Yahan pe silver mein bhi same aur rose mein bhi same toh aap dekh sakte hain jaise gold zyada mahnga hota hai. Silver usse kam aur rose usse bhi kam. Toh iss tarike se unhone alag-alag resources ko category wise daal diya. Jo high 3 TB ka hai, flash 1 TB, 1 TB, satin iridium level 5, 1 and 0 usse kam feature hai. Like this, the car ka price hota hai vaise another resources ka bhi price alag-alag hota hai. Okay. So multiple grade level example gold, silver, bronze, liquid, fine, each type of full. Clear hai ye grades ka alag-alag system. Clear? Next is what? Cost per price of the resource will differ depending on the grade level. Agar aap koi bhi resource buy kar rahe ho either you are buying gold, silver aur bronze. Price unka vary karega kyonki features sabhi alag-alag hai. Okay? So this is about your resource pool management. Now next is resource provisioning. Involve allocating resources from graded resource pool to service instances. Jo pool humare paas mein available hai usmen se jo bhi service aati hai usko resource allocate karke denge.",
+    "language_code": "en-IN",
+    "language_probability": null,
+    "diarized_transcript": null,
+    "timestamps": {
+      "words": [
+        "Okay? It allows the administrator to perform monitoring, reporting and root cause analysis. Okay? So this is the thing that it provide. So that is a unified manager. So what are the key phases involved in this provision? Toh first is your resource discovery kyunki ultimately cloud mein important cheez hoti hai resource, resource ko discover karna, jo bhi request aata hai resource ko allocate karna.",
+        "Okay? So resource discovery kya hota hai? It is a resource pool management, resource provising. These are the three main phases of your resources.",
+        "Survey kya hota hai ki enable unified manager to learn about a resource that are available for the service. Visibility for each service enable manager to the cloud infrastructure. Abhi alag-alag type ke resources ho sakte hain. Jaise humne physical air mein dekha teen type ke resources hai compute, network and storage. Toh what are the key content in that resource discovery? Compute ke andar kya-kya resources ho sakte hain?",
+        "So the number of blades, slot location, blade model, CPU speed, memory capacity, memory pool, physical to virtual mapping. These are all the part of the computer system. The network system will switch modern network adapter VLAM, SLAM, reversion to physical mapping, quality of services in zone. These are the component of network category ke hote hain aur storage categories mein kya-kya hota hai? Type of storage system, drive capacity, free capacity, RID level, storage pool, physical to virtual storage mapping.",
+        "Ye aapko physical to personal. Ye saari categories hai, saare unke component hai. Aage ki slides mein yahi saari chizon pe discuss kiya gaya hai ki what are the storage component, what are the network component and what are the different ideas of them.",
+        "Ye how to manage this services. Ye theory hai. So the first is your resource pool management. Abhi resource pool kaise aap manage karoge? Aa raha hai samajh mein ye friend? So it is very easy, okay? Toh resource pool mein humne dekha ki teen type ke resources hain, unka category diya gold, silver and bronze. Gold matlab ki jo 3 TB with 1 TB FC 1 TB SATA 1 TB and RID 115.",
+        "Yahan pe silver mein bhi same aur rose mein bhi same toh aap dekh sakte hain jaise gold zyada mahnga hota hai. Silver usse kam aur rose usse bhi kam. Toh iss tarike se unhone alag-alag resources ko category wise daal diya. Jo high 3 TB ka hai, flash 1 TB, 1 TB, satin iridium level 5, 1 and 0 usse kam feature hai.",
+        "Like this, the car ka price hota hai vaise another resources ka bhi price alag-alag hota hai. Okay. So multiple grade level example gold, silver, bronze, liquid, fine, each type of full. Clear hai ye grades ka alag-alag system.",
+        "Clear? Next is what? Cost per price of the resource will differ depending on the grade level. Agar aap koi bhi resource buy kar rahe ho either you are buying gold, silver aur bronze.",
+        "Price unka vary karega kyonki features sabhi alag-alag hai. Okay? So this is about your resource pool management. Now next is resource provisioning. Involve allocating resources from graded resource pool to service instances. Jo pool humare paas mein available hai usmen se jo bhi service aati hai usko resource allocate karke denge."
+      ],
+      "start_time_seconds": [
+        0,
+        24.52,
+        36.61,
+        57.7,
+        87.72,
+        99.84,
+        124.52,
+        142.82,
+        162.05,
+        176
+      ],
+      "end_time_seconds": [
+        24.52,
+        36.61,
+        57.7,
+        87.72,
+        99.84,
+        124.52,
+        142.82,
+        162.05,
+        176,
+        195.91
+      ]
+    }
+  }
+}

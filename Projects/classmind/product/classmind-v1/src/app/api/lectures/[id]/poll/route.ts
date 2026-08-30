@@ -22,7 +22,7 @@ export async function POST(_r: Request, { params }: { params: Promise<{ id: stri
     await requireCourseOwner(lecture.course_id as string, user.id);
 
     // Terminal already: report, don't re-poll. Keeps the endpoint idempotent.
-    if (["transcribed", "ready", "failed"].includes(lecture.status as string)) {
+    if (["transcribed", "ready", "failed", "quarantined"].includes(lecture.status as string)) {
       return NextResponse.json({ lectureId: id, status: lecture.status });
     }
     if (!lecture.provider_job_id) {
@@ -68,7 +68,7 @@ export async function POST(_r: Request, { params }: { params: Promise<{ id: stri
     // deliberately no path here that stores a transcript without one. The
     // descriptor is rebuilt from the language this lecture was actually
     // submitted with, not from the course's current setting.
-    const provenance = buildProvenance({
+    const { provenance, validation } = buildProvenance({
       // The record names the run and the provider call it came from, so a
       // transcript can be proved to belong to this lecture without trusting
       // the row it happens to be sitting in.
@@ -81,6 +81,20 @@ export async function POST(_r: Request, { params }: { params: Promise<{ id: stri
       rawResponse: raw,
     });
 
+    // THE TRANSCRIPT IS VALIDATED HERE, AT THE MOMENT IT ARRIVES -- before
+    // anything reads it and long before knowledge is derived from it. A
+    // rejected transcript is still STORED, with its provenance and its
+    // verdict: the raw artefact is what everything is re-derivable from and
+    // deleting it would destroy the evidence that the engine misbehaved. What
+    // changes is the status. A quarantined lecture never reaches extraction,
+    // so no knowledge is ever built on it.
+    //
+    // This is the step that was missing when Sarvam returned romanized Arabic
+    // for an English lecture on a live call: the transcript was stored as
+    // "transcribed", extraction ran, and 21 candidates were produced from a
+    // lecture nobody had given.
+    const quarantined = validation.verdict === "reject";
+
     // raw_transcription_response is stored exactly as received. Normalization
     // happens at read time; this row is the artefact everything re-derives from.
     // Matched on provider_job_id as well as id. The job id was read off this
@@ -92,10 +106,12 @@ export async function POST(_r: Request, { params }: { params: Promise<{ id: stri
     const { data: updated, error: updateError } = await svc
       .from("lectures")
       .update({
-        status: "transcribed",
+        status: quarantined ? "quarantined" : "transcribed",
         provider_status: polled.providerStatus,
         raw_transcription_response: raw,
         provenance,
+        transcript_validation: validation,
+        error_message: quarantined ? validation.reason : null,
         completed_at: new Date().toISOString(),
       })
       .eq("id", id)
@@ -109,7 +125,11 @@ export async function POST(_r: Request, { params }: { params: Promise<{ id: stri
       );
     }
 
-    return NextResponse.json({ lectureId: id, status: "transcribed" });
+    return NextResponse.json({
+      lectureId: id,
+      status: quarantined ? "quarantined" : "transcribed",
+      validation: { verdict: validation.verdict, code: validation.code, reason: validation.reason },
+    });
   } catch (err) {
     const { body, status } = errorResponse(err);
     return NextResponse.json(body, { status });
