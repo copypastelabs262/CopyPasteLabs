@@ -9,7 +9,7 @@ import { browserClient } from "@/lib/supabase/browser";
 // boundary is the whole route and the production build fails outright.
 export default function SignInPage() {
   return (
-    <Suspense fallback={<p className="mx-auto max-w-sm py-10 text-sm text-zinc-500">Loading…</p>}>
+    <Suspense fallback={<p className="mx-auto max-w-sm py-10 text-sm text-ink-faint">Loading…</p>}>
       <SignInForm />
     </Suspense>
   );
@@ -83,71 +83,75 @@ function SignInForm() {
   }
 
   return (
-    <div className="mx-auto max-w-sm py-10">
-      <h1 className="text-xl font-semibold">
+    <div className="mx-auto max-w-sm py-6 sm:py-10">
+      <p className="eyebrow-mono text-center">classmind</p>
+      <h1 className="font-display mt-2 text-center text-[1.8rem] leading-tight font-medium tracking-[-0.01em] text-ink">
         {mode === "signin" ? "Sign in" : "Create an account"}
       </h1>
 
-      <button
-        type="button" onClick={signInWithGoogle} disabled={busy}
-        className="mt-6 w-full rounded-md border border-zinc-300 px-4 py-2.5 font-medium hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-      >
-        Continue with Google
-      </button>
+      <div className="glass-2 mt-7 rounded-2xl p-6">
+        <button
+          type="button" onClick={signInWithGoogle} disabled={busy}
+          className="glass-3 w-full rounded-xl px-4 py-2.5 font-medium text-ink disabled:opacity-50"
+        >
+          Continue with Google
+        </button>
 
-      <div className="mt-6 flex items-center gap-3">
-        <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
-        <span className="text-xs uppercase tracking-wide text-zinc-500">or</span>
-        <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
+        <div className="mt-6 flex items-center gap-3">
+          <span className="h-px flex-1 bg-line" />
+          <span className="eyebrow-mono">or</span>
+          <span className="h-px flex-1 bg-line" />
+        </div>
+
+        <form onSubmit={submit} className="mt-6 space-y-4">
+          {mode === "signup" ? (
+            <>
+              <Field label="Full name" value={fullName} onChange={setFullName} required />
+              <div>
+                <label className="eyebrow-mono block">I am a</label>
+                <div className="mt-1.5 flex gap-2">
+                  {(["faculty", "student"] as const).map((r) => (
+                    <button
+                      key={r} type="button" onClick={() => setRole(r)}
+                      className={
+                        "flex-1 rounded-xl border px-3 py-2 text-sm capitalize transition-colors " +
+                        (role === r
+                          ? "border-accent/50 bg-accent-soft font-medium text-accent"
+                          : "border-line text-ink-soft hover:text-ink")
+                      }
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : null}
+
+          <Field label="Email" type="email" value={email} onChange={setEmail} required />
+          <Field label="Password" type="password" value={password} onChange={setPassword} required />
+
+          {error ? <p className="rounded-xl bg-danger-soft px-3.5 py-2.5 text-sm text-danger">{error}</p> : null}
+          {notice ? <p className="rounded-xl bg-ok-soft px-3.5 py-2.5 text-sm text-ok">{notice}</p> : null}
+
+          <button
+            type="submit" disabled={busy}
+            className="w-full rounded-xl bg-accent-fill px-4 py-2.5 font-medium text-accent-ink shadow-[0_0_0_1px_rgba(94,141,255,0.25),0_10px_30px_-10px_rgba(94,141,255,0.16)] transition-colors hover:bg-accent-strong disabled:opacity-50"
+          >
+            {busy ? "Working…" : mode === "signin" ? "Sign in" : "Create account"}
+          </button>
+        </form>
       </div>
 
-      <form onSubmit={submit} className="mt-6 space-y-4">
-        {mode === "signup" ? (
-          <>
-            <Field label="Full name" value={fullName} onChange={setFullName} required />
-            <div>
-              <label className="block text-xs font-medium uppercase tracking-wide text-zinc-500">
-                I am a
-              </label>
-              <div className="mt-1 flex gap-2">
-                {(["faculty", "student"] as const).map((r) => (
-                  <button
-                    key={r} type="button" onClick={() => setRole(r)}
-                    className={
-                      "flex-1 rounded-md border px-3 py-2 text-sm capitalize " +
-                      (role === r
-                        ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900"
-                        : "border-zinc-300 dark:border-zinc-700")
-                    }
-                  >
-                    {r}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </>
-        ) : null}
-
-        <Field label="Email" type="email" value={email} onChange={setEmail} required />
-        <Field label="Password" type="password" value={password} onChange={setPassword} required />
-
-        {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
-        {notice ? <p className="text-sm text-green-700 dark:text-green-400">{notice}</p> : null}
-
+      <p className="mt-6 text-center text-sm text-ink-soft">
+        {mode === "signin" ? "No account? " : "Already have an account? "}
         <button
-          type="submit" disabled={busy}
-          className="w-full rounded-md bg-zinc-900 px-4 py-2.5 font-medium text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+          onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(null); }}
+          className="font-medium text-accent hover:underline"
         >
-          {busy ? "Working…" : mode === "signin" ? "Sign in" : "Create account"}
+          {mode === "signin" ? "Create one" : "Sign in"}
         </button>
-      </form>
-
-      <button
-        onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(null); }}
-        className="mt-6 text-sm text-zinc-600 hover:underline dark:text-zinc-400"
-      >
-        {mode === "signin" ? "No account? Create one" : "Already have an account? Sign in"}
-      </button>
+      </p>
     </div>
   );
 }
@@ -160,13 +164,13 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-xs font-medium uppercase tracking-wide text-zinc-500">
+      <label className="eyebrow-mono block">
         {label}
       </label>
       <input
         type={type} value={value} required={required}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:focus:border-zinc-100"
+        className="mt-1.5 w-full rounded-xl border border-line bg-surface-sunken/70 px-3.5 py-2.5 text-[15px] text-ink transition-colors outline-none placeholder:text-ink-faint hover:border-ink-faint/60 focus:border-accent"
       />
     </div>
   );
