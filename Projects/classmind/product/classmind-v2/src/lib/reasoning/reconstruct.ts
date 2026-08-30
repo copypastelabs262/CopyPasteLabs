@@ -109,6 +109,19 @@ export interface ReconstructionResult {
     promptTokens: number;
     completionTokens: number;
     callsWithUsage: number;
+    // ---- ACTUAL PROVIDER TRAFFIC ---------------------------------------
+    //
+    // `calls` above counts LOGICAL WINDOWS. These count REQUESTS, and after
+    // Test A the difference is not academic: that run recorded calls: 20 for
+    // ~60 requests, zero completions and zero tokens. Three numbers, three
+    // meanings, and reporting only the first made a total failure look like
+    // twenty ordinary calls.
+    httpAttempts: number;
+    successfulCalls: number;
+    retries: number;
+    rateLimited: number;
+    concurrency: number;
+    requestsPerMinute: number;
   };
 }
 
@@ -174,9 +187,16 @@ const CONCURRENCY = 4;
 
 // Runs `work` over `items`, at most CONCURRENCY at a time. Completion order
 // does not matter: every result is independent and the caller sorts later.
-async function inParallel<T>(items: T[], work: (item: T) => Promise<void>): Promise<void> {
+async function inParallel<T>(
+  items: T[],
+  work: (item: T) => Promise<void>,
+  // How many at once is a property of the PROVIDER, not of reconstruction.
+  // CONCURRENCY below is the fallback for a stub provider that declares no
+  // capabilities; a real one always states its own.
+  concurrency: number = CONCURRENCY,
+): Promise<void> {
   let next = 0;
-  const runners = Array.from({ length: Math.min(CONCURRENCY, items.length) }, async () => {
+  const runners = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
     for (;;) {
       const i = next; next += 1;
       if (i >= items.length) return;
@@ -470,6 +490,83 @@ Output shape:
 Do not record the lecturer's filler, greetings, or classroom management.
 If the excerpt teaches nothing, return {"items":[]}.`;
 
+// ---------------------------------------------------------------------------
+// The output contract, as a schema
+// ---------------------------------------------------------------------------
+//
+// THE SAME CONTRACT THE PROMPTS ALREADY STATE, made machine-enforceable.
+//
+// Every field, every enum value and every name below is transcribed verbatim
+// from the "Output shape" block in the prompt it accompanies. Nothing new is
+// asked for and nothing is renamed: this is the existing contract expressed in
+// a form a provider can be made to obey, rather than merely asked to.
+//
+// It lives HERE, in the engine, because the shape of a ClassMind knowledge item
+// is ClassMind's decision. The adapter translates it into whatever the provider
+// supports; a provider that supports nothing still gets the prose version in
+// the prompt. That is what keeps two different models producing comparable
+// output, which is the whole point of the processing engine owning the contract.
+//
+// On 2026-08-30, seven of twenty windows came back as prose or as truncated
+// arrays. At temperature 0 those responses are deterministic, so retrying them
+// reproduces them exactly; constrained decoding is the only thing that changes
+// the outcome.
+//
+// `strict: true` requires every property listed in `required` and
+// `additionalProperties: false` at every level.
+function itemsSchema(kinds: string[], roles: string[]): object {
+  return {
+    type: "object",
+    additionalProperties: false,
+    required: ["items"],
+    properties: {
+      items: {
+        type: "array",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          required: ["kind", "title", "summary", "steps", "unspecified", "confidence", "evidence"],
+          properties: {
+            kind: { type: "string", enum: kinds },
+            title: { type: "string" },
+            summary: { type: "string" },
+            steps: { type: "array", items: { type: "string" } },
+            unspecified: { type: "array", items: { type: "string" } },
+            confidence: { type: "number" },
+            evidence: {
+              type: "array",
+              items: {
+                type: "object",
+                additionalProperties: false,
+                required: ["role", "quote"],
+                properties: {
+                  role: { type: "string", enum: roles },
+                  // Verbatim-ness cannot be expressed in JSON Schema, so it
+                  // stays where it already is: stated in the prompt and
+                  // ENFORCED by locateQuote, which drops any item whose quote
+                  // is not found. The schema constrains shape; the engine
+                  // constrains truth.
+                  quote: { type: "string" },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+}
+
+const ACTIONABLE_SCHEMA = itemsSchema(
+  ["assignment", "deadline", "exam_instruction", "announcement"],
+  ["introduces", "requires", "step", "deadline", "context"],
+);
+
+const TEACHING_SCHEMA = itemsSchema(
+  ["topic", "concept", "comparison", "procedure", "example"],
+  ["explains"],
+);
+
 // What to say when the cheap pass found nothing in this window.
 //
 // Sweeping every window with the actionable question invites a model to
@@ -509,6 +606,8 @@ export async function reconstructLecture(
   injectedProvider?: ReasoningProvider,
 ): Promise<ReconstructionResult> {
   const provider = injectedProvider ?? getReasoningProvider();
+  // Declared by the provider, defaulted only for stubs that declare nothing.
+  const concurrency = provider.capabilities?.maxConcurrency ?? CONCURRENCY;
   // Built once per lecture, not per quote.
   const spoken = buildSpoken(transcript);
   const collapsed = collapse(spoken.text);
@@ -518,6 +617,8 @@ export async function reconstructLecture(
     failures: [] as string[],
     providerId: provider.id, model: provider.model,
     promptTokens: 0, completionTokens: 0, callsWithUsage: 0,
+    httpAttempts: 0, successfulCalls: 0, retries: 0, rateLimited: 0,
+    concurrency, requestsPerMinute: provider.capabilities?.requestsPerMinute ?? 0,
   };
   const out: ReconstructedItem[] = [];
 
@@ -525,6 +626,10 @@ export async function reconstructLecture(
   // window and nothing else.
   async function runWindow(
     system: string,
+    // The engine's output contract for THIS pass. Travels with the prompt
+    // because the two state the same thing -- one in prose for the model to
+    // read, one in schema for the provider to enforce.
+    schema: object,
     win: Window,
     category: ReconstructedItem["category"],
     hint: string,
@@ -536,6 +641,7 @@ export async function reconstructLecture(
         system,
         user: `${hint}\n\nEXCERPT (${Math.round(win.startMs / 1000)}s - ${Math.round(win.endMs / 1000)}s):\n"""\n${win.text}\n"""`,
         expectJson: true,
+        jsonSchema: schema,
         maxTokens: MAX_COMPLETION_TOKENS,
       });
       // Counted BEFORE the response is parsed. A window whose JSON is
@@ -627,16 +733,16 @@ export async function reconstructLecture(
     const hint = inWindow.length
       ? `Sentences flagged as possible obligations in this excerpt:\n${inWindow.map((c) => `- "${c.evidenceText.trim()}"`).join("\n")}`
       : NO_CUE_HINT;
-    await runWindow(ACTIONABLE_SYSTEM, win, "actionable", hint);
-  });
+    await runWindow(ACTIONABLE_SYSTEM, ACTIONABLE_SCHEMA, win, "actionable", hint);
+  }, concurrency);
 
   // --- teaching: fixed windows, because teaching is continuous --------------
   await inParallel(windowStarts(end, TEACHING_STRIDE_MS), async (from) => {
     const win = windowFor(transcript, spoken, from, from + WINDOW_MS);
     if (!win) return;
     stats.teachingWindows += 1;
-    await runWindow(TEACHING_SYSTEM, win, "teaching", "Record what is taught in this excerpt.");
-  });
+    await runWindow(TEACHING_SYSTEM, TEACHING_SCHEMA, win, "teaching", "Record what is taught in this excerpt.");
+  }, concurrency);
 
   stats.windows = stats.actionableWindows + stats.teachingWindows;
 
@@ -653,6 +759,16 @@ export async function reconstructLecture(
     (a, b) => (a.evidence[0]?.startMs ?? 0) - (b.evidence[0]?.startMs ?? 0),
   );
 
+  // WHAT ACTUALLY WENT OVER THE WIRE. Read once, at the end, from the provider
+  // instance this run used -- so retries and rejections are counted even though
+  // reconstruction never saw them.
+  if (provider.telemetry) {
+    stats.httpAttempts = provider.telemetry.httpAttempts;
+    stats.successfulCalls = provider.telemetry.succeeded;
+    stats.retries = provider.telemetry.retries;
+    stats.rateLimited = provider.telemetry.rateLimited;
+  }
+
   return {
     items,
     method: RECONSTRUCTION_METHOD,
@@ -668,6 +784,13 @@ export async function reconstructLecture(
 // layer's safety claims rest on, and they are pure, so they are checkable
 // without a model and without any particular recording.
 export const __internals = {
+  ACTIONABLE_SCHEMA,
+  TEACHING_SCHEMA,
+  // The prompts themselves, so a provider probe can send exactly what the
+  // pipeline sends. A probe that paraphrases the prompt tests the paraphrase.
+  ACTIONABLE_SYSTEM,
+  TEACHING_SYSTEM,
+  NO_CUE_HINT,
   buildSpoken,
   collapse,
   windowFor,

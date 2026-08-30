@@ -7,7 +7,7 @@ import { getExtractionMethod } from "@/lib/extraction";
 import { reconstructLecture, RECONSTRUCTION_METHOD, RECONSTRUCTION_VERSION } from "@/lib/reasoning/reconstruct";
 import { storeKnowledge } from "@/lib/knowledge/store";
 import { decideReadiness } from "@/lib/knowledge/plan";
-import { reasoningAvailable, getReasoningProvider } from "@/lib/reasoning";
+import { reasoningAvailable, getReasoningProvider, reasoningUnavailableReason } from "@/lib/reasoning";
 import {
   transcriptFingerprint, findReusableRun, recordRun,
   type RunKey, type LedgerState,
@@ -196,7 +196,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       // Honest degradation. Candidates exist, knowledge does not, and the
       // response says which -- rather than letting sentence fragments pass for
       // understanding.
-      reasoningError = "No reasoning model is configured, so no knowledge was reconstructed.";
+      //
+      // The registry knows WHICH of the five ways this can fail actually
+      // happened -- unset, unknown, paid-and-disabled, no key, no model -- and
+      // saying "no model is configured" when the real answer is "the model id
+      // is missing" sends the reader to the wrong file.
+      reasoningError =
+        reasoningUnavailableReason() ??
+        "No reasoning model is configured, so no knowledge was reconstructed.";
     } else {
       // Naming the provider does not call it -- adapters read their credentials
       // at request time, not at construction -- so this is free and it is what
@@ -339,6 +346,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         knowledgeTotal,
         forced: force,
         error: reasoningError,
+        // What the provider actually received, as distinct from what the engine
+        // decided to ask for. Absent on a reused run: no requests were made.
+        traffic: reconstruction
+          ? {
+              httpAttempts: reconstruction.httpAttempts,
+              successfulCalls: reconstruction.successfulCalls,
+              retries: reconstruction.retries,
+              rateLimited: reconstruction.rateLimited,
+              requestsPerMinute: reconstruction.requestsPerMinute,
+              concurrency: reconstruction.concurrency,
+            }
+          : undefined,
       });
       runId = recorded.runId;
       // A ledger that could not be READ and one that could not be WRITTEN are
@@ -381,6 +400,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         promptTokens: (reconstruction?.callsWithUsage ?? 0) > 0 ? reconstruction!.promptTokens : null,
         completionTokens: (reconstruction?.callsWithUsage ?? 0) > 0 ? reconstruction!.completionTokens : null,
         durationMs: Date.now() - startedAt,
+        // `calls` is windows; these are requests. Test A made 20 of the first
+        // and ~60 of the second, and reporting only the first made a total
+        // failure look ordinary.
+        httpAttempts: reconstruction?.httpAttempts ?? 0,
+        successfulCalls: reconstruction?.successfulCalls ?? 0,
+        retries: reconstruction?.retries ?? 0,
+        rateLimited: reconstruction?.rateLimited ?? 0,
+        requestsPerMinute: reconstruction?.requestsPerMinute ?? null,
+        concurrency: reconstruction?.concurrency ?? null,
         ledger,
         ledgerNote,
       },

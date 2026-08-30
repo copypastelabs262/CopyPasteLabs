@@ -49,7 +49,25 @@ function isRetryable(err: unknown): boolean {
 const MAX_ATTEMPTS = 3;
 const RETRY_DELAY_MS = 1_500;
 
+// DISABLED ADAPTER. Sarvam is transcription only, locked 2026-08-30.
+//
+// The registry already refuses to hand this out without ALLOW_PAID_REASONING=1.
+// This second check exists because the registry is not the only way to reach
+// this function -- a direct import would bypass it -- and the rule this guards
+// is the one whose violation is measured in money rather than in test failures.
+// Two cheap checks beat one, when the failure mode is a bill.
+function assertPaidReasoningAllowed(): void {
+  if (process.env.ALLOW_PAID_REASONING === "1") return;
+  throw new Error(
+    "Sarvam reasoning is disabled. Sarvam is transcription only: once a transcript is stored, " +
+      "no processing step may call it again for that lecture. This adapter is kept for future " +
+      "provider evaluation and requires ALLOW_PAID_REASONING=1, which is unset by design. " +
+      "Set REASONING_PROVIDER to a free provider instead.",
+  );
+}
+
 export function createSarvamReasoner(): ReasoningProvider {
+  assertPaidReasoningAllowed();
   return {
     id: "sarvam",
     model: MODEL,

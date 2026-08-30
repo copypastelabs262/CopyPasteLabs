@@ -121,6 +121,9 @@ export async function findReusableRun(key: RunKey): Promise<Lookup> {
 export interface RunRecord {
   outcome: "succeeded" | "partial" | "failed" | "reused";
   complete: boolean;
+  // LOGICAL WINDOWS. Not provider traffic -- see `traffic` below, and the
+  // comments in migration 20260830170000 for why conflating the two hid a
+  // total rate-limit failure behind a plausible-looking number.
   calls: number;
   // Null, not zero, when the provider reported no usage. Recording an unknown
   // as zero would understate every total computed from this table.
@@ -134,6 +137,16 @@ export interface RunRecord {
   knowledgeTotal: number | null;
   forced: boolean;
   error: string | null;
+  // Added by migration 20260830170000. Optional so that a database without it
+  // still records everything else rather than losing the ledger entirely.
+  traffic?: {
+    httpAttempts: number;
+    successfulCalls: number;
+    retries: number;
+    rateLimited: number;
+    requestsPerMinute: number;
+    concurrency: number;
+  };
 }
 
 export interface Recorded {
@@ -146,10 +159,9 @@ export interface Recorded {
 // exactly the row you want when asking how often the guard earned its keep.
 export async function recordRun(key: RunKey, record: RunRecord): Promise<Recorded> {
   const svc = serviceClient();
-  const { data, error } = await svc
-    .from("processing_runs")
-    .insert({
-      lecture_id: key.lectureId,
+
+  const base = {
+    lecture_id: key.lectureId,
       course_id: key.courseId,
       transcript_sha256: key.transcriptSha256,
       reconstruction_method: key.method,
@@ -167,12 +179,44 @@ export async function recordRun(key: RunKey, record: RunRecord): Promise<Recorde
       items_proposed: record.itemsProposed,
       items_dropped_unverifiable: record.itemsDroppedUnverifiable,
       knowledge_total: record.knowledgeTotal,
-      forced: record.forced,
-      error: record.error,
-    })
-    .select("id")
-    .maybeSingle();
+    forced: record.forced,
+    error: record.error,
+  };
+
+  const traffic = record.traffic
+    ? {
+        http_attempts: record.traffic.httpAttempts,
+        successful_calls: record.traffic.successfulCalls,
+        retries: record.traffic.retries,
+        rate_limited: record.traffic.rateLimited,
+        requests_per_minute: record.traffic.requestsPerMinute,
+        concurrency: record.traffic.concurrency,
+      }
+    : {};
+
+  const insert = (row: Record<string, unknown>) =>
+    svc.from("processing_runs").insert(row).select("id").maybeSingle();
+
+  let { data, error } = await insert({ ...base, ...traffic });
+
+  // The traffic columns arrive in a LATER migration than the table. Losing the
+  // whole ledger because the newer one is not applied yet would be a worse
+  // failure than recording less, so an undefined-column error falls back to the
+  // original shape -- and says which it used, because a meter that silently
+  // measures less is the problem this file exists to solve.
+  let degraded = false;
+  if (error && /column .* does not exist|42703|schema cache/i.test(error.message) && record.traffic) {
+    degraded = true;
+    ({ data, error } = await insert(base));
+  }
 
   if (error) return { state: "unavailable", runId: null, note: unavailable(error.message) };
-  return { state: "ok", runId: (data?.id as string) ?? null, note: null };
+  return {
+    state: "ok",
+    runId: (data?.id as string) ?? null,
+    note: degraded
+      ? "Recorded without request-traffic columns -- migration 20260830170000 has not been applied, " +
+        "so http_attempts, retries and rate_limited were dropped for this run."
+      : null,
+  };
 }

@@ -7,6 +7,68 @@ Entries are snapshots of what was true when written and are never rewritten. Whe
 resolves something an earlier one recorded as blocked, the earlier line gets a dated marker
 pointing forward — it does not get edited away.
 
+## 2026-08-30 (night) — Reasoning becomes provider-independent, rate-limit-aware and metered
+
+**Done.** The reasoning layer no longer belongs to Sarvam. Four things shipped, all in
+`classmind-v2`, all uncommitted-then-committed tonight:
+
+1. **The processing ledger** (`processing_runs`, migration `20260830160000`, **applied**). One
+   table doing two jobs, because they are the same fact: a six-column cache key — transcript hash ·
+   method · version · provider · model — decides whether a run may be *reused*, and the same row
+   records what it *cost*. Layer 1 always had an idempotency guard; Layer 2, the paid one, had
+   none, and at `temperature: 0` that bought byte-identical output at full price. Migration
+   `20260830170000` (**applied**) adds the traffic columns: `calls` counts logical windows,
+   `http_attempts` counts requests, and the difference between those two numbers is the whole
+   point — one run recorded `calls: 20` for ~60 requests and zero completions.
+
+2. **Sarvam locked to transcription only.** Enforced in the registry *and* in the adapter, so a
+   direct import cannot route around it. `reasoningAvailable()` no longer reads `SARVAM_API_KEY`;
+   that function was the actual coupling. The rule costs ~2 points of Hinglish quality and is
+   written down so nobody rediscovers that as a surprise.
+
+3. **A provider registry and one OpenAI-compatible adapter.** Gemini, Groq, SambaNova, Mistral and
+   Ollama all speak the same wire format; adding a provider is a registry entry. An unset
+   `REASONING_PROVIDER` now **throws** — no default, because the old default is what spent a
+   transcription budget on reasoning.
+
+4. **A shared rate-limit scheduler.** The first run turned 20 windows into ~60 requests in 34
+   seconds because each window retried independently into a 429. The decision to slow down is now
+   made **once per run**: every attempt queues, and a 429 penalises the shared queue so backed-up
+   work resumes spaced instead of bursting. Next run: 27 attempts at ~8.2 req/min.
+
+**Structured output is now an engine contract.** Seven of twenty windows came back as prose or
+truncated arrays. Retrying is not the fix — at temperature 0 the same request fails identically —
+so the engine now declares a JSON Schema, transcribed verbatim from the prompts' own "Output
+shape" blocks, and each adapter translates it: strict `json_schema`, `json_object`, or prose-only.
+Same contract, three dialects, which is what keeps output comparable across models.
+
+**Provider migrated to Groq.** `gemini-3.5-flash` was refused after ~30 requests while
+`gemini-3.5-flash-lite` succeeded seconds later on the same key — so Gemini quotas are per-model,
+and the ~500 RPD figure from third-party sources is wrong for this project. **One lecture consumed
+a day's Gemini capacity.** Groq's own docs give `openai/gpt-oss-120b` 1,000 RPD / 200,000 TPD,
+strict schema support, and no training on customer data. A ClassMind-shaped probe — real prompt,
+real schema, real window, real `locateQuote` — passed on all four criteria including **verbatim
+Hinglish quoting**, which was the one risk no documentation could settle.
+
+**Blocked — and this is the finding that outranks the rest.** Groq charges rate-limit budget on the
+**reservation**, not usage: a call using 1,435 + 1,950 tokens was charged 5,435, exactly
+`input + max_tokens`. Sustained safe rate is ~1.5 req/min, so **a 20-window run takes ~20 minutes**
+— past undici's 5-minute client default (which killed the third attempt mid-run) and past
+**Vercel's `maxDuration = 300`.** The current architecture cannot run on a deployment at Groq's
+real token rate. That is an independent argument for Option D (9 calls) and for the background-job
+migration already drafted and still unapplied.
+
+**No clean baseline run exists.** Three attempts, three different failures, nothing written by any
+of them. The Sarvam baseline is intact at 24 items / 28 evidence and no Sarvam reasoning call was
+made all session.
+
+**Verified:** 311 offline checks pass (providers 100, extraction 76, transcript 33, reconstruction
+55, knowledge-plan 47); tsc and eslint clean.
+
+**Next:** fix the client timeout in `scripts/verify-processing-run.mts` (test tooling only), take
+the clean baseline on Groq — budget ~109K of 200K daily tokens, about one attempt per day — then
+build Option D with pass-level completeness.
+
 ## 2026-08-30 (evening) — The Sarvam balance was emptied by testing, and nothing was counting
 
 **What happened.** The operator topped up the Sarvam account during the day's session, uploaded

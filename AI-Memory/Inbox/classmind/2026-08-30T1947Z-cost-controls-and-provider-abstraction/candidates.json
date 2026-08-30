@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "session_id": "2026-08-30T1947Z-cost-controls-and-provider-abstraction",
+  "project": "classmind",
+  "generated_by": "End-Session/1.0.0 (hand-authored)",
+  "generated_at": "2026-08-30T19:47:00Z",
+  "candidates": [
+    {
+      "id": "cand-001",
+      "type": "learning",
+      "title": "Retrying into a rate limit amplifies it; the backoff decision belongs to the run, not the worker",
+      "body": "A pipeline that fans work out across concurrent workers must not let each worker decide independently how to handle a 429. Four workers with three attempts each, backing off 1.5s and 3s locally, produce a burst precisely when the provider has just asked for fewer requests. Retrying into a rate limit is the one case where retrying is strictly wrong: it converts 'slow down' into a self-inflicted outage.\n\nThe fix is structural, not a smaller constant. One rate limiter per run, shared by every worker; every attempt queues through it, retries included; a 429 penalises the SHARED queue so that work backed up during the pause resumes spaced rather than bursting the instant it lifts. Slot allocation must be claimed synchronously before any await, or concurrent callers all receive the same slot -- the same bug one level down.\n\nThe correct classification is three-way, not two: fatal (4xx other than 429 -- repeating cannot succeed and costs money to prove), rate-limited (coordinated globally), and transient (5xx, transport, empty completion -- bounded local retry).",
+      "confidence": "high",
+      "basis": "Measured on 2026-08-30. A 20-window reconstruction issued approximately 60 HTTP requests in 34 seconds (~105 req/min) against a documented 10 RPM ceiling; every request returned 429 and the run produced zero knowledge. After introducing a per-run scheduler the same lecture ran at 27 attempts over 198 seconds (~8.2 req/min) with 19 of 20 windows succeeding at the HTTP level.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v2/src/lib/reasoning/scheduler.ts",
+        "Projects/classmind/product/classmind-v2/src/lib/reasoning/openai-compatible.ts",
+        "Projects/classmind/product/classmind-v2/scripts/test-provider-registry.mts (section 9)"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-002",
+      "type": "learning",
+      "title": "A provider may charge rate-limit budget on the reservation, not on actual usage",
+      "body": "Token-per-minute accounting cannot be predicted from observed usage. At least one provider debits the budget by `input_tokens + max_tokens` at request time -- the full amount the caller RESERVED -- and does not refund the difference when the model stops early.\n\nThe practical consequence is that `max_tokens` is not a harmless ceiling. Setting it generously to avoid truncation silently multiplies the cost of every call against the rate limit, and the effective sustainable request rate can be several times lower than dividing TPM by measured token usage suggests.\n\nAlways derive the safe request rate from the reservation, and read the provider's own rate-limit response headers rather than inferring capacity from when 429s begin.",
+      "confidence": "high",
+      "basis": "Observed directly in Groq response headers on 2026-08-30. A call reporting 1,435 prompt tokens and 1,950 completion tokens (3,385 used) moved `x-ratelimit-remaining-tokens` from 8,000 to 2,565 -- a charge of 5,435, which is exactly 1,435 input + the 4,000 `max_tokens` requested. Naive arithmetic (8,000 / 3,385) suggested 2.36 requests per minute were safe; the true figure was 1.47.",
+      "evidence_refs": [
+        "Projects/classmind/.knowledge/sessions/2026-08-30-cost-controls-provider-abstraction-and-the-groq-migration.md"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-003",
+      "type": "mistake",
+      "title": "A verification script that exits 0 on a failed run reproduces the failure it exists to catch",
+      "body": "A test runner's exit code must reflect the OUTCOME OF THE WORK, not the completion of the runner. Two variants of the same mistake appeared in one evening:\n\n1. The runner asserted safety properties (ledger written, nothing overwritten, evidence grounded) and exited 0 when they held -- on a run that stored zero knowledge and was recorded as `partial`. Every assertion was true and the extraction had failed.\n\n2. Piping the runner through `tee` or `grep` replaces its exit code with the last stage's, so a hard crash mid-run also exited 0.\n\nThis is the same shape as the defect the project has already fought twice: confident success reported over an empty result. A harness carrying that defect cannot be trusted to detect it in the product.",
+      "confidence": "high",
+      "basis": "Both occurred on 2026-08-30. The first: `verify-processing-run.mts` reported '12 passed, 0 failed' and exit 0 for a run with `outcome: partial`, 8 of 20 windows failed and 0 items stored. The second: the run crashed with UND_ERR_HEADERS_TIMEOUT and the shell still reported exit code 0 because the command was piped through `tee`. The operator caught the first and explicitly asked whether exit 0 meant extraction success.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v2/scripts/verify-processing-run.mts"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-004",
+      "type": "pattern",
+      "title": "The output contract belongs to the engine; the adapter translates it into each provider's dialect",
+      "body": "When a system depends on structured model output, the schema should be declared by the application -- next to the prompt that describes the same shape in prose -- and each provider adapter should translate that one declaration into whatever the provider supports: strict constrained decoding where available, loose JSON mode where not, prose instruction where neither exists.\n\nTwo properties follow. The application never learns provider syntax, so swapping models is configuration. And every provider is asked for the SAME contract, which is what makes their outputs comparable -- the precondition for any cross-provider evaluation.\n\nThe schema constrains SHAPE only. Semantic guarantees that cannot be expressed in JSON Schema -- 'this quote must appear verbatim in the source' -- stay enforced by deterministic application code that discards violations. Shape from the schema, truth from the engine.\n\nA test should assert that the schema's enums match the prompt's stated vocabulary, because the two drift independently and a model told one contract while constrained to another fails confusingly.",
+      "confidence": "medium",
+      "basis": "Implemented and tested on 2026-08-30 after 7 of 20 windows returned prose or truncated arrays under a loose JSON mode. Retrying was established as useless: at temperature 0 the identical request reproduces the identical malformed response. The engine-declared schema is transcribed verbatim from the prompts' existing 'Output shape' blocks, and 15 offline assertions cover the three-dialect translation and enum agreement. Confidence is medium rather than high because the fix has been proven on a single window, not across a full 20-window run.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v2/src/lib/reasoning/types.ts",
+        "Projects/classmind/product/classmind-v2/src/lib/reasoning/openai-compatible.ts",
+        "Projects/classmind/product/classmind-v2/src/lib/reasoning/reconstruct.ts",
+        "Projects/classmind/product/classmind-v2/scripts/test-provider-registry.mts (section 11)"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-005",
+      "type": "learning",
+      "title": "Free-tier quota figures must be verified against the vendor and against your own account; aggregator lists go stale",
+      "body": "Published and community-aggregated free-tier numbers are unreliable in both directions and should never be used as planning inputs. Verify against the vendor's own documentation, and then against the account you will actually use -- the two can differ, and vendors increasingly decline to publish fixed numbers at all.\n\nTwo cheap techniques are worth knowing. Provider rate-limit RESPONSE HEADERS, where they exist, give the authoritative per-account figure without a dashboard login. And a single request that is refused while a sibling model succeeds on the same key proves quotas are per-model rather than project-wide -- a distinction that changes capacity planning entirely.",
+      "confidence": "high",
+      "basis": "On 2026-08-30 a widely-cited third-party figure of ~500 RPD was used for planning; the account refused the model after roughly 30 requests, while a sibling model succeeded seconds later on the same key. Separately, a community aggregator list was cross-checked against vendor documentation and contradicted it on four entries: GitHub Models (listed active; retired 2026-07-30), Cerebras (listed as a free tier; replaced by a $5 30-day trial requiring a payment method), Groq (listed 14,400 RPD; vendor docs give per-model limits, e.g. 1,000 RPD / 200,000 TPD), and Gemini (listed as not OpenAI-compatible; its compatibility endpoint was in use at the time).",
+      "evidence_refs": [
+        "Projects/classmind/.knowledge/sessions/2026-08-30-cost-controls-provider-abstraction-and-the-groq-migration.md"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    }
+  ]
+}

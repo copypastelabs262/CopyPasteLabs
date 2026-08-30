@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "session_id": "2026-08-30T1947Z-cost-controls-and-provider-abstraction",
+  "project": "classmind",
+  "state": "pending",
+  "state_set_at": "2026-08-30T19:47:00Z",
+  "state_set_by": "End-Session (hand-authored)",
+  "review": {
+    "reviewed_at": null,
+    "reviewed_by": null,
+    "candidate_outcomes": [],
+    "notes": ""
+  }
+}
