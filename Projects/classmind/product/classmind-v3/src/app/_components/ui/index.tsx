@@ -673,10 +673,165 @@ export function lectureStatusNote(status: string, errorMessage?: string | null):
     case "ready":
       return "What was taught is live. Anything actionable is waiting for your review.";
     case "quarantined":
-      return errorMessage ?? "The transcript failed validation and was held back.";
+      return friendlyLectureError(errorMessage).message;
     case "failed":
-      return errorMessage ?? "Processing failed.";
+      return friendlyLectureError(errorMessage).message;
     default:
-      return errorMessage ?? null;
+      return errorMessage ? friendlyLectureError(errorMessage).message : null;
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Failure, in human words.
+
+   The database stores whatever the provider threw — a raw 402 payload with a
+   request id, at worst — because losing the evidence would be worse. But raw
+   payloads are machine exhaust, and rendering one as body copy is how a
+   product tells its reader "something you cannot understand went wrong".
+   Every screen renders the sentence; the payload stays one disclosure away
+   (TechnicalDisclosure below) with the request id extracted for support.
+--------------------------------------------------------------------------- */
+
+export interface FriendlyError {
+  message: string;
+  /** Short support reference pulled out of the raw payload, when one exists. */
+  ref: string | null;
+  /** The untouched original, for the disclosure. Null when it IS the message. */
+  raw: string | null;
+}
+
+export function friendlyLectureError(raw: string | null | undefined): FriendlyError {
+  if (!raw) return { message: "Processing failed.", ref: null, raw: null };
+
+  const ref = raw.match(/request_id"?\s*[:=]\s*"?([A-Za-z0-9_-]{6,})/)?.[1]?.slice(0, 24) ?? null;
+  const lower = raw.toLowerCase();
+
+  if (lower.includes("insufficient_quota") || lower.includes("no credits")) {
+    return {
+      message:
+        "Transcription is paused — the transcription service has run out of credits. " +
+        "Your recording is stored safely and nothing was lost; it can be transcribed " +
+        "once credits are restored.",
+      ref,
+      raw,
+    };
+  }
+  if (lower.includes("sarvam") || lower.includes("transcri")) {
+    return {
+      message:
+        "Transcription failed partway. Your recording is stored safely — it can be " +
+        "re-run without uploading again.",
+      ref,
+      raw,
+    };
+  }
+  // Anything that looks like a payload rather than a sentence gets the generic
+  // sentence; anything that already reads as human (the transcript guard's
+  // verdicts, for instance) passes through untouched.
+  if (raw.includes("{") || raw.includes("_error") || raw.length > 200) {
+    return {
+      message:
+        "Processing hit a technical problem. Your recording is safe, and the details " +
+        "are preserved below for support.",
+      ref,
+      raw,
+    };
+  }
+  return { message: raw, ref, raw: null };
+}
+
+// The raw payload, one click away, in the machine voice. Never ambient.
+export function TechnicalDisclosure({ error }: { error: FriendlyError }) {
+  if (!error.raw && !error.ref) return null;
+  return (
+    <details className="mt-3 text-[13px]">
+      <summary className="cursor-pointer text-ink-faint transition-colors hover:text-ink-soft">
+        Technical details{error.ref ? <> &middot; ref <code className="chip-mono">{error.ref}</code></> : null}
+      </summary>
+      {error.raw ? (
+        <pre className="mt-2 max-h-40 overflow-auto rounded-lg bg-surface-sunken/80 p-3 font-mono text-xs leading-relaxed break-all whitespace-pre-wrap text-ink-faint">
+          {error.raw}
+        </pre>
+      ) : null}
+    </details>
+  );
+}
+
+/* ---------------------------------------------------------------------------
+   The pipeline, as a track.
+
+   Upload → transcribe → read → review → live is the product's core drama, and
+   a corner pill reduces it to a database enum. Five segments make state
+   narrative: lit is done, breathing is in progress, red says exactly where it
+   broke. Labels are mono — stage names are machine facts.
+--------------------------------------------------------------------------- */
+
+const STAGES = ["upload", "transcribe", "read", "review", "live"] as const;
+
+type SegmentState = "done" | "active" | "danger" | "idle";
+
+function stageStates(status: string, errorMessage?: string | null): {
+  segments: SegmentState[];
+  caption: string;
+} {
+  const seg = (fill: number, mark?: { at: number; as: SegmentState }): SegmentState[] =>
+    STAGES.map((_, i) => {
+      if (mark && i === mark.at) return mark.as;
+      return i < fill ? "done" : "idle";
+    });
+
+  switch (status) {
+    case "pending_upload":
+      return { segments: seg(0, { at: 0, as: "active" }), caption: "upload · waiting for audio" };
+    case "uploaded":
+      return { segments: seg(1), caption: "transcribe · not started" };
+    case "transcribing":
+      return { segments: seg(1, { at: 1, as: "active" }), caption: "transcribe · in progress" };
+    case "transcribed":
+      return { segments: seg(2), caption: "read · nothing read out yet" };
+    case "extracting":
+      return { segments: seg(2, { at: 2, as: "active" }), caption: "read · in progress" };
+    case "ready":
+      return { segments: seg(5), caption: "live" };
+    case "quarantined":
+      return { segments: seg(1, { at: 1, as: "danger" }), caption: "transcribe · transcript rejected" };
+    case "failed": {
+      const lower = (errorMessage ?? "").toLowerCase();
+      const at = lower.includes("sarvam") || lower.includes("transcri") || lower.includes("credit") ? 1 : 2;
+      return { segments: seg(at, { at, as: "danger" }), caption: `${STAGES[at]} · failed here` };
+    }
+    default:
+      return { segments: seg(0), caption: status };
+  }
+}
+
+const SEGMENT_CLASS: Record<SegmentState, string> = {
+  done: "bg-accent/55",
+  active: "bg-accent cm-breathe",
+  danger: "bg-danger",
+  idle: "bg-line",
+};
+
+// Decorative on purpose: the StatusPill beside it carries the words, and a
+// screen reader gets state from the pill, not from five coloured bars.
+export function PipelineTrack({
+  status,
+  errorMessage,
+  className,
+}: {
+  status: string;
+  errorMessage?: string | null;
+  className?: string;
+}) {
+  const { segments, caption } = stageStates(status, errorMessage);
+  return (
+    <div className={cx("min-w-0", className)} aria-hidden="true">
+      <div className="flex gap-1">
+        {segments.map((state, i) => (
+          <span key={i} className={cx("h-1 flex-1 rounded-full", SEGMENT_CLASS[state])} />
+        ))}
+      </div>
+      <p className="eyebrow-mono mt-1.5 truncate !text-[10px]">{caption}</p>
+    </div>
+  );
 }
