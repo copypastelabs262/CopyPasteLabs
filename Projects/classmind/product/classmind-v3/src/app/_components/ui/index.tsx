@@ -235,22 +235,30 @@ export function EmptyState({
   description?: ReactNode;
   action?: ReactNode;
 }) {
+  // Compact and solid on purpose. A dashed full-viewport void is the visual
+  // language of an unfinished mock, and a new account sees more empty states
+  // than full ones — they should read as a calm system awaiting input, not as
+  // a missing feature, and they should never dominate the screen they sit on.
   return (
-    <div className="rounded-2xl border border-dashed border-line bg-surface-raised px-6 py-14 text-center">
+    <div className="glass-2 flex items-center gap-4 rounded-2xl px-5 py-5 text-left sm:px-6">
       {icon ? (
-        <div className="mx-auto mb-5 flex h-11 w-11 items-center justify-center rounded-full bg-surface-sunken text-ink-soft">
+        <div
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink-soft"
+          style={{
+            background: "rgba(148,163,184,0.09)",
+            boxShadow: "0 0 24px -6px rgba(94,141,255,0.14)",
+          }}
+        >
           {icon}
         </div>
       ) : null}
-      <p className="mx-auto max-w-md text-lg leading-snug font-medium tracking-[-0.012em] text-balance text-ink">
-        {title}
-      </p>
-      {description ? (
-        <p className="mx-auto mt-2.5 max-w-md text-sm leading-relaxed text-ink-soft">
-          {description}
-        </p>
-      ) : null}
-      {action ? <div className="mt-7 flex justify-center">{action}</div> : null}
+      <div className="min-w-0 flex-1">
+        <p className="text-[15px] leading-snug font-medium tracking-[-0.008em] text-ink">{title}</p>
+        {description ? (
+          <p className="mt-1 max-w-xl text-sm leading-relaxed text-ink-soft">{description}</p>
+        ) : null}
+      </div>
+      {action ? <div className="shrink-0">{action}</div> : null}
     </div>
   );
 }
