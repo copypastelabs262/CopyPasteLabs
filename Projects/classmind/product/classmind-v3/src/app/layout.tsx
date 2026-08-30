@@ -42,7 +42,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en" className={`${inter.variable} ${fraunces.variable} ${jetbrains.variable}`}>
-      <body className="flex min-h-screen flex-col bg-surface text-ink antialiased">
+      <body className="relative flex min-h-screen flex-col bg-surface text-ink antialiased">
         {/* L0 — the ground plane. Fixed, behind everything, unclickable. */}
         <div className="cm-atmosphere" aria-hidden="true" />
 
