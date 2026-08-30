@@ -312,7 +312,7 @@ function TodoCard({ item }: { item: TodoItem }) {
 }
 
 function StudentCourseRow({ course }: { course: OverviewCourse }) {
-  const meta = [course.term, plural(course.lectureCount, "lecture", "lectures")]
+  const meta = [termLabel(course.term), plural(course.lectureCount, "lecture", "lectures")]
     .filter((part): part is string => Boolean(part))
     .join(" · ");
 
