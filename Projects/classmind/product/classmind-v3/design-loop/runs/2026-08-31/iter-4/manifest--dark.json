@@ -1,0 +1,62 @@
+{
+  "baseUrl": "http://localhost:3400",
+  "scheme": "dark",
+  "capturedAt": "2026-08-30T22:08:30.756Z",
+  "shots": [
+    {
+      "target": "home-student",
+      "viewport": "desktop",
+      "file": "home-student--desktop--dark.png",
+      "finalUrl": "http://localhost:3400/courses"
+    },
+    {
+      "target": "home-student",
+      "viewport": "tablet",
+      "file": "home-student--tablet--dark.png",
+      "finalUrl": "http://localhost:3400/courses"
+    },
+    {
+      "target": "home-student",
+      "viewport": "mobile",
+      "file": "home-student--mobile--dark.png",
+      "finalUrl": "http://localhost:3400/courses"
+    },
+    {
+      "target": "home-faculty",
+      "viewport": "desktop",
+      "file": "home-faculty--desktop--dark.png",
+      "finalUrl": "http://localhost:3400/courses"
+    },
+    {
+      "target": "home-faculty",
+      "viewport": "tablet",
+      "file": "home-faculty--tablet--dark.png",
+      "finalUrl": "http://localhost:3400/courses"
+    },
+    {
+      "target": "home-faculty",
+      "viewport": "mobile",
+      "file": "home-faculty--mobile--dark.png",
+      "finalUrl": "http://localhost:3400/courses"
+    },
+    {
+      "target": "course-faculty",
+      "viewport": "desktop",
+      "file": "course-faculty--desktop--dark.png",
+      "finalUrl": "http://localhost:3400/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975"
+    },
+    {
+      "target": "course-faculty",
+      "viewport": "tablet",
+      "file": "course-faculty--tablet--dark.png",
+      "finalUrl": "http://localhost:3400/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975"
+    },
+    {
+      "target": "course-faculty",
+      "viewport": "mobile",
+      "file": "course-faculty--mobile--dark.png",
+      "finalUrl": "http://localhost:3400/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975"
+    }
+  ],
+  "blocked": []
+}

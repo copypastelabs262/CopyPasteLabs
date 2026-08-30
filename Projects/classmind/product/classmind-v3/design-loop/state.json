@@ -55,7 +55,60 @@
         "Landing quote highlight is a static amber trace tint."
       ],
       "verify": "tsc PASS, eslint PASS",
-      "verdict": "pending gate review"
+      "verdict": "IMPROVE",
+      "gates": {
+        "ux": "PASS",
+        "visual": "PASS",
+        "comparative": "PASS",
+        "blockers": [
+          "Failed card must end in an action",
+          "Landing background seam through step 04 (fixed-position atmosphere painted viewport only)",
+          "Course-title truncation on desktop; ref chip wraps mid-token on mobile"
+        ]
+      }
+    },
+    {
+      "n": 3,
+      "label": "iter-3",
+      "capturedAt": "2026-08-31",
+      "evidence": "runs/2026-08-31/iter-3/",
+      "changes": [
+        "Failed card ends in 'Open lecture' (retrying is a paid operator-gated call, so the lecture page is the honest verb).",
+        "Atmosphere layer is absolute over the whole document; seam gone at every breakpoint.",
+        "Course titles line-clamp-2 instead of truncating; ref shortened to 12 chars and nowrap.",
+        "EmptyState drops its action below the text on phones."
+      ],
+      "verify": "tsc PASS, eslint PASS, next build PASS (label 'final')",
+      "verdict": "PASS",
+      "notes": [
+        "Gate judge re-reviewed: all three blockers fixed at every breakpoint, no regressions on judged screens; identity generalizes to course pages.",
+        "New finding carried into iter-4: course page rendered the failure as red prose; home's calm gray is correct.",
+        "Render-regression specialist (iter-2 evidence, 18 shots, pixel-level): no blockers, no overflow, no contrast failure on informational text; its D1/D2/D4/D6 were already fixed in iter-3; D3 (bare term numeral) and D5 (ambiguous Ask disabled state) carried into iter-4."
+      ]
+    },
+    {
+      "n": 4,
+      "label": "iter-4",
+      "capturedAt": "2026-08-31",
+      "evidence": "runs/2026-08-31/iter-4/",
+      "changes": [
+        "FacultyWorkspace failure prose is always the quiet voice; pill and stage track carry the alarm.",
+        "termLabel(): bare numeric terms render as 'Term 7' at the render boundary on both homes and the course header.",
+        "Ask submit is a quiet secondary until a question exists, then the glowing primary; the empty-ask guard stays."
+      ],
+      "verify": "tsc PASS, eslint PASS; production build re-run as label 'final-2'",
+      "verdict": "PASS"
     }
+  ],
+  "knownDevArtifacts": [
+    "The floating 'N' badge in before-shots was the Next.js dev-tools indicator; hidden via devIndicators:false from iter-1 on."
+  ],
+  "deferred": [
+    "Retry/re-transcribe affordance on failed lectures (paid path; operator decision required).",
+    "Password recovery flow on sign-in.",
+    "Faculty desktop right-rail secondary module (dead zone below course cards).",
+    "One committed backdrop-blur glass moment if the identity should move further from 'dark editorial' toward literal glass.",
+    "Header 'Sign in' link still shows on /signin itself; landing hero CTA shares the 'Sign in' label with the header link.",
+    "Compositional redesign of course and lecture screens (they inherit tokens only)."
   ]
 }
