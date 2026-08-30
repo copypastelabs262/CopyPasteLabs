@@ -10,6 +10,7 @@ import {
   PageHeader,
   Section,
   StatusPill,
+  termLabel,
 } from "@/app/_components/ui";
 import { AssignmentIcon, BookIcon, ChevronRightIcon, KeyIcon, SearchIcon } from "@/app/_components/ui/icons";
 import { kindLabel } from "./KnowledgeUnit";
