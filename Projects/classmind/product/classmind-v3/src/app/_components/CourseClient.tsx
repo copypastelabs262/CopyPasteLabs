@@ -189,7 +189,7 @@ export default function CourseClient({ courseId }: { courseId: string }) {
       <PageHeader
         eyebrow={course.code}
         title={course.title}
-        subtitle={`${course.term ?? "No term set"} · ${isOwner ? "You teach this course" : "Enrolled as a student"}`}
+        subtitle={`${termLabel(course.term) ?? "No term set"} · ${isOwner ? "You teach this course" : "Enrolled as a student"}`}
         action={isOwner && course.join_code ? <JoinCode code={course.join_code} /> : undefined}
       />
 
