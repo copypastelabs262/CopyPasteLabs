@@ -1,0 +1,20 @@
+{
+  "at": "2026-08-30T20:36:38.648Z",
+  "allOk": true,
+  "checks": [
+    {
+      "name": "typescript",
+      "command": "npx tsc --noEmit",
+      "ok": true,
+      "durationMs": 5169,
+      "tail": ""
+    },
+    {
+      "name": "eslint",
+      "command": "npx eslint .",
+      "ok": true,
+      "durationMs": 17370,
+      "tail": ""
+    }
+  ]
+}

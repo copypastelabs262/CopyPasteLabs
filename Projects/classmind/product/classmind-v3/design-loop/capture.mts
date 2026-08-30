@@ -214,7 +214,9 @@ async function main() {
       }
 
       const file = `${target.name}--${viewportName}--${scheme}.png`;
-      await page.screenshot({ path: join(runDir, file), fullPage: true });
+      // animations:"disabled" fast-forwards CSS animations to their end state,
+      // so an entry animation mid-flight can never masquerade as a contrast bug.
+      await page.screenshot({ path: join(runDir, file), fullPage: true, animations: "disabled" });
       manifest.shots.push({
         target: target.name,
         viewport: viewportName,
