@@ -266,7 +266,7 @@ export function EmptyState({
         </div>
         {action ? <div className="hidden shrink-0 sm:block">{action}</div> : null}
       </div>
-      {action ? <div className={cx("mt-4 sm:hidden", icon && "pl-14")}>{action}</div> : null}
+      {action ? <div className={cx("mt-4 sm:hidden", icon ? "pl-14" : null)}>{action}</div> : null}
     </div>
   );
 }
