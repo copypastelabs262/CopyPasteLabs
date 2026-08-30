@@ -265,12 +265,14 @@ export function EmptyState({
 
 export type PillTone = "neutral" | "ok" | "warn" | "danger" | "busy";
 
+// Pigment, not light: status chips are tinted fills with a matching border,
+// and they never glow. Colour states change hue, never intensity.
 const PILL_TONE: Record<PillTone, string> = {
-  neutral: "bg-surface-sunken text-ink-soft",
-  ok: "bg-ok-soft text-ok",
-  warn: "bg-warn-soft text-warn",
-  danger: "bg-danger-soft text-danger",
-  busy: "bg-accent-soft text-accent",
+  neutral: "bg-surface-sunken text-ink-soft border border-line",
+  ok: "bg-ok-soft text-ok border border-ok/25",
+  warn: "bg-warn-soft text-warn border border-warn/25",
+  danger: "bg-danger-soft text-danger border border-danger/25",
+  busy: "bg-accent-soft text-accent border border-accent/25",
 };
 
 const PILL_DOT: Record<PillTone, string> = {
