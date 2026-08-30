@@ -191,13 +191,12 @@ export default function FacultyWorkspace({
                         {formatBytes(l.file_size_bytes)}
                       </p>
 
+                      {/* Always the quiet voice. The pill and the stage track
+                          already carry the alarm; a paragraph of red prose
+                          reads as a siren, and the same sentence must not
+                          change temperature between this screen and home. */}
                       {line ? (
-                        <p
-                          className={cx(
-                            "mt-2 max-w-[62ch] text-sm leading-relaxed",
-                            tone === "danger" ? "text-danger" : "text-ink-soft",
-                          )}
-                        >
+                        <p className="mt-2 max-w-[62ch] text-sm leading-relaxed text-ink-soft">
                           {line}
                         </p>
                       ) : null}
