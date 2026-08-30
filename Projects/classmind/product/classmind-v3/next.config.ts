@@ -15,6 +15,11 @@ const nextConfig: NextConfig = {
     "/api/lectures/[id]/transcribe": ["./fixtures/transcription/**"],
     "/api/lectures/[id]/poll": ["./fixtures/transcription/**"],
   },
+
+  // The floating dev-tools badge sits on top of real content in screenshots and
+  // once occluded a lecture title in a design review. Dev-only either way;
+  // hiding it keeps captured evidence identical to what a user would see.
+  devIndicators: false,
 };
 
 export default nextConfig;
