@@ -317,7 +317,10 @@ function CourseRow({ course }: { course: OverviewCourse }) {
       className="row-hover flex items-center gap-4 p-4 sm:p-5"
     >
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[15px] text-ink">
+        {/* Clamped, not truncated: the rail is narrow and a course's name is
+            its identity — losing it to an ellipsis on a screen with the room
+            to wrap it is a regression a review already caught once. */}
+        <span className="line-clamp-2 block text-[15px] text-ink">
           <span className="font-medium">{course.code}</span>
           <span className="text-ink-soft"> {course.title}</span>
         </span>
