@@ -7,6 +7,53 @@ Entries are snapshots of what was true when written and are never rewritten. Whe
 resolves something an earlier one recorded as blocked, the earlier line gets a dated marker
 pointing forward — it does not get edited away.
 
+## 2026-08-31 — The Design Master Loop exists, and V3 has its first designed identity
+
+**Done.** All in `product/classmind-v3/` — `classmind-v2` is untouched and stays the preserved
+baseline; v3 now runs on its own port (3400) under its own package name.
+
+1. **A reusable design-improvement loop** lives at `classmind-v3/design-loop/`: a Playwright
+   capture harness that drives the real dev server as the e2e accounts and screenshots every
+   configured route × viewport, a verifier (tsc/eslint/build, results recorded per run), a
+   `state.json` iteration ledger, and `runs/2026-08-31/` holding the complete evidence trail —
+   before/after screenshots for four iterations, three preserved specialist critiques, and gate
+   verdicts. **The money rule is enforced in code:** every capture context aborts, at the
+   browser's network layer, any request to `/extract`, `/ask`, `/transcribe`, `/poll` or an AI
+   provider host, and logs the attempt to the run manifest. Zero attempts were recorded across
+   every run — rendering pages spent nothing, verified rather than assumed.
+
+2. **The first run redesigned the signed-in home flow** (both roles), landing, sign-in, the
+   shell, and the shared primitives into a committed dark identity ("The Observatory"): an
+   L0–L5 glass material hierarchy with two backdrop-filters app-wide and capped glow budgets,
+   Fraunces/Inter/JetBrains Mono as three deliberate voices, one focal surface per screen. The
+   UX repairs are the substance: **the raw Sarvam 402 payload that rendered twice as body copy
+   is gone** — failures are human sentences with the payload one disclosure away and a short
+   support ref; lecture state is a five-segment pipeline track that says *where* a run broke;
+   the attention list no longer duplicates into recents; empty states are compact and end in a
+   forward action; the student home's Ask panel is a **link** into the course, never a live
+   input, because asking bills tokens and the home page must not make spending a keystroke.
+
+3. **The verdict was earned, not asserted.** A hard-grading gate judge failed iteration 2 with
+   three named blockers (failed card ended without an action; a background seam cut through the
+   landing — the atmosphere layer was `position: fixed` and painted only the first viewport;
+   truncation regressions). Iteration 3 fixed them; the judge re-reviewed every breakpoint and
+   ruled **PASS**. A pixel-level regression pass over 18 shots found no blockers and two live
+   defects (a bare "7" rendering as metadata, an ambiguous disabled Ask button), both fixed in
+   iteration 4 with tsc/eslint/build green over the final tree.
+
+**Verified:** tsc clean, eslint clean, `next build` clean (26 routes), 63 screenshots across
+five labelled evidence sets, v2 byte-identical throughout.
+
+**Blocked / deferred, honestly:** no retry affordance on a failed lecture — re-transcription is
+a paid ASR call and an operator decision, so the card ends in "Open lecture" until that product
+question is answered. No password recovery on sign-in. Course and lecture screens inherit the
+tokens but have not had their compositional pass. Everything blocked in the 2026-08-30 entries
+(the 36-minute ceiling, the background-job migration, the clean Groq baseline) is unchanged —
+this session deliberately spent nothing.
+
+**Next:** run the loop on the student course view and lecture screen, and put the
+re-transcribe affordance question to the operator.
+
 ## 2026-08-30 (night) — Reasoning becomes provider-independent, rate-limit-aware and metered
 
 **Done.** The reasoning layer no longer belongs to Sarvam. Four things shipped, all in
