@@ -17,15 +17,13 @@
     { "name": "home-faculty", "path": "/courses", "role": "faculty" },
     {
       "name": "course-student",
-      "path": "/courses",
-      "role": "student",
-      "clickFirst": "main a[href^='/courses/']"
+      "path": "/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975",
+      "role": "student"
     },
     {
       "name": "course-faculty",
-      "path": "/courses",
-      "role": "faculty",
-      "clickFirst": "main a[href^='/courses/']"
+      "path": "/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975",
+      "role": "faculty"
     }
   ]
 }
