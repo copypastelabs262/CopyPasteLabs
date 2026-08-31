@@ -299,7 +299,10 @@ async function callOnce(
     throw new ProviderHttpError(
       `${cfg.id} reasoning failed (${res.status}): ${detail.slice(0, 300)}`,
       res.status,
-      classifyStatus(res.status),
+      // Classified from the FULL body, not the 300-char message slice --
+      // "json_validate_failed" sits past provider error prose long enough to
+      // be cut off by the slice.
+      classifyStatus(res.status, detail),
       parseRetryAfter(res.headers),
     );
   }
