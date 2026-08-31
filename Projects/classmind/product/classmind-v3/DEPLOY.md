@@ -127,17 +127,30 @@ watch the function logs.
 
 **Authentication → URL Configuration:**
 
-- **Site URL:** `https://<your-vercel-domain>`
-- **Redirect URLs** — add all of these:
+> **V3 note.** This Supabase project is shared with v1 (and v2), so these settings are
+> ADDITIVE: add v3's entries, never remove v1's and never change the Site URL while v1 is
+> the live deployment. The Site URL is the fallback Supabase silently redirects to whenever
+> a `redirectTo` is not in the allow-list — which is why an un-allow-listed local v3
+> sign-in lands on the old v1 deployment after Google consent.
+
+- **Site URL:** `https://<your-vercel-domain>` (currently v1's domain; becomes v3's when v3
+  replaces it as the live deployment)
+- **Redirect URLs** — the allow-list must contain every origin that initiates sign-in.
+  For local v3 development that means adding:
   ```
-  https://<your-vercel-domain>/**
-  http://localhost:3100/**
+  http://localhost:3400/**
   ```
+  alongside the existing entries (`https://<v1-vercel-domain>/**`, `http://localhost:3100/**`
+  for v1, `http://localhost:3300/**` if v2 was added). When v3 gets its own deployment, add
+  `https://<v3-domain>/**` too.
+
   **The wildcard is not optional.** Supabase glob-matches the *entire* `redirectTo` URL including
   its query string, and the sign-in page appends `?role=faculty` so the callback knows which kind
   of account to create. A bare `https://<domain>/auth/callback` entry will not match that and the
-  sign-in fails with a redirect-not-allowed error. Keep the localhost entry so local development
-  keeps working.
+  sign-in silently falls back to the Site URL.
+
+  **Host spelling matters too.** `http://localhost:3400/**` does not match a browser open on
+  `http://127.0.0.1:3400`. Develop on `localhost`, or add both entries.
 
 Preview deployments get a new URL per commit. If you want OAuth to work on previews, add
 `https://*-<your-team-slug>.vercel.app/**` too — or just test auth on production.
@@ -175,7 +188,9 @@ Two sides, and both must be done or the button fails with an unhelpful provider 
 **Google Cloud Console** → APIs & Services → Credentials → Create OAuth client ID → *Web
 application*:
 
-- **Authorised JavaScript origins:** `https://<your-vercel-domain>` and `http://localhost:3100`
+- **Authorised JavaScript origins:** `https://<your-vercel-domain>` and `http://localhost:3400`
+  (v3's dev port; v1 used 3100). Not the failure point for a redirect that lands on the wrong
+  app — Google only ever redirects to Supabase's callback below, which is port-independent.
 - **Authorised redirect URI** — this is Supabase's callback, **not** your app's:
   ```
   https://<your-project-ref>.supabase.co/auth/v1/callback
