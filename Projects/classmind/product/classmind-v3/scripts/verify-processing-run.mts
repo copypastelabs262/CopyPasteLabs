@@ -24,7 +24,10 @@ import { normalizeRawTranscript } from "../src/lib/transcript/normalize.ts";
 // pipeline actually uses, so it is what this must use.
 import { __internals } from "../src/lib/reasoning/reconstruct.ts";
 
-const BASE = process.env.E2E_BASE_URL ?? "http://localhost:3300";
+// 3400 is THIS app's dev port. The default used to be 3300 — classmind-v2's
+// port — which would have driven a paid extraction through the wrong codebase
+// had a v2 server been listening. The default must always be v3's own port.
+const BASE = process.env.E2E_BASE_URL ?? "http://localhost:3400";
 const svc = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
