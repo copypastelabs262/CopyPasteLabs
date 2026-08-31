@@ -14,6 +14,8 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { createHash } from "node:crypto";
+import { request as httpRequest } from "node:http";
+import { request as httpsRequest } from "node:https";
 import { normalizeRawTranscript } from "../src/lib/transcript/normalize.ts";
 // The ENGINE'S OWN verifier. An independent re-implementation here would test
 // the re-implementation: the first version of this script matched quotes as
