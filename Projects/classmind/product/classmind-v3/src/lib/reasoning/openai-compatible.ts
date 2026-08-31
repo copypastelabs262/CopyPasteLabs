@@ -160,6 +160,10 @@ export function createOpenAICompatibleReasoner(
 
     async complete(request: ReasoningRequest): Promise<ReasoningResponse> {
       let lastError: unknown = null;
+      // Tracked per class, not per attempt: a schema-validation failure gets
+      // its one retry even when a transient failure spent the first attempt,
+      // and never more than one no matter what happened in between.
+      let schemaRetried = false;
 
       for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
         // EVERY attempt queues, retries included. A retry that skipped the
