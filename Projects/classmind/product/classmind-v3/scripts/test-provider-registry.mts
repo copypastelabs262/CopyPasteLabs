@@ -280,6 +280,33 @@ try {
     check(telemetry.fatal === 1 && telemetry.retries === 0, `  ...counted as fatal, not retried`, telemetry);
   }
 
+  section("7b. json_validate_failed gets exactly ONE retry");
+  const SCHEMA_400 = { error: {
+    message: "Generated JSON does not match the expected schema. Please adjust your prompt.",
+    type: "invalid_request_error", code: "json_validate_failed",
+  } };
+  {
+    const { fn, seen } = stubFetch([{ status: 400, body: SCHEMA_400 }, { status: 200, body: OK_BODY }]);
+    globalThis.fetch = fn;
+    const { provider, telemetry } = reasoner();
+    const res = await provider.complete({ system: "S", user: "U", expectJson: true });
+    check(res.text.length > 0 && seen.length === 2,
+      "schema failure then success: exactly two requests and an answer", { attempts: seen.length });
+    check(telemetry.retries === 1 && telemetry.succeeded === 1 && telemetry.fatal === 0,
+      "  ...counted as one retry and one success, nothing fatal", telemetry);
+  }
+  {
+    const { fn, seen } = stubFetch([{ status: 400, body: SCHEMA_400 }]);
+    globalThis.fetch = fn;
+    const { provider, telemetry } = reasoner();
+    let threw = false;
+    try { await provider.complete({ system: "S", user: "U", expectJson: true }); } catch { threw = true; }
+    check(threw && seen.length === 2,
+      `a second schema failure stops the window at TWO requests, not ${MAX_ATTEMPTS}`, { attempts: seen.length });
+    check(telemetry.fatal === 1 && telemetry.retries === 1,
+      "  ...and the terminal failure is counted as fatal", telemetry);
+  }
+
   section("8. Transient errors still retry");
   {
     const { fn, seen } = stubFetch([{ status: 503 }, { status: 503 }, { status: 200, body: OK_BODY }]);
