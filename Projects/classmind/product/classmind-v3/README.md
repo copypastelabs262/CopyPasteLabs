@@ -13,7 +13,7 @@ separate — nothing here reads its tables.
 ```
 npm install
 npm run setup:db     # creates the `lectures` storage bucket; idempotent
-npm run dev          # http://localhost:3100
+npm run dev          # http://localhost:3400  (v1 used 3100, v2 uses 3300)
 ```
 
 `.env.local` needs the keys listed in `.env.example`. To replay a captured Sarvam response
