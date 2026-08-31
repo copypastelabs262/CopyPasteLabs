@@ -48,16 +48,33 @@ export interface OpenAICompatibleConfig {
 // Three kinds, because they need three different responses and lumping them
 // together is what produced the Test A request storm.
 //
-//   fatal       the request is wrong and will be wrong next time. Repeating it
-//               cannot succeed and, on a paid provider, costs money to prove.
-//   rate_limit  the request was fine; we sent too many. Handled by the SHARED
-//               scheduler, never by this window backing off on its own.
-//   transient   the provider faltered. Bounded local retry is right.
-export type FailureKind = "fatal" | "rate_limit" | "transient";
+//   fatal              the request is wrong and will be wrong next time.
+//                      Repeating it cannot succeed and, on a paid provider,
+//                      costs money to prove.
+//   rate_limit         the request was fine; we sent too many. Handled by the
+//                      SHARED scheduler, never by this window backing off on
+//                      its own.
+//   transient          the provider faltered. Bounded local retry is right.
+//   schema_validation  the request was fine and the GENERATION failed the
+//                      declared schema. One retry, exactly -- see below.
+export type FailureKind = "fatal" | "rate_limit" | "transient" | "schema_validation";
 
-export function classifyStatus(status: number): FailureKind {
+export function classifyStatus(status: number, body = ""): FailureKind {
   if (status === 429) return "rate_limit";
   if (status >= 500) return "transient";
+  // THE ONE CARVE-OUT FROM "4xx IS FATAL", and it is deliberately narrow.
+  //
+  // Groq's strict json_schema mode VALIDATES the completion after generating
+  // it rather than fully constraining decoding -- a 400 with code
+  // "json_validate_failed" cannot happen under true constrained decoding, yet
+  // the 2026-08-31 baseline run produced one (1 window of 20: a top-level
+  // array where the schema's root is an object). That 400 is not "the request
+  // is wrong": the same request produced 19 valid generations in its
+  // neighbouring windows. Provider inference is not bit-identical between
+  // calls even at temperature 0, so one re-ask is a real chance at a valid
+  // shape. The one-retry bound lives in complete(); anything past that is
+  // paying to reproduce a failure, which is what fatal exists to prevent.
+  if (status === 400 && body.includes('"json_validate_failed"')) return "schema_validation";
   // 400 invalid request · 401 auth · 403 forbidden · 404 unknown model · 422.
   // 403 is deliberately fatal: no provider-specific transient case has been
   // demonstrated, and guessing one would reintroduce paid retries of a request
