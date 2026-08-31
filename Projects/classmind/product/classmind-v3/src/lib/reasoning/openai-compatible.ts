@@ -189,6 +189,18 @@ export function createOpenAICompatibleReasoner(
             throw err; // will not succeed next time; repeating only costs
           }
 
+          if (kind === "schema_validation") {
+            // ONE retry, exactly. The generation failed the schema, not the
+            // request -- but a second identical ask that also failed is strong
+            // evidence the window is stuck, and every further ask is paid.
+            if (schemaRetried) {
+              telemetry.fatal += 1;
+              throw err;
+            }
+            schemaRetried = true;
+            continue; // re-queues through the shared scheduler; no extra sleep
+          }
+
           if (kind === "rate_limit") {
             telemetry.rateLimited += 1;
             const stated = err instanceof ProviderHttpError ? err.retryAfterMs : null;
