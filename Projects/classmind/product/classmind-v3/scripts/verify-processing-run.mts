@@ -144,7 +144,8 @@ try {
   clearInterval(heartbeat);
 }
 const wall = Date.now() - started;
-let body: Record<string, unknown> & { processing?: Record<string, unknown> } = {};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- same shape res.json() gave: untyped route JSON
+let body: any = {};
 try { body = JSON.parse(res.text); } catch { /* non-JSON body is reported below */ }
 console.log("  HTTP", res.status, "in", (wall / 1000).toFixed(1), "s");
 if (res.status < 200 || res.status >= 300) { console.log("  body:", res.text.slice(0, 600)); process.exit(1); }
