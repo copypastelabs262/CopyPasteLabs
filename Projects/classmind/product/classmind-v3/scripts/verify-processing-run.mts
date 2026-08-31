@@ -103,16 +103,51 @@ const beforeConfirmed = before.items.filter((i) => i.status === "confirmed" || i
 
 // ---- RUN ------------------------------------------------------------------
 
+// Node's built-in fetch is undici with a 300s headers timeout, and that limit
+// is not configurable without installing undici as a dependency. /extract
+// sends no response bytes until the whole reconstruction is done, and at
+// Groq's real sustained rate (~1 req/min — the budget is charged on the
+// reservation, input + max_tokens, not on usage) a 20-window run is 20+
+// minutes of headerless silence. The 2026-08-30 baseline attempt died at
+// exactly 300s, and the client abort took the server-side run with it: Next
+// cancelled the handler mid-run and no ledger row was written. So this one
+// request uses plain node:http, which applies NO client timeout unless asked
+// for one. The run is allowed to take as long as it takes; if it hangs, the
+// operator kills it, not a default nobody chose.
+function postAndWait(url: string, headers: Record<string, string>): Promise<{ status: number; text: string }> {
+  const u = new URL(url);
+  const req = u.protocol === "https:" ? httpsRequest : httpRequest;
+  return new Promise((resolve, reject) => {
+    const r = req(u, { method: "POST", headers }, (res) => {
+      const chunks: Buffer[] = [];
+      res.on("data", (c: Buffer) => chunks.push(c));
+      res.on("end", () => resolve({ status: res.statusCode ?? 0, text: Buffer.concat(chunks).toString("utf8") }));
+      res.on("error", reject);
+    });
+    r.on("error", reject);
+    r.end();
+  });
+}
+
 section("Running /extract" + (force ? "?force=1" : ""));
 const started = Date.now();
-const res = await fetch(`${BASE}/api/lectures/${lectureId}/extract${force ? "?force=1" : ""}`, {
-  method: "POST",
-  headers: { authorization: `Bearer ${token}` },
-});
+const heartbeat = setInterval(() => {
+  console.log(`  ... still running (${Math.round((Date.now() - started) / 60_000)} min — the route answers only when the whole run is done)`);
+}, 120_000);
+let res: { status: number; text: string };
+try {
+  res = await postAndWait(
+    `${BASE}/api/lectures/${lectureId}/extract${force ? "?force=1" : ""}`,
+    { authorization: `Bearer ${token}` },
+  );
+} finally {
+  clearInterval(heartbeat);
+}
 const wall = Date.now() - started;
-const body = await res.json().catch(() => ({}));
+let body: Record<string, unknown> & { processing?: Record<string, unknown> } = {};
+try { body = JSON.parse(res.text); } catch { /* non-JSON body is reported below */ }
 console.log("  HTTP", res.status, "in", (wall / 1000).toFixed(1), "s");
-if (!res.ok) { console.log("  body:", JSON.stringify(body).slice(0, 600)); process.exit(1); }
+if (res.status < 200 || res.status >= 300) { console.log("  body:", res.text.slice(0, 600)); process.exit(1); }
 
 const p = body.processing ?? {};
 console.log("\n=== ROUTE RESPONSE: processing ===");
