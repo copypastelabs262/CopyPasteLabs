@@ -174,6 +174,20 @@ for (const st of [500, 502, 503, 504]) {
   check(classifyStatus(st) === "transient", `${st} is transient -- the provider faltered`);
 }
 
+// The one approved carve-out from "4xx is fatal": Groq validates a strict-
+// schema generation AFTER producing it, so a 400 with code
+// json_validate_failed is about one sampled generation, not the request.
+const SCHEMA_FAIL_TEXT = JSON.stringify({ error: {
+  message: "Generated JSON does not match the expected schema. Please adjust your prompt.",
+  type: "invalid_request_error", code: "json_validate_failed",
+} });
+check(classifyStatus(400, SCHEMA_FAIL_TEXT) === "schema_validation",
+  "a 400 carrying json_validate_failed is SCHEMA_VALIDATION -- the generation failed, not the request");
+check(classifyStatus(400, '{"error":{"code":"model_decommissioned"}}') === "fatal",
+  "every other 400 body stays fatal");
+check(classifyStatus(422, SCHEMA_FAIL_TEXT) === "fatal",
+  "the carve-out is status 400 only -- the same body on a 422 stays fatal");
+
 check(parseRetryAfter(new Headers({ "retry-after": "7" })) === 7000, "Retry-After in seconds is honoured");
 const parsedDate = parseRetryAfter(new Headers({ "retry-after": new Date(Date.now() + 30_000).toUTCString() })) ?? 0;
 check(parsedDate > 25_000 && parsedDate <= 30_000, "Retry-After as an HTTP date is honoured", parsedDate);
