@@ -1,4 +1,4 @@
-# ClassMind V1
+# ClassMind V3
 
 The ClassMind product. A faculty member uploads a lecture; it is transcribed, academic
 information is extracted as **candidates**, and nothing reaches a student until a human confirms
