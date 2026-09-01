@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useId, useRef, useState, type DragEvent } from "react";
-import { ALLOWED_MIME_TYPES, FILE_SIZE_LIMIT_BYTES } from "@/lib/storage";
+import {
+  AUDIO_ACCEPT, FILE_SIZE_LIMIT_BYTES, isAllowedAudio, canonicalAudioContentType,
+} from "@/lib/storage";
 import { formatBytes } from "./Input";
 import { Button, Card, Spinner, TextInput, buttonClass, cx } from "./ui";
 import { AlertIcon, AudioIcon, CheckIcon, ChevronRightIcon, UploadIcon } from "./ui/icons";
