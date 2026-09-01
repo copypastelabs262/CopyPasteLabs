@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "session_id": "2026-09-01T2200Z-v4-overnight-shell-build",
+  "project": "classmind",
+  "secondary_projects": [],
+  "generated_by": { "producer": "claude", "tool": "End-Session/1.0.0 (hand-authored)" },
+  "generated_at": "2026-09-01T22:00:00Z",
+  "repository": { "branch": "master", "upstream": "origin/master" },
+  "session_boundary": {
+    "base": "241fbdd",
+    "head": "see final overnight capture commit",
+    "base_strategy": "previous_capture_commit — base is the Gemini-phase-day-one capture; the range holds the v4 copy sweep, checkpoints 1–3 and this capture."
+  },
+  "context_completeness": "full",
+  "duration_known": true,
+  "duration_minutes": 80,
+  "duration_source": "run timestamps (~02:00–03:20 IST)",
+  "working_tree_note": "Autonomous overnight run under the operator's written brief. Zero-spend enforced structurally: GEMINI_API_KEY and SARVAM_API_KEY absent from classmind-v4/.env.local; capture-harness network guard armed on every context; blocked: [] in all manifests; the interactive Ask smoke ran keyless (degraded, free). classmind-v3 byte-untouched (no path under it modified).",
+  "changes_summary": {
+    "created": [
+      "Projects/classmind/product/classmind-v4/ (successor tree: port 3500, keys stripped, harness ported)",
+      "classmind-v4/V4-ARCHITECTURE.md (committed before implementation)",
+      "classmind-v4/src/app/_components/shell/ (ClassShell, ClassContext, ClassHome, ClassLectures, ClassAssignments)",
+      "classmind-v4/src/app/_components/AskWorkspace.tsx",
+      "classmind-v4/src/app/courses/[id]/{layout.tsx, ask/, lectures/page.tsx, assignments/}",
+      "classmind-v4/design-loop/smoke-ask.mts + runs/2026-09-02-shell/ (48 screenshots, manifests)",
+      "classmind-v4/V4-OVERNIGHT-REPORT.md (the morning handoff)"
+    ],
+    "modified": [
+      "classmind-v4: FacultyWorkspace + StudentCourseView slimmed to one job each; CourseClient retired to types; AskPanel internals exported for reuse; design-loop/config.json retargeted",
+      "Projects/classmind/.knowledge/progress.md (overnight entry prepended)"
+    ],
+    "session_docs": [
+      "AI-Memory/Inbox/classmind/2026-09-01T2200Z-v4-overnight-shell-build/"
+    ]
+  },
+  "verification": {
+    "typescript": "pass", "eslint": "pass (--max-warnings 0)",
+    "next_build": "pass (9 routes)",
+    "screenshots": "30-shot pass + critique + 3 fixes + 9-shot recapture + 4-shot interactive Ask smoke",
+    "paid_calls": "none possible, none made — keys absent; manifests show blocked: []"
+  },
+  "diff": {
+    "stored": false,
+    "omitted_reason": "range contains the whole v4 tree copy plus 48 binary screenshots",
+    "regenerate_command": "git diff 241fbdd..HEAD -- Projects/classmind/product/classmind-v4"
+  }
+}
