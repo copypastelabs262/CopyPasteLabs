@@ -22,6 +22,12 @@ instead of paying for a real call, name it per lecture — `replayFixture: "<slu
 never selects a transcript. Replay is refused on any deployment. A live call from a developer
 machine needs `ALLOW_LIVE_SARVAM=1`, so nothing spends money by accident.
 
+To transcribe a real recording locally, run `npm run dev:spend` instead of `npm run dev` — it
+starts the same server with spending enabled **for that process only** and prints a banner
+saying so. Stop it and the next plain `npm run dev` is safe again; `.env.local` is never
+touched. The upload page checks this before creating anything, so with spending off it tells
+you what to run instead of failing after the upload.
+
 ## Verify it
 
 ```
