@@ -173,7 +173,13 @@ function StreamRow({
 }: { lecture: CourseLecture; courseId: string; yield_?: Yield_ }) {
   const tone = lectureStatusTone(l.status);
   const note = lectureStatusNote(l.status, l.error_message);
-  const line = l.status === "ready" ? yieldLine(yield_, note) : note;
+  // A blocked lecture's full sentence lives in the "Needs you" band above —
+  // the same paragraph twice on one screen is the duplication v3's design
+  // fought. In the stream the pill says failed and the row stays chronology.
+  // (Students never see these rows at all: the course payload filters them.)
+  const line = l.status === "ready"
+    ? yieldLine(yield_, note)
+    : PROBLEM_STATUSES.has(l.status) ? null : note;
   return (
     <li className="flex flex-wrap items-start gap-x-4 gap-y-2 p-5 sm:flex-nowrap">
       <div className="min-w-0 flex-1">
