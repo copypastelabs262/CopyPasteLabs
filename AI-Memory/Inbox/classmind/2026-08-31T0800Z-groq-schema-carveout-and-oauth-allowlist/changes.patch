@@ -1,0 +1,301 @@
+diff --git a/Projects/classmind/product/classmind-v3/DEPLOY.md b/Projects/classmind/product/classmind-v3/DEPLOY.md
+index c56f710..1a30235 100644
+--- a/Projects/classmind/product/classmind-v3/DEPLOY.md
++++ b/Projects/classmind/product/classmind-v3/DEPLOY.md
+@@ -127,17 +127,30 @@ watch the function logs.
+ 
+ **Authentication → URL Configuration:**
+ 
+-- **Site URL:** `https://<your-vercel-domain>`
+-- **Redirect URLs** — add all of these:
++> **V3 note.** This Supabase project is shared with v1 (and v2), so these settings are
++> ADDITIVE: add v3's entries, never remove v1's and never change the Site URL while v1 is
++> the live deployment. The Site URL is the fallback Supabase silently redirects to whenever
++> a `redirectTo` is not in the allow-list — which is why an un-allow-listed local v3
++> sign-in lands on the old v1 deployment after Google consent.
++
++- **Site URL:** `https://<your-vercel-domain>` (currently v1's domain; becomes v3's when v3
++  replaces it as the live deployment)
++- **Redirect URLs** — the allow-list must contain every origin that initiates sign-in.
++  For local v3 development that means adding:
+   ```
+-  https://<your-vercel-domain>/**
+-  http://localhost:3100/**
++  http://localhost:3400/**
+   ```
++  alongside the existing entries (`https://<v1-vercel-domain>/**`, `http://localhost:3100/**`
++  for v1, `http://localhost:3300/**` if v2 was added). When v3 gets its own deployment, add
++  `https://<v3-domain>/**` too.
++
+   **The wildcard is not optional.** Supabase glob-matches the *entire* `redirectTo` URL including
+   its query string, and the sign-in page appends `?role=faculty` so the callback knows which kind
+   of account to create. A bare `https://<domain>/auth/callback` entry will not match that and the
+-  sign-in fails with a redirect-not-allowed error. Keep the localhost entry so local development
+-  keeps working.
++  sign-in silently falls back to the Site URL.
++
++  **Host spelling matters too.** `http://localhost:3400/**` does not match a browser open on
++  `http://127.0.0.1:3400`. Develop on `localhost`, or add both entries.
+ 
+ Preview deployments get a new URL per commit. If you want OAuth to work on previews, add
+ `https://*-<your-team-slug>.vercel.app/**` too — or just test auth on production.
+@@ -175,7 +188,9 @@ Two sides, and both must be done or the button fails with an unhelpful provider
+ **Google Cloud Console** → APIs & Services → Credentials → Create OAuth client ID → *Web
+ application*:
+ 
+-- **Authorised JavaScript origins:** `https://<your-vercel-domain>` and `http://localhost:3100`
++- **Authorised JavaScript origins:** `https://<your-vercel-domain>` and `http://localhost:3400`
++  (v3's dev port; v1 used 3100). Not the failure point for a redirect that lands on the wrong
++  app — Google only ever redirects to Supabase's callback below, which is port-independent.
+ - **Authorised redirect URI** — this is Supabase's callback, **not** your app's:
+   ```
+   https://<your-project-ref>.supabase.co/auth/v1/callback
+diff --git a/Projects/classmind/product/classmind-v3/README.md b/Projects/classmind/product/classmind-v3/README.md
+index a0504a5..cb8d6a7 100644
+--- a/Projects/classmind/product/classmind-v3/README.md
++++ b/Projects/classmind/product/classmind-v3/README.md
+@@ -1,4 +1,4 @@
+-# ClassMind V1
++# ClassMind V3
+ 
+ The ClassMind product. A faculty member uploads a lecture; it is transcribed, academic
+ information is extracted as **candidates**, and nothing reaches a student until a human confirms
+@@ -13,7 +13,7 @@ separate — nothing here reads its tables.
+ ```
+ npm install
+ npm run setup:db     # creates the `lectures` storage bucket; idempotent
+-npm run dev          # http://localhost:3100
++npm run dev          # http://localhost:3400  (v1 used 3100, v2 uses 3300)
+ ```
+ 
+ `.env.local` needs the keys listed in `.env.example`. To replay a captured Sarvam response
+diff --git a/Projects/classmind/product/classmind-v3/scripts/test-provider-registry.mts b/Projects/classmind/product/classmind-v3/scripts/test-provider-registry.mts
+index 5eec1d3..26bf4d5 100644
+--- a/Projects/classmind/product/classmind-v3/scripts/test-provider-registry.mts
++++ b/Projects/classmind/product/classmind-v3/scripts/test-provider-registry.mts
+@@ -174,6 +174,20 @@ for (const st of [500, 502, 503, 504]) {
+   check(classifyStatus(st) === "transient", `${st} is transient -- the provider faltered`);
+ }
+ 
++// The one approved carve-out from "4xx is fatal": Groq validates a strict-
++// schema generation AFTER producing it, so a 400 with code
++// json_validate_failed is about one sampled generation, not the request.
++const SCHEMA_FAIL_TEXT = JSON.stringify({ error: {
++  message: "Generated JSON does not match the expected schema. Please adjust your prompt.",
++  type: "invalid_request_error", code: "json_validate_failed",
++} });
++check(classifyStatus(400, SCHEMA_FAIL_TEXT) === "schema_validation",
++  "a 400 carrying json_validate_failed is SCHEMA_VALIDATION -- the generation failed, not the request");
++check(classifyStatus(400, '{"error":{"code":"model_decommissioned"}}') === "fatal",
++  "every other 400 body stays fatal");
++check(classifyStatus(422, SCHEMA_FAIL_TEXT) === "fatal",
++  "the carve-out is status 400 only -- the same body on a 422 stays fatal");
++
+ check(parseRetryAfter(new Headers({ "retry-after": "7" })) === 7000, "Retry-After in seconds is honoured");
+ const parsedDate = parseRetryAfter(new Headers({ "retry-after": new Date(Date.now() + 30_000).toUTCString() })) ?? 0;
+ check(parsedDate > 25_000 && parsedDate <= 30_000, "Retry-After as an HTTP date is honoured", parsedDate);
+@@ -266,6 +280,33 @@ try {
+     check(telemetry.fatal === 1 && telemetry.retries === 0, `  ...counted as fatal, not retried`, telemetry);
+   }
+ 
++  section("7b. json_validate_failed gets exactly ONE retry");
++  const SCHEMA_400 = { error: {
++    message: "Generated JSON does not match the expected schema. Please adjust your prompt.",
++    type: "invalid_request_error", code: "json_validate_failed",
++  } };
++  {
++    const { fn, seen } = stubFetch([{ status: 400, body: SCHEMA_400 }, { status: 200, body: OK_BODY }]);
++    globalThis.fetch = fn;
++    const { provider, telemetry } = reasoner();
++    const res = await provider.complete({ system: "S", user: "U", expectJson: true });
++    check(res.text.length > 0 && seen.length === 2,
++      "schema failure then success: exactly two requests and an answer", { attempts: seen.length });
++    check(telemetry.retries === 1 && telemetry.succeeded === 1 && telemetry.fatal === 0,
++      "  ...counted as one retry and one success, nothing fatal", telemetry);
++  }
++  {
++    const { fn, seen } = stubFetch([{ status: 400, body: SCHEMA_400 }]);
++    globalThis.fetch = fn;
++    const { provider, telemetry } = reasoner();
++    let threw = false;
++    try { await provider.complete({ system: "S", user: "U", expectJson: true }); } catch { threw = true; }
++    check(threw && seen.length === 2,
++      `a second schema failure stops the window at TWO requests, not ${MAX_ATTEMPTS}`, { attempts: seen.length });
++    check(telemetry.fatal === 1 && telemetry.retries === 1,
++      "  ...and the terminal failure is counted as fatal", telemetry);
++  }
++
+   section("8. Transient errors still retry");
+   {
+     const { fn, seen } = stubFetch([{ status: 503 }, { status: 503 }, { status: 200, body: OK_BODY }]);
+diff --git a/Projects/classmind/product/classmind-v3/scripts/verify-processing-run.mts b/Projects/classmind/product/classmind-v3/scripts/verify-processing-run.mts
+index f8475c5..f262095 100644
+--- a/Projects/classmind/product/classmind-v3/scripts/verify-processing-run.mts
++++ b/Projects/classmind/product/classmind-v3/scripts/verify-processing-run.mts
+@@ -14,6 +14,8 @@
+ 
+ import { createClient } from "@supabase/supabase-js";
+ import { createHash } from "node:crypto";
++import { request as httpRequest } from "node:http";
++import { request as httpsRequest } from "node:https";
+ import { normalizeRawTranscript } from "../src/lib/transcript/normalize.ts";
+ // The ENGINE'S OWN verifier. An independent re-implementation here would test
+ // the re-implementation: the first version of this script matched quotes as
+@@ -22,7 +24,10 @@ import { normalizeRawTranscript } from "../src/lib/transcript/normalize.ts";
+ // pipeline actually uses, so it is what this must use.
+ import { __internals } from "../src/lib/reasoning/reconstruct.ts";
+ 
+-const BASE = process.env.E2E_BASE_URL ?? "http://localhost:3300";
++// 3400 is THIS app's dev port. The default used to be 3300 — classmind-v2's
++// port — which would have driven a paid extraction through the wrong codebase
++// had a v2 server been listening. The default must always be v3's own port.
++const BASE = process.env.E2E_BASE_URL ?? "http://localhost:3400";
+ const svc = createClient(
+   process.env.NEXT_PUBLIC_SUPABASE_URL!,
+   process.env.SUPABASE_SERVICE_ROLE_KEY!,
+@@ -98,16 +103,52 @@ const beforeConfirmed = before.items.filter((i) => i.status === "confirmed" || i
+ 
+ // ---- RUN ------------------------------------------------------------------
+ 
++// Node's built-in fetch is undici with a 300s headers timeout, and that limit
++// is not configurable without installing undici as a dependency. /extract
++// sends no response bytes until the whole reconstruction is done, and at
++// Groq's real sustained rate (~1 req/min — the budget is charged on the
++// reservation, input + max_tokens, not on usage) a 20-window run is 20+
++// minutes of headerless silence. The 2026-08-30 baseline attempt died at
++// exactly 300s, and the client abort took the server-side run with it: Next
++// cancelled the handler mid-run and no ledger row was written. So this one
++// request uses plain node:http, which applies NO client timeout unless asked
++// for one. The run is allowed to take as long as it takes; if it hangs, the
++// operator kills it, not a default nobody chose.
++function postAndWait(url: string, headers: Record<string, string>): Promise<{ status: number; text: string }> {
++  const u = new URL(url);
++  const req = u.protocol === "https:" ? httpsRequest : httpRequest;
++  return new Promise((resolve, reject) => {
++    const r = req(u, { method: "POST", headers }, (res) => {
++      const chunks: Buffer[] = [];
++      res.on("data", (c: Buffer) => chunks.push(c));
++      res.on("end", () => resolve({ status: res.statusCode ?? 0, text: Buffer.concat(chunks).toString("utf8") }));
++      res.on("error", reject);
++    });
++    r.on("error", reject);
++    r.end();
++  });
++}
++
+ section("Running /extract" + (force ? "?force=1" : ""));
+ const started = Date.now();
+-const res = await fetch(`${BASE}/api/lectures/${lectureId}/extract${force ? "?force=1" : ""}`, {
+-  method: "POST",
+-  headers: { authorization: `Bearer ${token}` },
+-});
++const heartbeat = setInterval(() => {
++  console.log(`  ... still running (${Math.round((Date.now() - started) / 60_000)} min — the route answers only when the whole run is done)`);
++}, 120_000);
++let res: { status: number; text: string };
++try {
++  res = await postAndWait(
++    `${BASE}/api/lectures/${lectureId}/extract${force ? "?force=1" : ""}`,
++    { authorization: `Bearer ${token}` },
++  );
++} finally {
++  clearInterval(heartbeat);
++}
+ const wall = Date.now() - started;
+-const body = await res.json().catch(() => ({}));
++// eslint-disable-next-line @typescript-eslint/no-explicit-any -- same shape res.json() gave: untyped route JSON
++let body: any = {};
++try { body = JSON.parse(res.text); } catch { /* non-JSON body is reported below */ }
+ console.log("  HTTP", res.status, "in", (wall / 1000).toFixed(1), "s");
+-if (!res.ok) { console.log("  body:", JSON.stringify(body).slice(0, 600)); process.exit(1); }
++if (res.status < 200 || res.status >= 300) { console.log("  body:", res.text.slice(0, 600)); process.exit(1); }
+ 
+ const p = body.processing ?? {};
+ console.log("\n=== ROUTE RESPONSE: processing ===");
+diff --git a/Projects/classmind/product/classmind-v3/src/lib/reasoning/openai-compatible.ts b/Projects/classmind/product/classmind-v3/src/lib/reasoning/openai-compatible.ts
+index 5bb9e75..8325119 100644
+--- a/Projects/classmind/product/classmind-v3/src/lib/reasoning/openai-compatible.ts
++++ b/Projects/classmind/product/classmind-v3/src/lib/reasoning/openai-compatible.ts
+@@ -48,16 +48,33 @@ export interface OpenAICompatibleConfig {
+ // Three kinds, because they need three different responses and lumping them
+ // together is what produced the Test A request storm.
+ //
+-//   fatal       the request is wrong and will be wrong next time. Repeating it
+-//               cannot succeed and, on a paid provider, costs money to prove.
+-//   rate_limit  the request was fine; we sent too many. Handled by the SHARED
+-//               scheduler, never by this window backing off on its own.
+-//   transient   the provider faltered. Bounded local retry is right.
+-export type FailureKind = "fatal" | "rate_limit" | "transient";
++//   fatal              the request is wrong and will be wrong next time.
++//                      Repeating it cannot succeed and, on a paid provider,
++//                      costs money to prove.
++//   rate_limit         the request was fine; we sent too many. Handled by the
++//                      SHARED scheduler, never by this window backing off on
++//                      its own.
++//   transient          the provider faltered. Bounded local retry is right.
++//   schema_validation  the request was fine and the GENERATION failed the
++//                      declared schema. One retry, exactly -- see below.
++export type FailureKind = "fatal" | "rate_limit" | "transient" | "schema_validation";
+ 
+-export function classifyStatus(status: number): FailureKind {
++export function classifyStatus(status: number, body = ""): FailureKind {
+   if (status === 429) return "rate_limit";
+   if (status >= 500) return "transient";
++  // THE ONE CARVE-OUT FROM "4xx IS FATAL", and it is deliberately narrow.
++  //
++  // Groq's strict json_schema mode VALIDATES the completion after generating
++  // it rather than fully constraining decoding -- a 400 with code
++  // "json_validate_failed" cannot happen under true constrained decoding, yet
++  // the 2026-08-31 baseline run produced one (1 window of 20: a top-level
++  // array where the schema's root is an object). That 400 is not "the request
++  // is wrong": the same request produced 19 valid generations in its
++  // neighbouring windows. Provider inference is not bit-identical between
++  // calls even at temperature 0, so one re-ask is a real chance at a valid
++  // shape. The one-retry bound lives in complete(); anything past that is
++  // paying to reproduce a failure, which is what fatal exists to prevent.
++  if (status === 400 && body.includes('"json_validate_failed"')) return "schema_validation";
+   // 400 invalid request · 401 auth · 403 forbidden · 404 unknown model · 422.
+   // 403 is deliberately fatal: no provider-specific transient case has been
+   // demonstrated, and guessing one would reintroduce paid retries of a request
+@@ -143,6 +160,10 @@ export function createOpenAICompatibleReasoner(
+ 
+     async complete(request: ReasoningRequest): Promise<ReasoningResponse> {
+       let lastError: unknown = null;
++      // Tracked per class, not per attempt: a schema-validation failure gets
++      // its one retry even when a transient failure spent the first attempt,
++      // and never more than one no matter what happened in between.
++      let schemaRetried = false;
+ 
+       for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
+         // EVERY attempt queues, retries included. A retry that skipped the
+@@ -168,6 +189,18 @@ export function createOpenAICompatibleReasoner(
+             throw err; // will not succeed next time; repeating only costs
+           }
+ 
++          if (kind === "schema_validation") {
++            // ONE retry, exactly. The generation failed the schema, not the
++            // request -- but a second identical ask that also failed is strong
++            // evidence the window is stuck, and every further ask is paid.
++            if (schemaRetried) {
++              telemetry.fatal += 1;
++              throw err;
++            }
++            schemaRetried = true;
++            continue; // re-queues through the shared scheduler; no extra sleep
++          }
++
+           if (kind === "rate_limit") {
+             telemetry.rateLimited += 1;
+             const stated = err instanceof ProviderHttpError ? err.retryAfterMs : null;
+@@ -266,7 +299,10 @@ async function callOnce(
+     throw new ProviderHttpError(
+       `${cfg.id} reasoning failed (${res.status}): ${detail.slice(0, 300)}`,
+       res.status,
+-      classifyStatus(res.status),
++      // Classified from the FULL body, not the 300-char message slice --
++      // "json_validate_failed" sits past provider error prose long enough to
++      // be cut off by the slice.
++      classifyStatus(res.status, detail),
+       parseRetryAfter(res.headers),
+     );
+   }
