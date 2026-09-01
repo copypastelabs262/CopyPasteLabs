@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "session_id": "2026-09-01T1216Z-upload-acceptance-and-spend-preflight",
+  "project": "classmind",
+  "generated_by": "End-Session/1.0.0 (hand-authored retroactively, same day)",
+  "generated_at": "2026-09-01T13:40:00Z",
+  "candidates": [
+    {
+      "id": "cand-001",
+      "type": "learning",
+      "title": "Exact-MIME whitelists refuse real files: accept on type OR extension, then canonicalise the type at the boundary",
+      "body": "Browsers and OSes do not reliably report a file's MIME type: Windows hands over many real audio recordings (.m4a, .opus, .amr) as application/octet-stream or with no type at all, so a whitelist of exact MIME strings refuses files the pipeline handles fine — and the refusal reads as 'not an audio file' to a user holding an obviously-audio file.\n\nThe working shape: accept on either of two signals (a type in the right family, e.g. audio/*, OR a filename extension from the formats the downstream consumer documents as decodable), then CANONICALISE the content type once at the accept boundary and use that single value everywhere downstream — the database row, the storage PUT (whose bucket policy admits only the family), and the eventual provider call. The client's guess never goes on the wire. Deliberate exclusions must be reasoned from the consumer, not the format's popularity: raw PCM was excluded because the provider requires an explicit codec parameter the call path does not send, not because PCM is exotic.\n\nAlso: the file input's accept attribute needs the extensions listed alongside the family wildcard, or typeless files remain unpickable in the picker even though the validator would accept them.",
+      "confidence": "high",
+      "basis": "classmind's seven-string whitelist (audio/mpeg, audio/wav, …) refused recordings during preparation for a real upload; storage.ts was rewritten in both v2 and v3 on 2026-09-01 with the two-signal check, canonicalAudioContentType used for row + PUT + provider, and the PCM exclusion documented in the code against Sarvam's input_audio_codec requirement.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v3/src/lib/storage.ts (AUDIO_EXTENSION_MIME, isAllowedAudio, canonicalAudioContentType)",
+        "Projects/classmind/product/classmind-v3/src/app/api/courses/[id]/lectures/route.ts",
+        "Projects/classmind/product/classmind-v2/src/lib/storage.ts"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-002",
+      "type": "pattern",
+      "title": "Pre-flight authorization for paid operations: ask 'would this be allowed?' before creating anything",
+      "body": "When a guarded (paid, quota-bound, permission-gated) operation sits at the END of a multi-step flow, its refusal arrives after earlier steps have created state — rows, uploaded files — that the refusal orphans. The pattern: expose a read-only endpoint that answers one question, 'would the guarded operation be permitted here right now?', and have the client ask it BEFORE the first write. A 'no' renders as instructions (what to run, what survives), not as an error — nothing failed and nothing exists.\n\nThree properties keep it honest: (1) the pre-flight READS the policy and must never influence it — the guard at the paid operation stays authoritative and unchanged; (2) any doubt in the pre-flight (endpoint missing, network blip) resolves to 'allowed', falling through to the real guard, so the courtesy check can never silently become the protection; (3) the real guard's refusal carries a machine-readable code alongside its human message, so a client that reaches it anyway (authorization changed mid-flow) can distinguish 'policy said no' from 'the operation broke' — and correctly withhold a retry button, since retrying a policy refusal refuses identically while minting more orphaned state.",
+      "confidence": "medium",
+      "basis": "Built in classmind-v3 on 2026-09-01: GET /api/transcription/authorization + LectureUpload's pre-flight (the transcribe route's refusal previously arrived after create + full upload, orphaning a pending_upload row per refused attempt), code live_transcription_disabled on the refusal, and the authorize failure copy that offers no retry. Confidence medium: the pattern has run in one project and the orphan-row problem it prevents was observed in code review of the flow, not measured in production.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v3/src/app/api/transcription/authorization/route.ts",
+        "Projects/classmind/product/classmind-v3/src/app/_components/LectureUpload.tsx (liveTranscriptionAllowed, ApiError, authorize)",
+        "Projects/classmind/product/classmind-v3/src/app/api/lectures/[id]/transcribe/route.ts"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-003",
+      "type": "pattern",
+      "title": "Per-process opt-in for dangerous dev capabilities: a wrapper script that sets the flag for one child process and can't persist it",
+      "body": "A dangerous developer capability (spending real money, writing to production) gated by an env var in .env.local is sticky: it stays enabled until someone remembers to turn it off, and the next session inherits it silently. The alternative: a wrapper script (`npm run dev:spend`) that spawns the normal dev server with the flag set in the CHILD's environment only, prints an unmissable banner stating exactly what is now possible and for how long, and writes nothing to any file. Stop the process and the authorization is gone; the next plain `npm run dev` starts safe. The .env.example entry for the flag should point at the wrapper rather than inviting a standing value.\n\nThe property that matters is not the banner — it is that the unsafe state is UN-PERSISTABLE through this path: there is no file to forget to clean up. (Windows note: spawning `npx` requires shell: true, since npx is npx.cmd there.)",
+      "confidence": "high",
+      "basis": "scripts/dev-spend.mjs built 2026-09-01 for ALLOW_LIVE_SARVAM in classmind-v3, replacing the .env.local workflow; .env.example updated at capture (7f904a2) to recommend it. Confidence high on the mechanism (trivially verifiable); observed in one project only, hence Draft.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v3/scripts/dev-spend.mjs",
+        "Projects/classmind/product/classmind-v3/.env.example",
+        "Projects/classmind/product/classmind-v3/package.json"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-004",
+      "type": "learning",
+      "title": "Idempotent setup scripts must converge existing resources, not skip them",
+      "body": "A setup script whose already-exists branch prints 'nothing to do' is only idempotent for creation, not for configuration: a resource provisioned under an older policy keeps the old policy forever, and the drift surfaces far from its cause — here, a storage bucket created under a narrow MIME list kept refusing formats the application code had since been taught to accept, and the refusal appeared inside the storage PUT as a generic upload error, unattributable to setup. The fix: on 'exists', UPDATE the resource to the currently-desired state (and say so in the output: 'exists; converged'), so re-running setup is the documented remedy for config drift. Keep the authoritative policy in one place in the application and make the resource-level setting a backstop, so converging cannot itself introduce a second source of truth.",
+      "confidence": "high",
+      "basis": "setup-storage.mts in both classmind apps: the exists branch previously logged 'Nothing to do.' while the bucket carried the pre-2026-09-01 seven-MIME allowlist; rewritten the same day to updateBucket to the audio/* backstop with the policy living in src/lib/storage.ts.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v3/scripts/setup-storage.mts",
+        "Projects/classmind/product/classmind-v2/scripts/setup-storage.mts"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    }
+  ]
+}
