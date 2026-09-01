@@ -1,25 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import AskPanel from "./AskPanel";
-import { AssignmentCard, type KnowledgeUnit } from "./KnowledgeUnit";
-import { actionableUnits, topicUnits, useCourseKnowledge } from "./KnowledgePanel";
+import { type KnowledgeUnit } from "./KnowledgeUnit";
+import { topicUnits, useCourseKnowledge } from "./KnowledgePanel";
 import { BookIcon, ChevronRightIcon } from "./ui/icons";
-import { EmptyState, Page, Section, Skeleton } from "./ui";
+import { EmptyState, Section } from "./ui";
 import type { CourseLecture } from "./CourseClient";
 
-// The course, as a student arrives at it.
+// The lecture index, as a student reads it.
 //
-// Two questions bring someone here and they are not the same question. "What do
-// I owe, and when" is answered across every lecture at once, because an
-// assignment does not care which week it was set in. "What was actually taught"
-// is answered one lecture at a time, because that is the unit a student thinks
-// in -- the lecture they missed, the lecture before the exam. So this page is
-// triage: everything owed, then the lectures themselves, each opening onto its
-// own full account.
-//
-// Asking sits above both. It is what a student actually arrives to do, and
-// browsing is the fallback for when they do not yet know what to ask.
+// v4: this surface does ONE job now. Asking moved to the Ask tab and "what do
+// I owe" moved to the Assignments tab — what remains is the question answered
+// one lecture at a time: what was actually taught, in the lecture I missed or
+// the lecture before the exam, each row opening onto its full account.
 
 function formatDay(iso: string): string {
   const d = new Date(iso);
