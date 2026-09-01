@@ -30,7 +30,18 @@ export const AUDIO_EXTENSION_MIME: Record<string, string> = {
   amr: "audio/amr",
   wma: "audio/x-ms-wma",
   webm: "audio/webm",
-  "3gp": "audio/3gpp", "3gpp": "audio/3gpp",
+  // audio/3gpp is NOT on Sarvam's allowlist (its 2026-09-02 400 response
+  // enumerates the list verbatim). 3GP is an ISO-BMFF (MP4-family) container,
+  // and audio/mp4 is allowed, so that is what a .3gp is sent as.
+  "3gp": "audio/mp4", "3gpp": "audio/mp4",
+};
+
+// Browser-reported types that are genuinely audio but named in a dialect the
+// transcription provider refuses. Windows reports .aac as the DLNA type; the
+// content is ordinary ADTS/AAC, which Sarvam accepts as audio/aac. Extend only
+// from an observed refusal, never speculatively.
+const EXOTIC_AUDIO_ALIASES: Record<string, string> = {
+  "audio/vnd.dlna.adts": "audio/aac",
 };
 
 // For the file input's `accept` attribute: any audio/* type, plus the
