@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { AnswerView, Looking, SUGGESTIONS, type Answer } from "./AskPanel";
 import type { EvidenceNav } from "./KnowledgeUnit";
+import { useClassData } from "./shell/ClassContext";
 import { Button, cx } from "./ui";
 import { BookIcon } from "./ui/icons";
 
