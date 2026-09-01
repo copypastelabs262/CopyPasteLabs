@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useClassData } from "./ClassContext";
 import { actionableUnits, useCourseKnowledge } from "../KnowledgePanel";
-import { AssignmentCard, type KnowledgeUnit } from "../KnowledgeUnit";
+import {
+  AssignmentCard, EvidenceList, KindBadge, NotSpecified, Steps, type KnowledgeUnit,
+} from "../KnowledgeUnit";
 import { Button, Card, EmptyState, Page, Section, Skeleton } from "@/app/_components/ui";
-import { CheckIcon, ClipboardIcon } from "@/app/_components/ui/icons";
+import { AssignmentIcon, CheckIcon } from "@/app/_components/ui/icons";
 
 // ASSIGNMENTS — work with a consequence, as a destination.
 //
@@ -17,7 +20,7 @@ import { CheckIcon, ClipboardIcon } from "@/app/_components/ui/icons";
 //
 // The queue's verdict actions reuse the exact review contract the lecture page
 // uses (`POST /api/knowledge/:id/review`); wording edits stay on the lecture
-// page beside the evidence, and the card links there.
+// page beside the evidence, and the queue card links there.
 //
 // No due dates are rendered anywhere, because the data model does not carry
 // them — an assignment's date lives in `unspecified` when the lecturer never
@@ -25,8 +28,11 @@ import { CheckIcon, ClipboardIcon } from "@/app/_components/ui/icons";
 
 export default function ClassAssignments() {
   const { courseId, isOwner, lectures, loading } = useClassData();
+  // Bumped after every verdict so the queue, the posted list and the
+  // awaiting-review count are refetched together rather than patched by hand.
+  const [reviewedBump, setReviewedBump] = useState(0);
   const readyIds = lectures.filter((l) => l.status === "ready").map((l) => l.id).join(",");
-  const knowledge = useCourseKnowledge(courseId, readyIds);
+  const knowledge = useCourseKnowledge(courseId, `${readyIds}:${reviewedBump}`);
 
   if (loading || knowledge.loading) {
     return (
@@ -51,7 +57,12 @@ export default function ClassAssignments() {
           >
             <div className="space-y-4">
               {pending.map((u) => (
-                <PendingCard key={u.id} unit={u} courseId={courseId} onDone={() => knowledge.units.splice(0)} />
+                <PendingCard
+                  key={u.id}
+                  unit={u}
+                  courseId={courseId}
+                  onDone={() => setReviewedBump((b) => b + 1)}
+                />
               ))}
             </div>
           </Section>
@@ -66,7 +77,7 @@ export default function ClassAssignments() {
             </div>
           ) : (
             <EmptyState
-              icon={<ClipboardIcon size={20} />}
+              icon={<AssignmentIcon size={20} />}
               title="Nothing has been set in this class yet."
               description="When a lecture sets work, it is reconstructed from the recording and lands here for your confirmation — you never have to type it in."
             />
@@ -98,7 +109,7 @@ export default function ClassAssignments() {
           </p>
         ) : (
           <EmptyState
-            icon={<ClipboardIcon size={20} />}
+            icon={<AssignmentIcon size={20} />}
             title="Nothing has been set from these lectures yet."
             description="Anything your lecturer gives out will appear here, with the moment it was said."
           />
@@ -108,10 +119,11 @@ export default function ClassAssignments() {
   );
 }
 
-// A queue card: the assignment exactly as students would see it, plus the two
-// verdicts. Optimistic exit on success; the error stays on the card that
-// caused it. Editing the wording lives on the lecture page beside the
-// transcript — the card says so rather than half-duplicating that form here.
+// A queue card: the assignment exactly as it would post, with the two verdicts
+// beneath it. One Card, built from the unit primitives — wrapping the student
+// AssignmentCard would nest a card in a card. Optimistic exit on success; the
+// error stays on the card that caused it; `onDone` refetches so every count on
+// the page moves together.
 function PendingCard({
   unit, courseId, onDone,
 }: { unit: KnowledgeUnit; courseId: string; onDone: () => void }) {
@@ -145,8 +157,22 @@ function PendingCard({
 
   return (
     <Card className="shadow-soft">
-      <AssignmentCard unit={unit} nav={{ courseId }} showLecture />
-      <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-line pt-5">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <KindBadge kind={unit.kind} />
+        <span className="text-xs text-ink-faint">{unit.lectureTitle}</span>
+      </div>
+
+      <h3 className="mt-3 text-xl font-semibold leading-snug tracking-tight text-ink">
+        {unit.title}
+      </h3>
+      {unit.summary ? (
+        <p className="mt-2 max-w-[62ch] text-[15px] leading-relaxed text-ink-soft">{unit.summary}</p>
+      ) : null}
+      <Steps steps={unit.steps} id={unit.id} />
+      <NotSpecified items={unit.unspecified} id={unit.id} />
+      <EvidenceList evidence={unit.evidence} nav={{ courseId }} />
+
+      <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-line pt-5">
         <Button tone="primary" size="sm" disabled={state === "busy"} onClick={() => void act("confirm")}>
           <CheckIcon size={14} />
           {state === "busy" ? "Saving…" : "Confirm & post"}
@@ -154,12 +180,12 @@ function PendingCard({
         <Button tone="ghost" size="sm" disabled={state === "busy"} onClick={() => void act("reject")}>
           Reject
         </Button>
-        <a
+        <Link
           href={`/courses/${courseId}/lectures/${unit.lectureId}`}
           className="text-[13px] text-ink-soft transition-colors hover:text-ink"
         >
           Edit the wording on the lecture page &rarr;
-        </a>
+        </Link>
         {error ? <p className="w-full text-sm text-danger">{error}</p> : null}
       </div>
     </Card>
