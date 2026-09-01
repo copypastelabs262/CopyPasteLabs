@@ -102,15 +102,53 @@ function upload(url: string, file: File, contentType: string, onProgress: (p: nu
   });
 }
 
+// Carries the server's machine-readable refusal code alongside the human
+// message, so the catch below can tell a policy refusal from a real failure.
+class ApiError extends Error {
+  readonly code: string | null;
+  constructor(message: string, code: string | null) {
+    super(message);
+    this.name = "ApiError";
+    this.code = code;
+  }
+}
+
 async function post(url: string, body?: unknown) {
   const r = await fetch(url, {
     method: "POST",
     ...(body ? { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {}),
   });
   const b = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(b.error ?? `${url} failed: ${r.status}`);
+  if (!r.ok) {
+    throw new ApiError(b.error ?? `${url} failed: ${r.status}`, typeof b.code === "string" ? b.code : null);
+  }
   return b as Record<string, unknown>;
 }
+
+// True unless this server SAYS live transcription is off. Any doubt -- the
+// endpoint missing, a network blip -- resolves to true and lets the normal
+// flow run into the transcribe route's own guard, which is the protection;
+// this pre-flight only exists so a refusal can arrive BEFORE a lecture row
+// and a full upload that the refusal would orphan.
+async function liveTranscriptionAllowed(): Promise<boolean> {
+  try {
+    const r = await fetch("/api/transcription/authorization");
+    if (!r.ok) return true;
+    const b = (await r.json()) as { liveTranscriptionAllowed?: boolean };
+    return b.liveTranscriptionAllowed !== false;
+  } catch {
+    return true;
+  }
+}
+
+// What the teacher-developer reads instead of a failure when the money guard
+// declines locally. Shown before anything is created (pre-flight) and, should
+// the flow get as far as the transcribe route's own refusal, after upload too.
+const SPEND_GUIDE =
+  "This development server starts with paid transcription switched off, so nothing spends " +
+  "money by accident. To transcribe a real recording: stop the dev server, start it with " +
+  "`npm run dev:spend`, and upload the recording again. That server permits live " +
+  "transcription only until you stop it.";
 
 /* ---------------------------------------------------------------------------
    Technical details
