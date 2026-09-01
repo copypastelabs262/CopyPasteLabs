@@ -1,0 +1,62 @@
+{
+  "baseUrl": "http://localhost:3500",
+  "scheme": "dark",
+  "capturedAt": "2026-09-01T21:00:53.784Z",
+  "shots": [
+    {
+      "target": "class-home-faculty",
+      "viewport": "desktop",
+      "file": "class-home-faculty--desktop--dark.png",
+      "finalUrl": "http://localhost:3500/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975"
+    },
+    {
+      "target": "class-home-faculty",
+      "viewport": "tablet",
+      "file": "class-home-faculty--tablet--dark.png",
+      "finalUrl": "http://localhost:3500/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975"
+    },
+    {
+      "target": "class-home-faculty",
+      "viewport": "mobile",
+      "file": "class-home-faculty--mobile--dark.png",
+      "finalUrl": "http://localhost:3500/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975"
+    },
+    {
+      "target": "assignments-faculty",
+      "viewport": "desktop",
+      "file": "assignments-faculty--desktop--dark.png",
+      "finalUrl": "http://localhost:3500/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975/assignments"
+    },
+    {
+      "target": "assignments-faculty",
+      "viewport": "tablet",
+      "file": "assignments-faculty--tablet--dark.png",
+      "finalUrl": "http://localhost:3500/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975/assignments"
+    },
+    {
+      "target": "assignments-faculty",
+      "viewport": "mobile",
+      "file": "assignments-faculty--mobile--dark.png",
+      "finalUrl": "http://localhost:3500/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975/assignments"
+    },
+    {
+      "target": "lecture-detail-faculty",
+      "viewport": "desktop",
+      "file": "lecture-detail-faculty--desktop--dark.png",
+      "finalUrl": "http://localhost:3500/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975/lectures/03f38b9e-9566-47dc-96d5-1cfcc78baf6f"
+    },
+    {
+      "target": "lecture-detail-faculty",
+      "viewport": "tablet",
+      "file": "lecture-detail-faculty--tablet--dark.png",
+      "finalUrl": "http://localhost:3500/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975/lectures/03f38b9e-9566-47dc-96d5-1cfcc78baf6f"
+    },
+    {
+      "target": "lecture-detail-faculty",
+      "viewport": "mobile",
+      "file": "lecture-detail-faculty--mobile--dark.png",
+      "finalUrl": "http://localhost:3500/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975/lectures/03f38b9e-9566-47dc-96d5-1cfcc78baf6f"
+    }
+  ],
+  "blocked": []
+}
