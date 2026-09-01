@@ -528,7 +528,8 @@ export default function LectureUpload({
                 {dragging ? "Drop it here" : "Drop a lecture recording here"}
               </span>
               <span className="max-w-xs text-sm leading-relaxed text-ink-soft">
-                MP3, M4A, WAV, WebM or OGG, up to {formatBytes(FILE_SIZE_LIMIT_BYTES)}.
+                Any audio format — MP3, M4A, AAC, WAV, FLAC, OGG and more — up to{" "}
+                {formatBytes(FILE_SIZE_LIMIT_BYTES)}.
               </span>
               <span className={buttonClass("secondary", "md", "mt-2 pointer-events-none")}>
                 Choose a file
