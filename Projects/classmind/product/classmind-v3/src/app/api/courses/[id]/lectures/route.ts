@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import { requireUser, requireCourseOwner, errorResponse } from "@/lib/auth";
 import { serviceClient } from "@/lib/supabase/service";
 import {
-  LECTURE_BUCKET, ALLOWED_MIME_TYPES, FILE_SIZE_LIMIT_BYTES, lectureObjectPath,
+  LECTURE_BUCKET, FILE_SIZE_LIMIT_BYTES, lectureObjectPath,
+  isAllowedAudio, canonicalAudioContentType,
 } from "@/lib/storage";
 import {
   fixtureSlugExists, knownFixtureSlugs, rememberReplayRequest,
