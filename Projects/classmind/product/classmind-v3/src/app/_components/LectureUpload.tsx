@@ -386,8 +386,18 @@ export default function LectureUpload({
       throw new Error("Still transcribing after 20 minutes. The job id is stored, so polling can resume.");
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
-      setFailure(stage);
-      setFailedStep(stage === "upload" ? 0 : stage === "understand" ? 2 : 1);
+      // The transcribe route refusing to spend is not a transcription failure:
+      // the upload completed, nothing broke, and "worth trying again" would be
+      // false -- retrying without authorization refuses identically and mints
+      // another orphaned lecture row. Reached only when authorization changed
+      // mid-flow (the pre-flight above answers the common case first).
+      if (err instanceof ApiError && err.code === "live_transcription_disabled") {
+        setFailure("authorize");
+        setFailedStep(1);
+      } else {
+        setFailure(stage);
+        setFailedStep(stage === "upload" ? 0 : stage === "understand" ? 2 : 1);
+      }
       setPhase("failed");
       onComplete();
     }
