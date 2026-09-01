@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "session_id": "2026-08-31T0800Z-groq-schema-carveout-and-oauth-allowlist",
+  "project": "classmind",
+  "secondary_projects": [],
+  "generated_by": { "producer": "claude", "tool": "End-Session/1.0.0 (hand-authored retroactively, 2026-09-01)" },
+  "generated_at": "2026-09-01T13:30:00Z",
+  "repository": { "branch": "master", "upstream": "origin/master" },
+  "session_boundary": {
+    "base": "03ddac6",
+    "head": "5695d42",
+    "base_strategy": "capture_commit_range — base is the previous session-capture commit ('Session capture: classmind - the Design Master Loop…'); head is the last Auto-save of 2026-08-31 (13:30 IST). All commits in range are Auto-saves from this work stream; the capture itself was written retroactively on 2026-09-01."
+  },
+  "context_completeness": "partial",
+  "context_note": "No conversation transcript existed. Reconstructed entirely from git diffs, commit timestamps, and comments the work wrote into the code. Only high-confidence candidates were emitted.",
+  "duration_known": false,
+  "duration_minutes": null,
+  "duration_source": "unavailable — commit timestamps span 09:15–13:30 IST (03:45–08:00 UTC)",
+  "working_tree_note": "All changes were committed incrementally by scripts/autosave.sh; no intentional commit, session log, progress entry, or Inbox entry was made on the day.",
+  "changes_summary": {
+    "created": [
+      "Projects/classmind/product/classmind-v3/design-loop/tmp-oauth-probe.mjs (765f953; deleted again in 610f5a3 — one-off Playwright probe that captured and aborted the /auth/v1/authorize URL)"
+    ],
+    "modified": [
+      "Projects/classmind/product/classmind-v3/scripts/verify-processing-run.mts (+55/-? — /extract driven via node:http with no client timeout, 2-min heartbeat, default BASE 3300→3400)",
+      "Projects/classmind/product/classmind-v3/src/lib/reasoning/openai-compatible.ts (+52 — schema_validation failure class, one-retry bound tracked per class, classifyStatus reads full body)",
+      "Projects/classmind/product/classmind-v3/scripts/test-provider-registry.mts (+41 — classification and one-retry behavioural tests for json_validate_failed)",
+      "Projects/classmind/product/classmind-v3/DEPLOY.md (+29/-? — shared-project OAuth allow-list: additive entries, Site URL fallback, whole-URL glob, localhost≠127.0.0.1)",
+      "Projects/classmind/product/classmind-v3/README.md (title V1→V3, dev port note)"
+    ],
+    "session_docs": [
+      "Projects/classmind/.knowledge/sessions/2026-08-31-groq-schema-carveout-and-oauth-allowlist.md (written 2026-09-01)",
+      "AI-Memory/Inbox/classmind/2026-08-31T0800Z-groq-schema-carveout-and-oauth-allowlist/ (written 2026-09-01)"
+    ]
+  },
+  "verification": {
+    "at_the_time": "none recorded",
+    "at_capture_2026_09_01": "tsc --noEmit and eslint --max-warnings 0 pass over classmind-v3's current tree (which includes this work plus the 2026-09-01 stream)",
+    "paid_calls": "one Groq reasoning baseline run occurred during this stream (evidenced by the classifyStatus comment: 20 windows, 1 json_validate_failed); its completion, ledger row, and cost are unrecorded — see cand-005. No Sarvam call of any kind."
+  },
+  "diff": {
+    "stored": true,
+    "file": "changes.patch",
+    "regenerate_command": "git diff 03ddac6..5695d42 -- Projects/classmind/product/classmind-v3"
+  }
+}
