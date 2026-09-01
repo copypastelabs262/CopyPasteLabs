@@ -53,43 +53,7 @@ export default function StudentCourseView({
   }
 
   return (
-    <Page>
-      <AskPanel courseId={courseId} />
-
-      <Section
-        title="What you have to do"
-        description="Everything set across this course, newest lectures first."
-      >
-        {loading ? (
-          <Skeleton className="h-28 rounded-2xl" />
-        ) : owed.length ? (
-          <div className="space-y-4">
-            {owed.map((u) => (
-              <AssignmentCard key={u.id} unit={u} nav={{ courseId }} showLecture />
-            ))}
-          </div>
-        ) : awaitingReview ? (
-          // "NOTHING TO DO" AND "YOUR LECTURER HAS NOT LOOKED YET" ARE NOT THE
-          // SAME SENTENCE, and a student who reads the first when the second is
-          // true plans their week around a page that misled them. The count is
-          // all that is said: what those items are stays invisible until the
-          // lecturer confirms them, which is the product's central safety rule
-          // and does not bend for this.
-          <p className="max-w-[52ch] text-[15px] leading-relaxed text-ink-soft">
-            Nothing to do right now.{" "}
-            {awaitingReview === 1
-              ? "1 item is waiting for your lecturer to confirm"
-              : `${awaitingReview} items are waiting for your lecturer to confirm`}
-            , and will appear here once they have.
-          </p>
-        ) : (
-          <p className="max-w-[52ch] text-[15px] leading-relaxed text-ink-soft">
-            Nothing has been set from these lectures yet. Anything your lecturer gives out will
-            appear here, with the moment it was said.
-          </p>
-        )}
-      </Section>
-
+    <>
       <Section title="Lectures">
         {lectures.length === 0 ? (
           <EmptyState
