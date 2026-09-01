@@ -542,6 +542,13 @@ export default function LectureUpload({
               <span>{pickError}</span>
             </p>
           ) : null}
+
+          {authNotice ? (
+            <p className="flex items-start gap-2 rounded-xl border border-line bg-surface-sunken px-4 py-3 text-sm leading-relaxed text-ink-soft">
+              <AlertIcon size={16} className="mt-0.5 shrink-0 text-ink-faint" />
+              <span>{authNotice}</span>
+            </p>
+          ) : null}
         </div>
       ) : null}
 
