@@ -41,7 +41,19 @@ if (listError) {
 
 const existing = (buckets ?? []).find((b) => b.name === BUCKET);
 if (existing) {
-  console.log(`Bucket "${BUCKET}" already exists (public=${existing.public}, limit=${existing.file_size_limit}). Nothing to do.`);
+  // Converge, don't skip: a bucket created under an older MIME list would
+  // otherwise keep refusing formats the code now accepts, and the refusal
+  // happens inside the storage PUT where it reads as a generic upload error.
+  const { error: updateError } = await svc.storage.updateBucket(BUCKET, {
+    public: false,
+    fileSizeLimit: FILE_SIZE_LIMIT,
+    allowedMimeTypes: ALLOWED,
+  });
+  if (updateError) {
+    console.error(`Could not update bucket "${BUCKET}": ${updateError.message}`);
+    process.exit(1);
+  }
+  console.log(`Bucket "${BUCKET}" exists; converged (limit ${FILE_SIZE_LIMIT} bytes, mime ${ALLOWED.join(", ")}).`);
 } else {
 
   // Private. Audio is reached only through short-lived signed URLs minted by a
