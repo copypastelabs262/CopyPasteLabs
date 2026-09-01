@@ -7,6 +7,37 @@ Entries are snapshots of what was true when written and are never rewritten. Whe
 resolves something an earlier one recorded as blocked, the earlier line gets a dated marker
 pointing forward — it does not get edited away.
 
+## 2026-09-02 (overnight) — ClassMind v4 exists: the class shell, built and screenshot-judged in one autonomous run
+
+**Done, ~02:00–03:20 IST, zero spend (provider keys stripped from the tree; every capture
+manifest shows `blocked: []`).** Full handoff in
+[`product/classmind-v4/V4-OVERNIGHT-REPORT.md`](../product/classmind-v4/V4-OVERNIGHT-REPORT.md)
+— written for the operator's morning review, with the recommended review order.
+
+The one-line version: **v4 is the successor line** (port 3500, v3 byte-frozen as the
+pre-shell baseline). The classroom grammar is now the product's structure — class rail,
+persistent context header, and four tabs (**Home | Ask | Lectures | Assignments**) around
+every surface in a class, **on unchanged routes** so every stored citation deep link
+(`?t=`) kept working with no redirect layer. Home is a real-data stream with a
+needs-you band; Ask is a chat-first conversation surface with a viewport-fixed composer
+and *visible* degraded mode (v3 hid it); Assignments carries the confirm-as-posting queue
+on the existing review API; Lectures re-homes the pipeline surface and student index,
+each slimmed to one job. Backend, providers, auth: zero changes.
+
+**Judged, not assumed:** 48 rendered screenshots over three passes (capture → critique →
+fix → recapture, the design-loop method), an interactive two-turn Ask smoke in degraded
+mode, tsc/eslint/`next build` all clean. Three defects found by review and fixed in the
+run (duplicate failure sentence on Home; tab-echoing section title; a wrong capture
+target that incidentally proved the auth boundary holds inside the shell).
+
+**Known issues are in the report** — headline ones: the lecture-detail capture lingers on
+its skeleton (data APIs 200; likely a capture artifact — verify by hand first), the
+Supabase redirect allowlist needs `localhost:3500` added before Google sign-in works
+locally, and `/courses` (My Classes) still awaits its reframe.
+
+**Next:** the operator's morning review per the report's §H, then the two-day backend
+brief, then R1/R2/R6.
+
 ## 2026-09-01/02 — Gemini phase day one: two clean baselines, the first true end-to-end run, and the grammar decision
 
 **Done.**
