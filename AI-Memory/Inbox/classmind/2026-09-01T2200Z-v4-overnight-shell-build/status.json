@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "session_id": "2026-09-01T2200Z-v4-overnight-shell-build",
+  "project": "classmind",
+  "state": "pending",
+  "state_set_at": "2026-09-01T22:00:00Z",
+  "state_set_by": "End-Session (hand-authored)",
+  "review": {
+    "reviewed_at": null,
+    "reviewed_by": null,
+    "candidate_outcomes": [],
+    "notes": ""
+  }
+}
