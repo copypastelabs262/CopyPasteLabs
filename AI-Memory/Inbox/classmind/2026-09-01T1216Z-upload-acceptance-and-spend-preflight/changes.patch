@@ -1,0 +1,766 @@
+diff --git a/Projects/classmind/product/classmind-v2/scripts/setup-storage.mts b/Projects/classmind/product/classmind-v2/scripts/setup-storage.mts
+index a7d5d8b..beaf675 100644
+--- a/Projects/classmind/product/classmind-v2/scripts/setup-storage.mts
++++ b/Projects/classmind/product/classmind-v2/scripts/setup-storage.mts
+@@ -24,10 +24,12 @@ const BUCKET = "lectures";
+ // 50 MiB is the Supabase Free plan's GLOBAL ceiling, not a preference. A
+ // per-bucket limit above it is rejected outright at creation time.
+ const FILE_SIZE_LIMIT = 52_428_800;
+-const ALLOWED = [
+-  "audio/mpeg", "audio/wav", "audio/x-wav", "audio/mp4",
+-  "audio/m4a", "audio/webm", "audio/ogg",
+-];
++// Any audio type. The precise decision of what counts as an audio recording
++// lives in src/lib/storage.ts (isAllowedAudio / canonicalAudioContentType);
++// the upload route canonicalises every accepted file to an audio/* type
++// before it reaches this bucket, so the wildcard here is a backstop, not the
++// policy.
++const ALLOWED = ["audio/*"];
+ 
+ const svc = createClient(url, key, { auth: { persistSession: false } });
+ 
+@@ -39,7 +41,19 @@ if (listError) {
+ 
+ const existing = (buckets ?? []).find((b) => b.name === BUCKET);
+ if (existing) {
+-  console.log(`Bucket "${BUCKET}" already exists (public=${existing.public}, limit=${existing.file_size_limit}). Nothing to do.`);
++  // Converge, don't skip: a bucket created under an older MIME list would
++  // otherwise keep refusing formats the code now accepts, and the refusal
++  // happens inside the storage PUT where it reads as a generic upload error.
++  const { error: updateError } = await svc.storage.updateBucket(BUCKET, {
++    public: false,
++    fileSizeLimit: FILE_SIZE_LIMIT,
++    allowedMimeTypes: ALLOWED,
++  });
++  if (updateError) {
++    console.error(`Could not update bucket "${BUCKET}": ${updateError.message}`);
++    process.exit(1);
++  }
++  console.log(`Bucket "${BUCKET}" exists; converged (limit ${FILE_SIZE_LIMIT} bytes, mime ${ALLOWED.join(", ")}).`);
+ } else {
+ 
+   // Private. Audio is reached only through short-lived signed URLs minted by a
+diff --git a/Projects/classmind/product/classmind-v2/src/app/_components/LectureUpload.tsx b/Projects/classmind/product/classmind-v2/src/app/_components/LectureUpload.tsx
+index a745384..5876009 100644
+--- a/Projects/classmind/product/classmind-v2/src/app/_components/LectureUpload.tsx
++++ b/Projects/classmind/product/classmind-v2/src/app/_components/LectureUpload.tsx
+@@ -1,7 +1,9 @@
+ "use client";
+ 
+ import { useCallback, useId, useRef, useState, type DragEvent } from "react";
+-import { ALLOWED_MIME_TYPES, FILE_SIZE_LIMIT_BYTES } from "@/lib/storage";
++import {
++  AUDIO_ACCEPT, FILE_SIZE_LIMIT_BYTES, isAllowedAudio, canonicalAudioContentType,
++} from "@/lib/storage";
+ import { formatBytes } from "./Input";
+ import { Button, Card, Spinner, TextInput, buttonClass, cx } from "./ui";
+ import { AlertIcon, AudioIcon, CheckIcon, ChevronRightIcon, UploadIcon } from "./ui/icons";
+@@ -86,11 +88,11 @@ async function sha256Hex(file: File): Promise<string> {
+ 
+ // XHR rather than fetch: fetch cannot report upload progress, and a 40 MB upload
+ // with no feedback is indistinguishable from a hang.
+-function upload(url: string, file: File, onProgress: (p: number) => void): Promise<void> {
++function upload(url: string, file: File, contentType: string, onProgress: (p: number) => void): Promise<void> {
+   return new Promise((resolve, reject) => {
+     const xhr = new XMLHttpRequest();
+     xhr.open("PUT", url);
+-    xhr.setRequestHeader("Content-Type", file.type);
++    xhr.setRequestHeader("Content-Type", contentType);
+     xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(Math.round((e.loaded / e.total) * 100));
+     xhr.onload = () => (xhr.status >= 200 && xhr.status < 300
+       ? resolve()
+@@ -190,10 +192,12 @@ export default function LectureUpload({
+     setPickError(null); setError(null); setPhase("idle");
+     setProgress(0); setProviderStatus(null); setLectureId(null); setFailure(null);
+     if (!picked) { setFile(null); return; }
+-    if (!(ALLOWED_MIME_TYPES as readonly string[]).includes(picked.type)) {
++    // Judged on type OR extension -- Windows hands over many real recordings
++    // (.m4a, .opus, .amr) with no type at all, and those must not be refused.
++    if (!isAllowedAudio(picked.type, picked.name)) {
+       setFile(null);
+       setPickError(
+-        `${picked.name} is not an audio recording ClassMind can read. Upload an MP3, M4A, WAV, WebM or OGG file.`,
++        `${picked.name} is not an audio recording ClassMind can read. Upload an audio file — MP3, M4A, WAV, AAC, FLAC, OGG/Opus, AMR, WMA, WebM and more are all fine.`,
+       );
+       return;
+     }
+@@ -229,15 +233,19 @@ export default function LectureUpload({
+       const checksumSha256 = await sha256Hex(file);
+ 
+       setPhase("creating");
++      // Canonicalised once and used for BOTH the row and the storage PUT: the
++      // bucket admits only audio/*, so a browser that reported no type (or
++      // application/octet-stream) must not put its own guess on the wire.
++      const contentType = canonicalAudioContentType(file.type, file.name);
+       const created = await post(`/api/courses/${courseId}/lectures`, {
+         title, originalFilename: file.name, fileSizeBytes: file.size,
+-        contentType: file.type, checksumSha256,
++        contentType, checksumSha256,
+       });
+       const id = created.lectureId as string;
+       setLectureId(id);
+ 
+       setPhase("uploading");
+-      await upload(created.signedUrl as string, file, setProgress);
++      await upload(created.signedUrl as string, file, contentType, setProgress);
+ 
+       stage = "transcribe";
+       setPhase("submitting");
+@@ -392,7 +400,7 @@ export default function LectureUpload({
+             id={fileInputId}
+             ref={inputRef}
+             type="file"
+-            accept={ALLOWED_MIME_TYPES.join(",")}
++            accept={AUDIO_ACCEPT}
+             // Clearing on open makes re-picking the SAME file fire `change`.
+             // Without it, choosing the file you just replaced does nothing.
+             onClick={(e) => { e.currentTarget.value = ""; }}
+diff --git a/Projects/classmind/product/classmind-v2/src/app/api/courses/[id]/lectures/route.ts b/Projects/classmind/product/classmind-v2/src/app/api/courses/[id]/lectures/route.ts
+index b91ce4a..8e6d66b 100644
+--- a/Projects/classmind/product/classmind-v2/src/app/api/courses/[id]/lectures/route.ts
++++ b/Projects/classmind/product/classmind-v2/src/app/api/courses/[id]/lectures/route.ts
+@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
+ import { requireUser, requireCourseOwner, errorResponse } from "@/lib/auth";
+ import { serviceClient } from "@/lib/supabase/service";
+ import {
+-  LECTURE_BUCKET, ALLOWED_MIME_TYPES, FILE_SIZE_LIMIT_BYTES, lectureObjectPath,
++  LECTURE_BUCKET, FILE_SIZE_LIMIT_BYTES, lectureObjectPath,
++  isAllowedAudio, canonicalAudioContentType,
+ } from "@/lib/storage";
+ import {
+   fixtureSlugExists, knownFixtureSlugs, rememberReplayRequest,
+@@ -34,8 +35,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
+     };
+ 
+     if (!body.originalFilename) return NextResponse.json({ error: "originalFilename is required." }, { status: 400 });
+-    if (!body.contentType || !(ALLOWED_MIME_TYPES as readonly string[]).includes(body.contentType)) {
+-      return NextResponse.json({ error: `contentType must be one of: ${ALLOWED_MIME_TYPES.join(", ")}` }, { status: 400 });
++    // Any audio/* content type is accepted, and so is a recognised audio file
++    // extension when the client could not name a type -- Windows reports many
++    // real recordings as application/octet-stream or nothing at all. A file
++    // that satisfies neither signal is refused here, before a row or a signed
++    // URL exists for it.
++    if (!isAllowedAudio(body.contentType ?? "", body.originalFilename)) {
++      return NextResponse.json({
++        error:
++          "This does not look like an audio recording. Send an audio/* contentType, or a " +
++          "filename with a recognised audio extension (mp3, m4a, mp4, wav, aac, aiff, ogg, " +
++          "opus, flac, amr, wma, webm, 3gp).",
++      }, { status: 400 });
+     }
+     if (!body.fileSizeBytes || body.fileSizeBytes <= 0) {
+       return NextResponse.json({ error: "fileSizeBytes must be positive." }, { status: 400 });
+@@ -109,7 +120,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
+       original_filename: body.originalFilename,
+       storage_path: path,
+       file_size_bytes: body.fileSizeBytes,
+-      content_type: body.contentType,
++      // Canonicalised, never raw: the bucket admits only audio/*, and this is
++      // also the Content-Type later handed to the transcription provider.
++      content_type: canonicalAudioContentType(body.contentType ?? "", body.originalFilename),
+       checksum_sha256: claimed,
+       recorded_on: body.recordedOn || null,
+     };
+diff --git a/Projects/classmind/product/classmind-v2/src/lib/storage.ts b/Projects/classmind/product/classmind-v2/src/lib/storage.ts
+index 965ac0f..71cad68 100644
+--- a/Projects/classmind/product/classmind-v2/src/lib/storage.ts
++++ b/Projects/classmind/product/classmind-v2/src/lib/storage.ts
+@@ -5,10 +5,61 @@ export const LECTURE_BUCKET = "lectures";
+ // per-bucket limit cannot exceed it. A 40-minute lecture at 64 kbps mono is
+ // ~18 MB, which fits comfortably.
+ export const FILE_SIZE_LIMIT_BYTES = 52_428_800;
+-export const ALLOWED_MIME_TYPES = [
+-  "audio/mpeg", "audio/wav", "audio/x-wav", "audio/mp4",
+-  "audio/m4a", "audio/webm", "audio/ogg",
+-] as const;
++
++// WHAT COUNTS AS AN AUDIO RECORDING.
++//
++// Two signals, either one sufficient: the browser reports an audio/* type, or
++// the filename carries the extension of a format Sarvam's batch API documents
++// as decodable (WAV, MP3, AAC, AIFF, OGG, OPUS, FLAC, MP4/M4A, AMR, WMA,
++// WebM). The extension path exists because Windows reports many perfectly
++// real recordings -- .m4a, .opus and .amr among them -- as
++// application/octet-stream or as no type at all, and the previous whitelist
++// of seven exact MIME strings refused files the pipeline handles fine.
++//
++// Raw PCM (.pcm/.raw) is deliberately absent: Sarvam requires an explicit
++// input_audio_codec parameter for it, which the transcribe path does not
++// send. PCM inside a WAV container works like any other WAV.
++export const AUDIO_EXTENSION_MIME: Record<string, string> = {
++  mp3: "audio/mpeg", mpga: "audio/mpeg",
++  wav: "audio/wav",
++  m4a: "audio/mp4", mp4: "audio/mp4", m4b: "audio/mp4",
++  aac: "audio/aac",
++  aif: "audio/aiff", aiff: "audio/aiff",
++  ogg: "audio/ogg", oga: "audio/ogg", opus: "audio/ogg",
++  flac: "audio/flac",
++  amr: "audio/amr",
++  wma: "audio/x-ms-wma",
++  webm: "audio/webm",
++  "3gp": "audio/3gpp", "3gpp": "audio/3gpp",
++};
++
++// For the file input's `accept` attribute: any audio/* type, plus the
++// extensions above so files the OS reports without a type stay pickable.
++export const AUDIO_ACCEPT = [
++  "audio/*",
++  ...Object.keys(AUDIO_EXTENSION_MIME).map((ext) => `.${ext}`),
++].join(",");
++
++function extensionOf(filename: string): string {
++  const dot = filename.lastIndexOf(".");
++  return dot === -1 ? "" : filename.slice(dot + 1).toLowerCase();
++}
++
++export function isAllowedAudio(contentType: string, filename: string): boolean {
++  if (contentType.trim().toLowerCase().startsWith("audio/")) return true;
++  return extensionOf(filename) in AUDIO_EXTENSION_MIME;
++}
++
++// The type that is stored, sent to the bucket, and handed to the
++// transcription provider. Always audio/* -- the bucket admits only audio/*,
++// so a browser that reported nothing (or application/octet-stream, or
++// video/webm for an audio-only recording) gets the canonical type for its
++// extension instead of its own guess.
++export function canonicalAudioContentType(contentType: string, filename: string): string {
++  const reported = contentType.trim().toLowerCase();
++  if (reported.startsWith("audio/")) return reported.split(";")[0].trim();
++  return AUDIO_EXTENSION_MIME[extensionOf(filename)] ?? "audio/mpeg";
++}
+ 
+ export function lectureObjectPath(lectureId: string, filename: string): string {
+   const dot = filename.lastIndexOf(".");
+diff --git a/Projects/classmind/product/classmind-v3/.env.example b/Projects/classmind/product/classmind-v3/.env.example
+index c9da267..c9eb86d 100644
+--- a/Projects/classmind/product/classmind-v3/.env.example
++++ b/Projects/classmind/product/classmind-v3/.env.example
+@@ -21,6 +21,9 @@ SARVAM_API_KEY=
+ # call is the product and this variable is not consulted.
+ #
+ # It can ONLY enable spending. It cannot enable replay anywhere, ever.
++#
++# Prefer leaving this UNSET here and using `npm run dev:spend`, which sets it
++# for one server process and forgets it when that process stops.
+ ALLOW_LIVE_SARVAM=
+ 
+ # ---------------------------------------------------------------------------
+diff --git a/Projects/classmind/product/classmind-v3/README.md b/Projects/classmind/product/classmind-v3/README.md
+index cb8d6a7..299b3db 100644
+--- a/Projects/classmind/product/classmind-v3/README.md
++++ b/Projects/classmind/product/classmind-v3/README.md
+@@ -22,6 +22,12 @@ instead of paying for a real call, name it per lecture — `replayFixture: "<slu
+ never selects a transcript. Replay is refused on any deployment. A live call from a developer
+ machine needs `ALLOW_LIVE_SARVAM=1`, so nothing spends money by accident.
+ 
++To transcribe a real recording locally, run `npm run dev:spend` instead of `npm run dev` — it
++starts the same server with spending enabled **for that process only** and prints a banner
++saying so. Stop it and the next plain `npm run dev` is safe again; `.env.local` is never
++touched. The upload page checks this before creating anything, so with spending off it tells
++you what to run instead of failing after the upload.
++
+ ## Verify it
+ 
+ ```
+diff --git a/Projects/classmind/product/classmind-v3/package.json b/Projects/classmind/product/classmind-v3/package.json
+index 305a03a..0326bc2 100644
+--- a/Projects/classmind/product/classmind-v3/package.json
++++ b/Projects/classmind/product/classmind-v3/package.json
+@@ -4,6 +4,7 @@
+   "private": true,
+   "scripts": {
+     "dev": "next dev -p 3400",
++    "dev:spend": "node scripts/dev-spend.mjs",
+     "build": "next build",
+     "start": "next start -p 3400",
+     "design:capture": "node --env-file=.env.local design-loop/capture.mts",
+diff --git a/Projects/classmind/product/classmind-v3/scripts/dev-spend.mjs b/Projects/classmind/product/classmind-v3/scripts/dev-spend.mjs
+new file mode 100644
+index 0000000..981a119
+--- /dev/null
++++ b/Projects/classmind/product/classmind-v3/scripts/dev-spend.mjs
+@@ -0,0 +1,32 @@
++// Starts the v3 dev server with LIVE SARVAM SPENDING ENABLED -- for exactly as
++// long as this process lives, and not one second longer.
++//
++//   npm run dev:spend
++//
++// This is the per-process opt-in the transcription guard was designed around
++// (src/lib/transcription/index.ts: "opted into per shell, deliberately").
++// Nothing is written to .env.local or any other file: stop this server and the
++// authorization is gone. It has no effect on replay safety or on deployments
++// -- ALLOW_LIVE_SARVAM can only ever permit spending on a developer machine.
++import { spawn } from "node:child_process";
++
++console.log(`
++==============================================================================
++  LIVE SARVAM SPENDING IS ENABLED FOR THIS SERVER PROCESS
++
++  Transcribing a lecture that names no replay fixture will make a real,
++  billable Sarvam ASR call. A successful transcription then flows straight
++  into extraction, which bills the reasoning provider (Groq) per token.
++
++  This authorization lives and dies with this process. Stop the server
++  (Ctrl+C) and the next 'npm run dev' starts with spending off again.
++==============================================================================
++`);
++
++const child = spawn("npx", ["next", "dev", "-p", "3400"], {
++  stdio: "inherit",
++  env: { ...process.env, ALLOW_LIVE_SARVAM: "1" },
++  // npx is npx.cmd on Windows, which spawn only finds through a shell.
++  shell: process.platform === "win32",
++});
++child.on("exit", (code) => process.exit(code ?? 0));
+diff --git a/Projects/classmind/product/classmind-v3/scripts/setup-storage.mts b/Projects/classmind/product/classmind-v3/scripts/setup-storage.mts
+index a7d5d8b..beaf675 100644
+--- a/Projects/classmind/product/classmind-v3/scripts/setup-storage.mts
++++ b/Projects/classmind/product/classmind-v3/scripts/setup-storage.mts
+@@ -24,10 +24,12 @@ const BUCKET = "lectures";
+ // 50 MiB is the Supabase Free plan's GLOBAL ceiling, not a preference. A
+ // per-bucket limit above it is rejected outright at creation time.
+ const FILE_SIZE_LIMIT = 52_428_800;
+-const ALLOWED = [
+-  "audio/mpeg", "audio/wav", "audio/x-wav", "audio/mp4",
+-  "audio/m4a", "audio/webm", "audio/ogg",
+-];
++// Any audio type. The precise decision of what counts as an audio recording
++// lives in src/lib/storage.ts (isAllowedAudio / canonicalAudioContentType);
++// the upload route canonicalises every accepted file to an audio/* type
++// before it reaches this bucket, so the wildcard here is a backstop, not the
++// policy.
++const ALLOWED = ["audio/*"];
+ 
+ const svc = createClient(url, key, { auth: { persistSession: false } });
+ 
+@@ -39,7 +41,19 @@ if (listError) {
+ 
+ const existing = (buckets ?? []).find((b) => b.name === BUCKET);
+ if (existing) {
+-  console.log(`Bucket "${BUCKET}" already exists (public=${existing.public}, limit=${existing.file_size_limit}). Nothing to do.`);
++  // Converge, don't skip: a bucket created under an older MIME list would
++  // otherwise keep refusing formats the code now accepts, and the refusal
++  // happens inside the storage PUT where it reads as a generic upload error.
++  const { error: updateError } = await svc.storage.updateBucket(BUCKET, {
++    public: false,
++    fileSizeLimit: FILE_SIZE_LIMIT,
++    allowedMimeTypes: ALLOWED,
++  });
++  if (updateError) {
++    console.error(`Could not update bucket "${BUCKET}": ${updateError.message}`);
++    process.exit(1);
++  }
++  console.log(`Bucket "${BUCKET}" exists; converged (limit ${FILE_SIZE_LIMIT} bytes, mime ${ALLOWED.join(", ")}).`);
+ } else {
+ 
+   // Private. Audio is reached only through short-lived signed URLs minted by a
+diff --git a/Projects/classmind/product/classmind-v3/src/app/_components/LectureUpload.tsx b/Projects/classmind/product/classmind-v3/src/app/_components/LectureUpload.tsx
+index a745384..c763016 100644
+--- a/Projects/classmind/product/classmind-v3/src/app/_components/LectureUpload.tsx
++++ b/Projects/classmind/product/classmind-v3/src/app/_components/LectureUpload.tsx
+@@ -1,7 +1,9 @@
+ "use client";
+ 
+ import { useCallback, useId, useRef, useState, type DragEvent } from "react";
+-import { ALLOWED_MIME_TYPES, FILE_SIZE_LIMIT_BYTES } from "@/lib/storage";
++import {
++  AUDIO_ACCEPT, FILE_SIZE_LIMIT_BYTES, isAllowedAudio, canonicalAudioContentType,
++} from "@/lib/storage";
+ import { formatBytes } from "./Input";
+ import { Button, Card, Spinner, TextInput, buttonClass, cx } from "./ui";
+ import { AlertIcon, AudioIcon, CheckIcon, ChevronRightIcon, UploadIcon } from "./ui/icons";
+@@ -21,7 +23,7 @@ type Phase =
+ // Where a run stopped, in the teacher's terms rather than the pipeline's. The
+ // raw error is always kept -- this only decides which sentence sits above it
+ // and whether re-running the same file is a sensible thing to offer.
+-type FailureKind = "upload" | "transcribe" | "timeout" | "understand" | "quarantine";
++type FailureKind = "upload" | "transcribe" | "timeout" | "understand" | "quarantine" | "authorize";
+ 
+ const POLL_MS = 5000;
+ const MAX_POLLS = 240;
+@@ -58,6 +60,15 @@ function stepForPhase(phase: Phase): number {
+   }
+ }
+ 
++// What the teacher-developer reads instead of a failure when the money guard
++// declines locally. Shown before anything is created (pre-flight) and, should
++// the flow get as far as the transcribe route's own refusal, after upload too.
++const SPEND_GUIDE =
++  "This development server starts with paid transcription switched off, so nothing spends " +
++  "money by accident. To transcribe a real recording: stop the dev server, start it with " +
++  "`npm run dev:spend`, and upload the recording again. That server permits live " +
++  "transcription only until you stop it.";
++
+ // One sentence per way this can end badly. Every one of them names what
+ // survived and what to do next -- a teacher who cannot tell whether their
+ // recording still exists will re-record the lecture rather than retry.
+@@ -72,6 +83,7 @@ const FAILURE_COPY: Record<FailureKind, string> = {
+     "The lecture was transcribed, but the step that reads it for what was taught did not finish. The transcript is safe: open the lecture and run it again.",
+   quarantine:
+     "The recording was transcribed, but the transcript did not look like a lecture — so nothing was read out of it. This usually means the audio was too quiet, too noisy, or in a different language from the course. Upload a clearer recording.",
++  authorize: `Your recording is uploaded and safe, and nothing was charged. ${SPEND_GUIDE}`,
+ };
+ 
+ // Re-running the whole sequence only helps when the failure was in getting the
+@@ -86,11 +98,11 @@ async function sha256Hex(file: File): Promise<string> {
+ 
+ // XHR rather than fetch: fetch cannot report upload progress, and a 40 MB upload
+ // with no feedback is indistinguishable from a hang.
+-function upload(url: string, file: File, onProgress: (p: number) => void): Promise<void> {
++function upload(url: string, file: File, contentType: string, onProgress: (p: number) => void): Promise<void> {
+   return new Promise((resolve, reject) => {
+     const xhr = new XMLHttpRequest();
+     xhr.open("PUT", url);
+-    xhr.setRequestHeader("Content-Type", file.type);
++    xhr.setRequestHeader("Content-Type", contentType);
+     xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(Math.round((e.loaded / e.total) * 100));
+     xhr.onload = () => (xhr.status >= 200 && xhr.status < 300
+       ? resolve()
+@@ -100,16 +112,46 @@ function upload(url: string, file: File, onProgress: (p: number) => void): Promi
+   });
+ }
+ 
++// Carries the server's machine-readable refusal code alongside the human
++// message, so the catch below can tell a policy refusal from a real failure.
++class ApiError extends Error {
++  readonly code: string | null;
++  constructor(message: string, code: string | null) {
++    super(message);
++    this.name = "ApiError";
++    this.code = code;
++  }
++}
++
+ async function post(url: string, body?: unknown) {
+   const r = await fetch(url, {
+     method: "POST",
+     ...(body ? { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {}),
+   });
+   const b = await r.json().catch(() => ({}));
+-  if (!r.ok) throw new Error(b.error ?? `${url} failed: ${r.status}`);
++  if (!r.ok) {
++    throw new ApiError(b.error ?? `${url} failed: ${r.status}`, typeof b.code === "string" ? b.code : null);
++  }
+   return b as Record<string, unknown>;
+ }
+ 
++// True unless this server SAYS live transcription is off. Any doubt -- the
++// endpoint missing, a network blip -- resolves to true and lets the normal
++// flow run into the transcribe route's own guard, which is the protection;
++// this pre-flight only exists so a refusal can arrive BEFORE a lecture row
++// and a full upload that the refusal would orphan.
++async function liveTranscriptionAllowed(): Promise<boolean> {
++  try {
++    const r = await fetch("/api/transcription/authorization");
++    if (!r.ok) return true;
++    const b = (await r.json()) as { liveTranscriptionAllowed?: boolean };
++    return b.liveTranscriptionAllowed !== false;
++  } catch {
++    return true;
++  }
++}
++
++
+ /* ---------------------------------------------------------------------------
+    Technical details
+ 
+@@ -175,6 +217,10 @@ export default function LectureUpload({
+   const [lectureId, setLectureId] = useState<string | null>(null);
+   const [error, setError] = useState<string | null>(null);
+   const [pickError, setPickError] = useState<string | null>(null);
++  // The money guard's pre-flight verdict, rendered in the idle card. Not an
++  // error: nothing failed, nothing was created, the server simply is not
++  // authorized to spend yet.
++  const [authNotice, setAuthNotice] = useState<string | null>(null);
+   const [failure, setFailure] = useState<FailureKind | null>(null);
+   const [failedStep, setFailedStep] = useState(0);
+   const [dragging, setDragging] = useState(false);
+@@ -187,13 +233,15 @@ export default function LectureUpload({
+   const dragDepth = useRef(0);
+ 
+   const choose = useCallback((picked: File | null) => {
+-    setPickError(null); setError(null); setPhase("idle");
++    setPickError(null); setError(null); setAuthNotice(null); setPhase("idle");
+     setProgress(0); setProviderStatus(null); setLectureId(null); setFailure(null);
+     if (!picked) { setFile(null); return; }
+-    if (!(ALLOWED_MIME_TYPES as readonly string[]).includes(picked.type)) {
++    // Judged on type OR extension -- Windows hands over many real recordings
++    // (.m4a, .opus, .amr) with no type at all, and those must not be refused.
++    if (!isAllowedAudio(picked.type, picked.name)) {
+       setFile(null);
+       setPickError(
+-        `${picked.name} is not an audio recording ClassMind can read. Upload an MP3, M4A, WAV, WebM or OGG file.`,
++        `${picked.name} is not an audio recording ClassMind can read. Upload an audio file — MP3, M4A, WAV, AAC, FLAC, OGG/Opus, AMR, WMA, WebM and more are all fine.`,
+       );
+       return;
+     }
+@@ -213,7 +261,7 @@ export default function LectureUpload({
+   const reset = useCallback(() => {
+     setFile(null); setTitle(""); setPhase("idle"); setProgress(0);
+     setProviderStatus(null); setLectureId(null);
+-    setError(null); setPickError(null); setFailure(null); setFailedStep(0);
++    setError(null); setPickError(null); setAuthNotice(null); setFailure(null); setFailedStep(0);
+     if (inputRef.current) inputRef.current.value = "";
+   }, []);
+ 
+@@ -221,6 +269,16 @@ export default function LectureUpload({
+     if (!file) return;
+     setError(null); setFailure(null); setProgress(0);
+     setProviderStatus(null); setLectureId(null);
++
++    // PRE-FLIGHT: would this server be allowed to transcribe for real? Asked
++    // while there is still nothing to orphan -- a refusal after create+upload
++    // leaves a pending_upload row nothing can resume. The transcribe route
++    // keeps its own guard either way; this only moves the answer earlier.
++    if (!(await liveTranscriptionAllowed())) {
++      setAuthNotice(SPEND_GUIDE);
++      return;
++    }
++    setAuthNotice(null);
+     // Which sentence the teacher gets if this throws. Moved forward as the run
+     // advances, so the catch does not have to reverse-engineer the phase.
+     let stage: FailureKind = "upload";
+@@ -229,15 +287,19 @@ export default function LectureUpload({
+       const checksumSha256 = await sha256Hex(file);
+ 
+       setPhase("creating");
++      // Canonicalised once and used for BOTH the row and the storage PUT: the
++      // bucket admits only audio/*, so a browser that reported no type (or
++      // application/octet-stream) must not put its own guess on the wire.
++      const contentType = canonicalAudioContentType(file.type, file.name);
+       const created = await post(`/api/courses/${courseId}/lectures`, {
+         title, originalFilename: file.name, fileSizeBytes: file.size,
+-        contentType: file.type, checksumSha256,
++        contentType, checksumSha256,
+       });
+       const id = created.lectureId as string;
+       setLectureId(id);
+ 
+       setPhase("uploading");
+-      await upload(created.signedUrl as string, file, setProgress);
++      await upload(created.signedUrl as string, file, contentType, setProgress);
+ 
+       stage = "transcribe";
+       setPhase("submitting");
+@@ -324,8 +386,18 @@ export default function LectureUpload({
+       throw new Error("Still transcribing after 20 minutes. The job id is stored, so polling can resume.");
+     } catch (err) {
+       setError(err instanceof Error ? err.message : String(err));
+-      setFailure(stage);
+-      setFailedStep(stage === "upload" ? 0 : stage === "understand" ? 2 : 1);
++      // The transcribe route refusing to spend is not a transcription failure:
++      // the upload completed, nothing broke, and "worth trying again" would be
++      // false -- retrying without authorization refuses identically and mints
++      // another orphaned lecture row. Reached only when authorization changed
++      // mid-flow (the pre-flight above answers the common case first).
++      if (err instanceof ApiError && err.code === "live_transcription_disabled") {
++        setFailure("authorize");
++        setFailedStep(1);
++      } else {
++        setFailure(stage);
++        setFailedStep(stage === "upload" ? 0 : stage === "understand" ? 2 : 1);
++      }
+       setPhase("failed");
+       onComplete();
+     }
+@@ -392,7 +464,7 @@ export default function LectureUpload({
+             id={fileInputId}
+             ref={inputRef}
+             type="file"
+-            accept={ALLOWED_MIME_TYPES.join(",")}
++            accept={AUDIO_ACCEPT}
+             // Clearing on open makes re-picking the SAME file fire `change`.
+             // Without it, choosing the file you just replaced does nothing.
+             onClick={(e) => { e.currentTarget.value = ""; }}
+@@ -456,7 +528,8 @@ export default function LectureUpload({
+                 {dragging ? "Drop it here" : "Drop a lecture recording here"}
+               </span>
+               <span className="max-w-xs text-sm leading-relaxed text-ink-soft">
+-                MP3, M4A, WAV, WebM or OGG, up to {formatBytes(FILE_SIZE_LIMIT_BYTES)}.
++                Any audio format — MP3, M4A, AAC, WAV, FLAC, OGG and more — up to{" "}
++                {formatBytes(FILE_SIZE_LIMIT_BYTES)}.
+               </span>
+               <span className={buttonClass("secondary", "md", "mt-2 pointer-events-none")}>
+                 Choose a file
+@@ -470,6 +543,13 @@ export default function LectureUpload({
+               <span>{pickError}</span>
+             </p>
+           ) : null}
++
++          {authNotice ? (
++            <p className="flex items-start gap-2 rounded-xl border border-line bg-surface-sunken px-4 py-3 text-sm leading-relaxed text-ink-soft">
++              <AlertIcon size={16} className="mt-0.5 shrink-0 text-ink-faint" />
++              <span>{authNotice}</span>
++            </p>
++          ) : null}
+         </div>
+       ) : null}
+ 
+diff --git a/Projects/classmind/product/classmind-v3/src/app/api/courses/[id]/lectures/route.ts b/Projects/classmind/product/classmind-v3/src/app/api/courses/[id]/lectures/route.ts
+index b91ce4a..8e6d66b 100644
+--- a/Projects/classmind/product/classmind-v3/src/app/api/courses/[id]/lectures/route.ts
++++ b/Projects/classmind/product/classmind-v3/src/app/api/courses/[id]/lectures/route.ts
+@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
+ import { requireUser, requireCourseOwner, errorResponse } from "@/lib/auth";
+ import { serviceClient } from "@/lib/supabase/service";
+ import {
+-  LECTURE_BUCKET, ALLOWED_MIME_TYPES, FILE_SIZE_LIMIT_BYTES, lectureObjectPath,
++  LECTURE_BUCKET, FILE_SIZE_LIMIT_BYTES, lectureObjectPath,
++  isAllowedAudio, canonicalAudioContentType,
+ } from "@/lib/storage";
+ import {
+   fixtureSlugExists, knownFixtureSlugs, rememberReplayRequest,
+@@ -34,8 +35,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
+     };
+ 
+     if (!body.originalFilename) return NextResponse.json({ error: "originalFilename is required." }, { status: 400 });
+-    if (!body.contentType || !(ALLOWED_MIME_TYPES as readonly string[]).includes(body.contentType)) {
+-      return NextResponse.json({ error: `contentType must be one of: ${ALLOWED_MIME_TYPES.join(", ")}` }, { status: 400 });
++    // Any audio/* content type is accepted, and so is a recognised audio file
++    // extension when the client could not name a type -- Windows reports many
++    // real recordings as application/octet-stream or nothing at all. A file
++    // that satisfies neither signal is refused here, before a row or a signed
++    // URL exists for it.
++    if (!isAllowedAudio(body.contentType ?? "", body.originalFilename)) {
++      return NextResponse.json({
++        error:
++          "This does not look like an audio recording. Send an audio/* contentType, or a " +
++          "filename with a recognised audio extension (mp3, m4a, mp4, wav, aac, aiff, ogg, " +
++          "opus, flac, amr, wma, webm, 3gp).",
++      }, { status: 400 });
+     }
+     if (!body.fileSizeBytes || body.fileSizeBytes <= 0) {
+       return NextResponse.json({ error: "fileSizeBytes must be positive." }, { status: 400 });
+@@ -109,7 +120,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
+       original_filename: body.originalFilename,
+       storage_path: path,
+       file_size_bytes: body.fileSizeBytes,
+-      content_type: body.contentType,
++      // Canonicalised, never raw: the bucket admits only audio/*, and this is
++      // also the Content-Type later handed to the transcription provider.
++      content_type: canonicalAudioContentType(body.contentType ?? "", body.originalFilename),
+       checksum_sha256: claimed,
+       recorded_on: body.recordedOn || null,
+     };
+diff --git a/Projects/classmind/product/classmind-v3/src/app/api/lectures/[id]/transcribe/route.ts b/Projects/classmind/product/classmind-v3/src/app/api/lectures/[id]/transcribe/route.ts
+index acdc923..8ea4925 100644
+--- a/Projects/classmind/product/classmind-v3/src/app/api/lectures/[id]/transcribe/route.ts
++++ b/Projects/classmind/product/classmind-v3/src/app/api/lectures/[id]/transcribe/route.ts
+@@ -128,7 +128,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
+     // this guard does not apply on a deployment, where a live call is the
+     // product rather than an accident.
+     if (!replaySlug && !liveCallIsAllowedHere()) {
+-      return NextResponse.json({ error: liveCallRefusalReason() }, { status: 400 });
++      // `code` lets the upload UI tell "spending is switched off here" apart
++      // from a transcription that actually broke, and render instructions
++      // instead of an error. The message stays for scripts and logs.
++      return NextResponse.json(
++        { error: liveCallRefusalReason(), code: "live_transcription_disabled" },
++        { status: 400 },
++      );
+     }
+ 
+     // The object's presence in Storage is the proof of upload. There is no
+diff --git a/Projects/classmind/product/classmind-v3/src/app/api/transcription/authorization/route.ts b/Projects/classmind/product/classmind-v3/src/app/api/transcription/authorization/route.ts
+new file mode 100644
+index 0000000..5a758e5
+--- /dev/null
++++ b/Projects/classmind/product/classmind-v3/src/app/api/transcription/authorization/route.ts
+@@ -0,0 +1,27 @@
++import { NextResponse } from "next/server";
++import { requireUser, errorResponse } from "@/lib/auth";
++import { liveCallIsAllowedHere } from "@/lib/transcription";
++
++// Answers ONE question for the upload UI, before anything is created: would a
++// live, billable transcription be permitted on this server right now?
++//
++// Without this, the browser only learns the answer from the transcribe route's
++// refusal -- which arrives AFTER a lecture row exists and the whole recording
++// has been uploaded, so every refused attempt leaves an orphaned
++// pending_upload row behind. Asking first costs one authenticated GET and
++// creates nothing.
++//
++// This route READS the policy; it must never influence it. The decision stays
++// in liveCallIsAllowedHere() -- deployments are always allowed (a live call is
++// the product there), developer machines require the per-process
++// ALLOW_LIVE_SARVAM=1 opt-in (`npm run dev:spend`). The transcribe route keeps
++// its own guard regardless: this is a courtesy check, not the protection.
++export async function GET() {
++  try {
++    await requireUser();
++    return NextResponse.json({ liveTranscriptionAllowed: liveCallIsAllowedHere() });
++  } catch (err) {
++    const { body, status } = errorResponse(err);
++    return NextResponse.json(body, { status });
++  }
++}
+diff --git a/Projects/classmind/product/classmind-v3/src/lib/storage.ts b/Projects/classmind/product/classmind-v3/src/lib/storage.ts
+index 965ac0f..71cad68 100644
+--- a/Projects/classmind/product/classmind-v3/src/lib/storage.ts
++++ b/Projects/classmind/product/classmind-v3/src/lib/storage.ts
+@@ -5,10 +5,61 @@ export const LECTURE_BUCKET = "lectures";
+ // per-bucket limit cannot exceed it. A 40-minute lecture at 64 kbps mono is
+ // ~18 MB, which fits comfortably.
+ export const FILE_SIZE_LIMIT_BYTES = 52_428_800;
+-export const ALLOWED_MIME_TYPES = [
+-  "audio/mpeg", "audio/wav", "audio/x-wav", "audio/mp4",
+-  "audio/m4a", "audio/webm", "audio/ogg",
+-] as const;
++
++// WHAT COUNTS AS AN AUDIO RECORDING.
++//
++// Two signals, either one sufficient: the browser reports an audio/* type, or
++// the filename carries the extension of a format Sarvam's batch API documents
++// as decodable (WAV, MP3, AAC, AIFF, OGG, OPUS, FLAC, MP4/M4A, AMR, WMA,
++// WebM). The extension path exists because Windows reports many perfectly
++// real recordings -- .m4a, .opus and .amr among them -- as
++// application/octet-stream or as no type at all, and the previous whitelist
++// of seven exact MIME strings refused files the pipeline handles fine.
++//
++// Raw PCM (.pcm/.raw) is deliberately absent: Sarvam requires an explicit
++// input_audio_codec parameter for it, which the transcribe path does not
++// send. PCM inside a WAV container works like any other WAV.
++export const AUDIO_EXTENSION_MIME: Record<string, string> = {
++  mp3: "audio/mpeg", mpga: "audio/mpeg",
++  wav: "audio/wav",
++  m4a: "audio/mp4", mp4: "audio/mp4", m4b: "audio/mp4",
++  aac: "audio/aac",
++  aif: "audio/aiff", aiff: "audio/aiff",
++  ogg: "audio/ogg", oga: "audio/ogg", opus: "audio/ogg",
++  flac: "audio/flac",
++  amr: "audio/amr",
++  wma: "audio/x-ms-wma",
++  webm: "audio/webm",
++  "3gp": "audio/3gpp", "3gpp": "audio/3gpp",
++};
++
++// For the file input's `accept` attribute: any audio/* type, plus the
++// extensions above so files the OS reports without a type stay pickable.
++export const AUDIO_ACCEPT = [
++  "audio/*",
++  ...Object.keys(AUDIO_EXTENSION_MIME).map((ext) => `.${ext}`),
++].join(",");
++
++function extensionOf(filename: string): string {
++  const dot = filename.lastIndexOf(".");
++  return dot === -1 ? "" : filename.slice(dot + 1).toLowerCase();
++}
++
++export function isAllowedAudio(contentType: string, filename: string): boolean {
++  if (contentType.trim().toLowerCase().startsWith("audio/")) return true;
++  return extensionOf(filename) in AUDIO_EXTENSION_MIME;
++}
++
++// The type that is stored, sent to the bucket, and handed to the
++// transcription provider. Always audio/* -- the bucket admits only audio/*,
++// so a browser that reported nothing (or application/octet-stream, or
++// video/webm for an audio-only recording) gets the canonical type for its
++// extension instead of its own guess.
++export function canonicalAudioContentType(contentType: string, filename: string): string {
++  const reported = contentType.trim().toLowerCase();
++  if (reported.startsWith("audio/")) return reported.split(";")[0].trim();
++  return AUDIO_EXTENSION_MIME[extensionOf(filename)] ?? "audio/mpeg";
++}
+ 
+ export function lectureObjectPath(lectureId: string, filename: string): string {
+   const dot = filename.lastIndexOf(".");

@@ -7,6 +7,84 @@ Entries are snapshots of what was true when written and are never rewritten. Whe
 resolves something an earlier one recorded as blocked, the earlier line gets a dated marker
 pointing forward — it does not get edited away.
 
+## 2026-09-01 — Real recordings are accepted, and spending is asked about before anything exists
+
+**Recorded retroactively the same evening** — this work ran 13:39–17:46 IST as Auto-saves only;
+the record was reconstructed from git when the gap was noticed. Same class of failure as the
+2026-08-24/26 gap, caught in hours instead of days.
+
+**Done.** The path to uploading a real recording through v3 locally is clear, in two moves:
+
+1. **Audio acceptance rewritten** (`storage.ts`, in **both v2 and v3**): the seven-MIME
+   whitelist refused recordings Windows reports as `application/octet-stream` or typeless
+   (`.m4a`, `.opus`, `.amr`). Now: `audio/*` type OR a recognised audio extension, with the
+   content type canonicalised once and used for the row, the storage PUT and the provider —
+   the browser's guess never goes on the wire. Raw PCM deliberately excluded (Sarvam needs an
+   explicit `input_audio_codec` the transcribe path doesn't send). The lectures route refuses
+   non-audio before any row or signed URL exists. `setup-storage.mts` now **converges** an
+   existing bucket to current config instead of skipping it — a bucket provisioned under the
+   old list would otherwise keep refusing formats the code accepts, and the refusal reads as a
+   generic upload error.
+
+2. **The money guard answers before anything is created** (v3 only): a read-only
+   `GET /api/transcription/authorization` pre-flight; the upload UI renders "spending is off
+   here" as instructions in the idle card instead of an error after a full upload (each late
+   refusal used to orphan a `pending_upload` row). The transcribe route's refusal now carries
+   `code: "live_transcription_disabled"` so the UI can tell policy from breakage — and
+   correctly offers no retry. **`npm run dev:spend`** starts the server with
+   `ALLOW_LIVE_SARVAM=1` for that one process only, banner printed, nothing written to any
+   file; stop it and the next `npm run dev` is safe again.
+
+**Verified:** tsc and eslint clean in both v2 and v3 (offline; run at capture). No paid call
+made by the work or its capture.
+
+**Blocked / open:** possible orphaned `pending_upload` rows in the live DB from earlier refused
+attempts (cleanup undecided). Everything from 2026-08-30/31 unchanged — see below.
+
+**Next (operator's stated plan for today):** set up the **paid Gemini key** as the reasoning
+provider (arrived today, topped up; Sarvam also topped up ~90 credits, and a new lecture
+recording exists); test it against already-stored transcripts; finalize the processing engine —
+the 36-minute ceiling and the standing backend blockers, per the operator's two-day brief; then
+a live end-to-end walkthrough with the operator acting as faculty uploading the new lecture.
+The design loop is deliberately not part of the day.
+
+## 2026-08-31 (daytime) — The extract client stops timing out; Groq schema failures get one retry; the OAuth allow-list learns about v3
+
+**Recorded retroactively on 2026-09-01** from git and the code's own comments — this stream
+(09:15–13:30 IST) left no record at the time.
+
+**Done.**
+
+1. **`verify-processing-run.mts` can no longer kill the run it observes.** `/extract` is
+   driven through plain `node:http` — undici's non-configurable 300 s headers timeout is what
+   ended the 2026-08-30 baseline attempt, and the client abort cancelled the server-side
+   handler mid-run, so nothing was written. Heartbeat every 2 minutes; the run takes as long
+   as it takes. Also fixed: the script's default base URL was **3300 — v2's port** — and would
+   have driven a paid extraction through the wrong codebase; now 3400.
+
+2. **A Groq baseline run happened, and taught us something about strict schemas.** Groq's
+   strict `json_schema` mode validates the completion *after* generation: 1 of 20 windows came
+   back `400 json_validate_failed` (top-level array where the schema root is an object) while
+   its 19 neighbours validated. New `schema_validation` failure class: status 400 + that exact
+   code + **exactly one retry**, tracked per class; classification now reads the full body (the
+   code was slicing to 300 chars, past which the code sits). Tests cover both the
+   classification and the one-retry bound.
+
+3. **Local v3 sign-in was landing on the v1 production deployment** after Google consent —
+   Supabase silently falls back to the Site URL when `redirectTo` isn't allow-listed.
+   `localhost:3400/**` added; `DEPLOY.md` now records the shared-project rules: allow-list is
+   additive across v1/v2/v3, the glob matches the whole URL including query string, and
+   `localhost` ≠ `127.0.0.1`.
+
+**Not recorded, honestly:** whether that baseline run completed, whether a `processing_runs`
+row exists, and **what it cost** — the record-the-cost rule went unmet because the session left
+no record at all. Must be answered from `processing_runs` before the next paid reasoning run.
+
+**Blocked:** unchanged from 2026-08-30 (night) — the 36-minute ceiling, the background-job
+migration, Option D; "no clean baseline" is now *status unknown* pending the ledger check above.
+
+**Next:** confirm the baseline's fate in `processing_runs`, then the standing queue.
+
 ## 2026-08-31 — The Design Master Loop exists, and V3 has its first designed identity
 
 **Done.** All in `product/classmind-v3/` — `classmind-v2` is untouched and stays the preserved
