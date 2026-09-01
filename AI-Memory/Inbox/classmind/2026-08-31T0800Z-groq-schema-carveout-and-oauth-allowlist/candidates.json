@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "session_id": "2026-08-31T0800Z-groq-schema-carveout-and-oauth-allowlist",
+  "project": "classmind",
+  "generated_by": "End-Session/1.0.0 (hand-authored retroactively, 2026-09-01)",
+  "generated_at": "2026-09-01T13:30:00Z",
+  "candidates": [
+    {
+      "id": "cand-001",
+      "type": "learning",
+      "title": "A provider's 'strict schema' mode may validate after generation — its 400 is a verdict on one sample, and earns exactly one retry",
+      "body": "Groq's strict json_schema mode validates the completion AFTER producing it rather than fully constraining decoding: a 400 with code json_validate_failed cannot happen under true constrained decoding, yet a real run produced one. That 400 is not 'the request is wrong' — the same request shape produced valid generations in neighbouring windows, and provider inference is not bit-identical between calls even at temperature 0, so one re-ask is a real chance at a valid shape.\n\nThe generalisable rule has three parts: (1) blanket '4xx is fatal' policies need a carve-out for post-hoc schema validation failures, but the carve-out must be surgical — exact status, exact error code, nothing wider; (2) the retry bound must be hard and small (one), tracked per failure class so unrelated transient failures cannot widen it — anything past one is paying to reproduce a failure; (3) classify from the FULL response body: error codes often sit past the provider's error prose, and a body sliced for display (here, 300 chars) silently loses the code and misclassifies the failure as fatal.",
+      "confidence": "high",
+      "basis": "The 2026-08-31 Groq baseline run: 1 of 20 windows returned 400 json_validate_failed (a top-level array where the schema root is an object) while its 19 neighbours validated. The carve-out, the per-class one-retry bound, and the full-body classification were implemented in openai-compatible.ts the same day, with classification and behavioural tests in test-provider-registry.mts (schema-fail-then-success = exactly two requests; second schema failure stops at two and counts fatal).",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v3/src/lib/reasoning/openai-compatible.ts (classifyStatus, schema_validation, schemaRetried)",
+        "Projects/classmind/product/classmind-v3/scripts/test-provider-registry.mts (section 7b)"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-002",
+      "type": "learning",
+      "title": "A client-side timeout can destroy the server-side run it is waiting on",
+      "body": "Node's built-in fetch is undici with a 300 s headers timeout that is not configurable without installing undici as a dependency. Against an endpoint that streams nothing until the whole job is done, the client abort does not just fail the observer: Next.js cancels the route handler when the client disconnects, so the server-side run dies mid-flight and writes nothing — a 'client tooling default' becomes server-side data loss on a paid run.\n\nFor long-running paid requests driven from a script: use a client that applies no timeout unless asked (plain node:http/https), print a periodic heartbeat so silence is visibly progress, and let a human kill a hung run — not a default nobody chose. The durable fix is moving the job off the request path entirely; until then the client must never be the thing that decides the run is over.\n\nExtends the 2026-08-30T1947Z capture (which recorded the 300 s death itself); the new fact here is the cancellation coupling — the server run died BECAUSE the client gave up — and the working fix.",
+      "confidence": "high",
+      "basis": "The 2026-08-30 baseline attempt died at exactly 300 s with no ledger row written; verify-processing-run.mts was rewritten on 2026-08-31 to drive /extract via node:http with no timeout and a 2-minute heartbeat, with the mechanism documented in its own comments.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v3/scripts/verify-processing-run.mts (postAndWait, heartbeat)"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-003",
+      "type": "mistake",
+      "title": "A paid-run script defaulted to a sibling app's port",
+      "body": "verify-processing-run.mts defaulted its base URL to http://localhost:3300 — classmind-v2's dev port — while living in classmind-v3 (port 3400). Had a v2 server been listening, the script would have driven a real, billed extraction through the wrong codebase, and the results would have been attributed to the wrong tree. The default existed because v3 began as a byte-copy of v2 and the port moved later.\n\nThe rule: any tool that can spend money or write data must default to its OWN application's address, and a forked codebase's port change must be grepped for across scripts, not just applied to package.json. A wrong default in test tooling is worse than no default — it works silently, against the wrong target.",
+      "confidence": "high",
+      "basis": "The 2026-08-31 diff corrects BASE from 3300 to 3400 with a comment naming the risk; the 3300 default had existed since the v3 fork on 2026-08-31 while v3 itself moved to 3400 during the design session.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v3/scripts/verify-processing-run.mts (BASE)"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-004",
+      "type": "learning",
+      "title": "Supabase OAuth fails open to the Site URL: an un-allow-listed redirect silently lands on another deployment",
+      "body": "When a Supabase OAuth sign-in's redirectTo is not matched by the redirect allow-list, Supabase does not error — it silently redirects to the project's Site URL. On a Supabase project shared by several app versions, that means signing into local app B lands the signed-in browser on production app A, with no message anywhere in the flow.\n\nThree sharp edges found the hard way: (1) the allow-list glob matches the ENTIRE redirect URL including the query string, so a bare /auth/callback entry will not match a callback carrying ?role=...; (2) http://localhost:PORT does not match a browser open on http://127.0.0.1:PORT — develop on one spelling or list both; (3) on a shared project the allow-list is additive across app versions and the Site URL belongs to whichever deployment is live — never repoint it for local convenience.\n\nDiagnosis technique worth keeping: a throwaway Playwright probe that clicks the sign-in button, captures the /auth/v1/authorize URL (which carries redirect_to verbatim), and ABORTS it before any request reaches Google — the misroute is visible with no sign-in performed and no state created.",
+      "confidence": "high",
+      "basis": "Local classmind-v3 (port 3400) Google sign-in landed on the v1 production deployment after consent; the probe tmp-oauth-probe.mjs (committed 765f953, deleted 610f5a3) captured the authorize URL; adding localhost:3400/** to the allow-list is the documented fix, recorded with the mechanism in DEPLOY.md the same morning.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v3/DEPLOY.md (URL Configuration section)",
+        "765f953",
+        "610f5a3"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-005",
+      "type": "open_question",
+      "title": "Did the 2026-08-31 Groq baseline run complete, and what did it cost?",
+      "body": "A paid Groq extraction run demonstrably happened on 2026-08-31 (the json_validate_failed evidence in cand-001 came from it), but the session left no record: whether the run completed, whether a processing_runs ledger row was written, whether the 19 valid windows were stored, and what the run cost in requests and tokens are all unknown. The charter's rule — record what a paid run cost in the session log — was violated by omission, because there was no session log at all.\n\nMust be answered by querying processing_runs (and knowledge_items provenance) for 2026-08-31 rows BEFORE the next paid reasoning run, so the next run neither repeats paid work the ledger would reuse nor trusts a baseline that is not actually there. Also decides whether the 'no clean baseline exists' status from 2026-08-30 is still true.",
+      "confidence": "high",
+      "basis": "openai-compatible.ts's carve-out comment cites 'the 2026-08-31 baseline run' with per-window results; no session log, progress entry, ledger printout, or cost line exists anywhere in the repository for that run.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v3/src/lib/reasoning/openai-compatible.ts (classifyStatus comment)"
+      ],
+      "proposed_scope": "project",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    }
+  ]
+}
