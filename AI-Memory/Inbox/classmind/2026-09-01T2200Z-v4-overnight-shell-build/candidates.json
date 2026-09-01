@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "session_id": "2026-09-01T2200Z-v4-overnight-shell-build",
+  "project": "classmind",
+  "generated_by": "End-Session/1.0.0 (hand-authored)",
+  "generated_at": "2026-09-01T22:00:00Z",
+  "candidates": [
+    {
+      "id": "cand-001",
+      "type": "pattern",
+      "title": "Restructure IA by growing destinations inside existing routes, never by moving them",
+      "body": "When a UX rework wants a new navigation structure over an app whose URLs are load-bearing (stored deep links, hardcoded hrefs, external references), do not move routes and build a redirect layer — nest the new destinations UNDER the existing namespace and let the old URL become the new structure's most natural landing. In v4: /courses/:id became the class shell's Home tab and /ask, /lectures, /assignments grew beneath it; the lecture-detail URL — the target of every stored citation link with its ?t= timestamp contract — was untouched. Result: ~25 hardcoded links and every stored citation kept working, zero redirects exist to maintain, and old bookmarks land in better places than they were saved from. The prerequisite is an honest inventory of every hardcoded path first (one Explore-agent pass produced it with file:line for each).",
+      "confidence": "high",
+      "basis": "The v4 overnight build: the archaeology pass mapped every hardcoded path; the shell shipped with routes unmoved; the full capture pass and interactive smoke exercised old URLs inside the new structure with zero 404s and no redirect code written.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v4/V4-ARCHITECTURE.md",
+        "Projects/classmind/product/classmind-v4/src/app/courses/[id]/layout.tsx"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-002",
+      "type": "learning",
+      "title": "A static screenshot harness cannot judge a conversational surface — pair it with a scripted interaction smoke",
+      "body": "A capture harness that screenshots routes judges resting states only; a chat-style surface's essence (turns accumulating, composer disabling and re-enabling, waiting and error states, scroll behavior) is invisible to it. The fix is a small scripted browser smoke that signs in through the real UI, drives one genuine interaction sequence, and screenshots each state transition. Where the interaction can trigger paid calls, run the smoke in the mechanically-degraded environment (provider keys absent) so the states exercised are the free, honest ones — which are exactly the states a static pass also cannot show. In v4 this caught what no static shot could: the two-turn conversation flow rendering correctly end to end, including the empty-course answer state.",
+      "confidence": "high",
+      "basis": "design-loop/smoke-ask.mts, written and run during the overnight build after recognizing the 30-shot static pass could only show Ask's intro; its four screenshots are the only evidence the conversation flow works.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v4/design-loop/smoke-ask.mts",
+        "Projects/classmind/product/classmind-v4/design-loop/runs/2026-09-02-shell/smoke-ask/"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    }
+  ]
+}
