@@ -233,15 +233,19 @@ export default function LectureUpload({
       const checksumSha256 = await sha256Hex(file);
 
       setPhase("creating");
+      // Canonicalised once and used for BOTH the row and the storage PUT: the
+      // bucket admits only audio/*, so a browser that reported no type (or
+      // application/octet-stream) must not put its own guess on the wire.
+      const contentType = canonicalAudioContentType(file.type, file.name);
       const created = await post(`/api/courses/${courseId}/lectures`, {
         title, originalFilename: file.name, fileSizeBytes: file.size,
-        contentType: file.type, checksumSha256,
+        contentType, checksumSha256,
       });
       const id = created.lectureId as string;
       setLectureId(id);
 
       setPhase("uploading");
-      await upload(created.signedUrl as string, file, setProgress);
+      await upload(created.signedUrl as string, file, contentType, setProgress);
 
       stage = "transcribe";
       setPhase("submitting");
