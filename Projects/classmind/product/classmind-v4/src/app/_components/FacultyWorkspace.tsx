@@ -4,7 +4,7 @@ import { useId, useState } from "react";
 import Link from "next/link";
 import LectureUpload from "./LectureUpload";
 import LectureProgress from "./LectureProgress";
-import { CourseKnowledgePanel, useCourseKnowledge } from "./KnowledgePanel";
+import { useCourseKnowledge } from "./KnowledgePanel";
 import { formatBytes, formatWhen } from "./Input";
 import {
   Button,
