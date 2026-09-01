@@ -40,10 +40,10 @@ interface Turn {
   error?: string;
 }
 
-export default function AskWorkspace({ courseId: courseIdProp }: { courseId?: string } = {}) {
-  // Usable both inside the class shell (no prop; reads the route) and, later,
-  // anywhere a courseId can be handed in directly.
-  const courseId = courseIdProp ?? useCourseIdFromPath();
+export default function AskWorkspace() {
+  // Rendered only inside the class shell, whose provider is the one source of
+  // which class this is — the same identity the header and rail display.
+  const { courseId } = useClassData();
 
   const [turns, setTurns] = useState<Turn[]>([]);
   const [draft, setDraft] = useState("");
