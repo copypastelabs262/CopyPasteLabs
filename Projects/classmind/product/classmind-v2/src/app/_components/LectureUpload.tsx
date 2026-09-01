@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useId, useRef, useState, type DragEvent } from "react";
-import { ALLOWED_MIME_TYPES, FILE_SIZE_LIMIT_BYTES } from "@/lib/storage";
+import {
+  AUDIO_ACCEPT, FILE_SIZE_LIMIT_BYTES, isAllowedAudio, canonicalAudioContentType,
+} from "@/lib/storage";
 import { formatBytes } from "./Input";
 import { Button, Card, Spinner, TextInput, buttonClass, cx } from "./ui";
 import { AlertIcon, AudioIcon, CheckIcon, ChevronRightIcon, UploadIcon } from "./ui/icons";
@@ -86,11 +88,11 @@ async function sha256Hex(file: File): Promise<string> {
 
 // XHR rather than fetch: fetch cannot report upload progress, and a 40 MB upload
 // with no feedback is indistinguishable from a hang.
-function upload(url: string, file: File, onProgress: (p: number) => void): Promise<void> {
+function upload(url: string, file: File, contentType: string, onProgress: (p: number) => void): Promise<void> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", url);
-    xhr.setRequestHeader("Content-Type", file.type);
+    xhr.setRequestHeader("Content-Type", contentType);
     xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(Math.round((e.loaded / e.total) * 100));
     xhr.onload = () => (xhr.status >= 200 && xhr.status < 300
       ? resolve()
@@ -190,10 +192,12 @@ export default function LectureUpload({
     setPickError(null); setError(null); setPhase("idle");
     setProgress(0); setProviderStatus(null); setLectureId(null); setFailure(null);
     if (!picked) { setFile(null); return; }
-    if (!(ALLOWED_MIME_TYPES as readonly string[]).includes(picked.type)) {
+    // Judged on type OR extension -- Windows hands over many real recordings
+    // (.m4a, .opus, .amr) with no type at all, and those must not be refused.
+    if (!isAllowedAudio(picked.type, picked.name)) {
       setFile(null);
       setPickError(
-        `${picked.name} is not an audio recording ClassMind can read. Upload an MP3, M4A, WAV, WebM or OGG file.`,
+        `${picked.name} is not an audio recording ClassMind can read. Upload an audio file — MP3, M4A, WAV, AAC, FLAC, OGG/Opus, AMR, WMA, WebM and more are all fine.`,
       );
       return;
     }
@@ -229,15 +233,19 @@ export default function LectureUpload({
       const checksumSha256 = await sha256Hex(file);
 
       setPhase("creating");
+      // Canonicalised once and used for BOTH the row and the storage PUT: the
+      // bucket admits only audio/*, so a browser that reported no type (or
+      // application/octet-stream) must not put its own guess on the wire.
+      const contentType = canonicalAudioContentType(file.type, file.name);
       const created = await post(`/api/courses/${courseId}/lectures`, {
         title, originalFilename: file.name, fileSizeBytes: file.size,
-        contentType: file.type, checksumSha256,
+        contentType, checksumSha256,
       });
       const id = created.lectureId as string;
       setLectureId(id);
 
       setPhase("uploading");
-      await upload(created.signedUrl as string, file, setProgress);
+      await upload(created.signedUrl as string, file, contentType, setProgress);
 
       stage = "transcribe";
       setPhase("submitting");
@@ -392,7 +400,7 @@ export default function LectureUpload({
             id={fileInputId}
             ref={inputRef}
             type="file"
-            accept={ALLOWED_MIME_TYPES.join(",")}
+            accept={AUDIO_ACCEPT}
             // Clearing on open makes re-picking the SAME file fire `change`.
             // Without it, choosing the file you just replaced does nothing.
             onClick={(e) => { e.currentTarget.value = ""; }}

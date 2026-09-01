@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import { requireUser, requireCourseOwner, errorResponse } from "@/lib/auth";
 import { serviceClient } from "@/lib/supabase/service";
 import {
-  LECTURE_BUCKET, ALLOWED_MIME_TYPES, FILE_SIZE_LIMIT_BYTES, lectureObjectPath,
+  LECTURE_BUCKET, FILE_SIZE_LIMIT_BYTES, lectureObjectPath,
+  isAllowedAudio, canonicalAudioContentType,
 } from "@/lib/storage";
 import {
   fixtureSlugExists, knownFixtureSlugs, rememberReplayRequest,
@@ -34,8 +35,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     };
 
     if (!body.originalFilename) return NextResponse.json({ error: "originalFilename is required." }, { status: 400 });
-    if (!body.contentType || !(ALLOWED_MIME_TYPES as readonly string[]).includes(body.contentType)) {
-      return NextResponse.json({ error: `contentType must be one of: ${ALLOWED_MIME_TYPES.join(", ")}` }, { status: 400 });
+    // Any audio/* content type is accepted, and so is a recognised audio file
+    // extension when the client could not name a type -- Windows reports many
+    // real recordings as application/octet-stream or nothing at all. A file
+    // that satisfies neither signal is refused here, before a row or a signed
+    // URL exists for it.
+    if (!isAllowedAudio(body.contentType ?? "", body.originalFilename)) {
+      return NextResponse.json({
+        error:
+          "This does not look like an audio recording. Send an audio/* contentType, or a " +
+          "filename with a recognised audio extension (mp3, m4a, mp4, wav, aac, aiff, ogg, " +
+          "opus, flac, amr, wma, webm, 3gp).",
+      }, { status: 400 });
     }
     if (!body.fileSizeBytes || body.fileSizeBytes <= 0) {
       return NextResponse.json({ error: "fileSizeBytes must be positive." }, { status: 400 });
@@ -109,7 +120,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       original_filename: body.originalFilename,
       storage_path: path,
       file_size_bytes: body.fileSizeBytes,
-      content_type: body.contentType,
+      // Canonicalised, never raw: the bucket admits only audio/*, and this is
+      // also the Content-Type later handed to the transcription provider.
+      content_type: canonicalAudioContentType(body.contentType ?? "", body.originalFilename),
       checksum_sha256: claimed,
       recorded_on: body.recordedOn || null,
     };

@@ -24,10 +24,12 @@ const BUCKET = "lectures";
 // 50 MiB is the Supabase Free plan's GLOBAL ceiling, not a preference. A
 // per-bucket limit above it is rejected outright at creation time.
 const FILE_SIZE_LIMIT = 52_428_800;
-const ALLOWED = [
-  "audio/mpeg", "audio/wav", "audio/x-wav", "audio/mp4",
-  "audio/m4a", "audio/webm", "audio/ogg",
-];
+// Any audio type. The precise decision of what counts as an audio recording
+// lives in src/lib/storage.ts (isAllowedAudio / canonicalAudioContentType);
+// the upload route canonicalises every accepted file to an audio/* type
+// before it reaches this bucket, so the wildcard here is a backstop, not the
+// policy.
+const ALLOWED = ["audio/*"];
 
 const svc = createClient(url, key, { auth: { persistSession: false } });
 
@@ -39,7 +41,19 @@ if (listError) {
 
 const existing = (buckets ?? []).find((b) => b.name === BUCKET);
 if (existing) {
-  console.log(`Bucket "${BUCKET}" already exists (public=${existing.public}, limit=${existing.file_size_limit}). Nothing to do.`);
+  // Converge, don't skip: a bucket created under an older MIME list would
+  // otherwise keep refusing formats the code now accepts, and the refusal
+  // happens inside the storage PUT where it reads as a generic upload error.
+  const { error: updateError } = await svc.storage.updateBucket(BUCKET, {
+    public: false,
+    fileSizeLimit: FILE_SIZE_LIMIT,
+    allowedMimeTypes: ALLOWED,
+  });
+  if (updateError) {
+    console.error(`Could not update bucket "${BUCKET}": ${updateError.message}`);
+    process.exit(1);
+  }
+  console.log(`Bucket "${BUCKET}" exists; converged (limit ${FILE_SIZE_LIMIT} bytes, mime ${ALLOWED.join(", ")}).`);
 } else {
 
   // Private. Audio is reached only through short-lived signed URLs minted by a
