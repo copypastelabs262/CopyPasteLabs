@@ -68,7 +68,10 @@ export default function ClassAssignments() {
           </Section>
         ) : null}
 
-        <Section title={pending.length ? "Posted to the class" : "Assignments"}>
+        {/* Never titled "Assignments": that word is already lit in the tab bar
+            directly above, and a heading that repeats the navigation is a
+            heading that says nothing. */}
+        <Section title="Posted to the class">
           {confirmed.length ? (
             <div className="space-y-4">
               {confirmed.map((u) => (
