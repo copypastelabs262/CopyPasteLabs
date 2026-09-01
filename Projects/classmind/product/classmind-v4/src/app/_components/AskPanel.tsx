@@ -258,7 +258,7 @@ export function Looking({ scope }: { scope: "lecture" | "course" }) {
 const SECTION_HEADING =
   "text-[11px] font-medium uppercase tracking-[0.16em] text-ink-faint";
 
-function AnswerView({
+export function AnswerView({
   answer,
   nav,
   scope,
