@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3400",
+    "dev:spend": "node scripts/dev-spend.mjs",
     "build": "next build",
     "start": "next start -p 3400",
     "design:capture": "node --env-file=.env.local design-loop/capture.mts",
