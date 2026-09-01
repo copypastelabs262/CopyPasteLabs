@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "session_id": "2026-09-01T1758Z-recovery-closure-and-ledger-check",
+  "project": "classmind",
+  "secondary_projects": [],
+  "generated_by": { "producer": "claude", "tool": "End-Session/1.0.0 (hand-authored)" },
+  "generated_at": "2026-09-01T17:58:00Z",
+  "repository": { "branch": "master", "upstream": "origin/master" },
+  "session_boundary": {
+    "base": "4034416",
+    "head": "see final session-capture commit",
+    "base_strategy": "previous_capture_commit — base is the second recovered capture ('Session capture: classmind - upload acceptance and the spend pre-flight (recovered)'). Every commit in range is this closure session's own record writes (Auto-saves plus the boundary commit)."
+  },
+  "context_completeness": "full",
+  "duration_known": false,
+  "duration_minutes": null,
+  "duration_source": "unavailable",
+  "working_tree_note": "Records only — no product code, no design documents. The session's one external action was a read-only PostgREST GET against processing_runs and lectures (operator-approved; results transcribed into session.md and the candidates' bases).",
+  "changes_summary": {
+    "created": [
+      "Projects/classmind/.knowledge/sessions/2026-09-01-recovery-closure-and-ledger-check.md",
+      "AI-Memory/Inbox/classmind/2026-09-01T1758Z-recovery-closure-and-ledger-check/"
+    ],
+    "modified": [
+      "Projects/classmind/.knowledge/progress.md (closing entry prepended; two dated forward-markers added to the 2026-08-31 daytime and 2026-08-30 night entries per the file's resolution convention)"
+    ],
+    "session_docs": [
+      "Projects/classmind/.knowledge/sessions/2026-09-01-recovery-closure-and-ledger-check.md",
+      "AI-Memory/Inbox/classmind/2026-09-01T1758Z-recovery-closure-and-ledger-check/"
+    ]
+  },
+  "verification": {
+    "suites": "none run — nothing this session touched executes (markdown and JSON records only)",
+    "paid_calls": "none — the database read is a Supabase PostgREST GET; no ASR, no reasoning provider, no /extract, /ask or /transcribe"
+  },
+  "diff": {
+    "stored": false,
+    "omitted_reason": "the change set IS this entry and the records it names; a patch would duplicate the entry into itself",
+    "regenerate_command": "git diff 4034416..HEAD -- Projects/classmind/.knowledge AI-Memory/Inbox"
+  }
+}
