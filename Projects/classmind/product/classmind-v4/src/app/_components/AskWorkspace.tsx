@@ -221,12 +221,3 @@ function Intro({ onAsk, disabled }: { onAsk: (q: string) => void; disabled: bool
     </div>
   );
 }
-
-// The class shell mounts this under /courses/[id]/ask, so the id is the second
-// path segment. A hook rather than a prop drill because the page component is
-// a server file that would otherwise exist only to await params.
-function useCourseIdFromPath(): string {
-  if (typeof window === "undefined") return "";
-  const parts = window.location.pathname.split("/");
-  return parts[2] ?? "";
-}
