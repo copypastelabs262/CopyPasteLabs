@@ -23,7 +23,7 @@ type Phase =
 // Where a run stopped, in the teacher's terms rather than the pipeline's. The
 // raw error is always kept -- this only decides which sentence sits above it
 // and whether re-running the same file is a sensible thing to offer.
-type FailureKind = "upload" | "transcribe" | "timeout" | "understand" | "quarantine";
+type FailureKind = "upload" | "transcribe" | "timeout" | "understand" | "quarantine" | "authorize";
 
 const POLL_MS = 5000;
 const MAX_POLLS = 240;
