@@ -1,0 +1,446 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Tokens — "The Observatory".
+
+   One committed identity: a deep, instrument-lit academic workspace. Cold
+   cinematic depths in the ground plane, warm lamplight reserved for whatever
+   needs a human. This replaces the earlier light/dark duality on purpose: two
+   themes produced two halves of a design, and the product's whole visual
+   vocabulary — glass, depth, controlled light — only reads against a dark
+   ground. `prefers-reduced-motion` and contrast floors are honoured instead
+   of `prefers-color-scheme`. (Decision recorded in design-loop/state.json.)
+
+   Names describe ROLE, not appearance, and every name that existed before
+   this redesign still exists — untouched screens keep rendering.
+
+   Material levels (see design-loop findings, glass spec):
+     L0 .cm-atmosphere   the page's ground: base gradient + two ambient glows
+     L1 header/footer    structural chrome; the ONE always-on backdrop blur
+     L2 .glass-2         standard panel: cards, lists (no blur — fakes glass
+                         with layered gradients over the known L0 backdrop)
+     L3 .glass-3         interactive surface: brighter fill, responds to hover
+     L4 .glass-overlay   floating: dialogs, menus (second and last blur)
+     L5 .glass-hero      one per screen, max: the surface the page is about
+--------------------------------------------------------------------------- */
+:root {
+  color-scheme: dark;
+
+  /* Surfaces, furthest back to nearest front. */
+  --surface: #0b0e16;
+  --surface-raised: #131a2a;
+  --surface-sunken: #0e1320;
+  --line: rgba(148, 163, 184, 0.14);
+
+  /* Text, three emphasis tiers. Floors are measured over the lightest
+     composite a panel can produce, not the raw canvas: nothing informational
+     sits below ~4.8:1. */
+  --ink: #edf1f7;
+  --ink-soft: rgba(206, 216, 231, 0.74);
+  --ink-faint: rgba(203, 213, 225, 0.62);
+
+  /* Hues. accent = "do this" (cool, interactive), trace/warn = lamplight
+     amber ("this is about time / needs a human"), ok = "finished",
+     danger = "broken or destructive". The amber doubles as the product's
+     signature: timestamps, attention edges, the playhead. */
+  --accent: #8fb0ff;
+  --accent-strong: #a9c2ff;
+  --accent-soft: rgba(94, 141, 255, 0.16);
+  --accent-ink: #0a1020;
+  --accent-fill: #5e8dff;
+
+  --ok: #4ade9d;
+  --ok-soft: rgba(74, 222, 157, 0.13);
+
+  --warn: #e9b662;
+  --warn-soft: rgba(232, 177, 92, 0.14);
+
+  --danger: #f58f87;
+  --danger-strong: #fba9a2;
+  --danger-soft: rgba(248, 113, 113, 0.14);
+  --danger-ink: #2a0f0d;
+
+  /* Depth is carried by three channels — fill, border, shadow — so planes
+     separate without blurring what is behind them. */
+  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 30px -14px rgba(0, 0, 0, 0.55);
+  --elev-2: 0 2px 8px rgba(0, 0, 0, 0.4), 0 24px 64px -16px rgba(0, 0, 0, 0.7);
+
+  /* Ambient light budget for a whole screen: these two sources, and at most
+     one glowing element on top (the hero surface OR the primary action).
+     No glow alpha above 0.16 anywhere. */
+  --glow-a: radial-gradient(90rem 42rem at 18% -8%, rgba(94, 141, 255, 0.13), transparent 62%);
+  --glow-b: radial-gradient(70rem 36rem at 100% 88%, rgba(56, 189, 248, 0.06), transparent 60%);
+  --l0-base: linear-gradient(180deg, #0d1322 0%, #0a0e18 45%, #080a10 100%);
+
+  /* Three voices: display serif for what a screen is about, UI sans for
+     everything operational, mono for machine facts — timecodes, join codes,
+     stage labels, request ids. layout.tsx injects the next/font variables. */
+  --font-app: var(--font-inter, "Inter"), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-app-display: var(--font-fraunces, "Fraunces"), Georgia, "Times New Roman", serif;
+  --font-app-mono: var(--font-jetbrains, "JetBrains Mono"), ui-monospace, SFMono-Regular,
+    Menlo, Consolas, monospace;
+}
+
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-line: var(--line);
+
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-fill: var(--accent-fill);
+
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+
+  --color-danger: var(--danger);
+  --color-danger-strong: var(--danger-strong);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-ink: var(--danger-ink);
+
+  --shadow-soft: var(--elev-1);
+  --shadow-lift: var(--elev-2);
+
+  --font-sans: var(--font-app);
+  --font-display: var(--font-app-display);
+  --font-mono: var(--font-app-mono);
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+--------------------------------------------------------------------------- */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-app);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* L0 — the atmosphere. Absolutely positioned over the WHOLE document (body is
+   relative), not fixed: a fixed layer only paints the first viewport in any
+   full-page rendering — tall screenshots, print — and the page below it shows
+   a seam where the atmosphere stops. Anchoring the glows to the document top
+   also reads naturally: the light lives where the page begins.
+   pointer-events: none so it can never eat a click; the grain kills gradient
+   banding on cheap panels. */
+.cm-atmosphere {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--glow-a), var(--glow-b), var(--l0-base);
+}
+.cm-atmosphere::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.028;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* One focus ring for the whole product: a gap ring that stays visible on any
+   surface level. Components may thicken it; none may remove it. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 4px rgba(94, 141, 255, 0.65);
+  border-radius: 0.5rem;
+}
+
+::selection {
+  background: rgba(94, 141, 255, 0.35);
+  color: var(--ink);
+}
+
+::placeholder {
+  color: var(--ink-faint);
+}
+
+/* ---------------------------------------------------------------------------
+   Materials.
+
+   Only TWO element classes in the whole app may blur: the sticky header (L1,
+   in layout.tsx) and .glass-overlay (L4). Panels below an overlay sit on a
+   static, known gradient, so they fake translucency with layered gradients at
+   zero compositing cost. Adjacent levels must differ on all three depth
+   channels — fill, border, shadow — or flatness returns wearing glass.
+--------------------------------------------------------------------------- */
+
+/* L2 — standard panel. */
+.glass-2 {
+  background: linear-gradient(180deg, rgba(148, 163, 184, 0.07) 0%, rgba(148, 163, 184, 0.028) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.13);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 10px 30px -14px rgba(0, 0, 0, 0.55);
+}
+
+/* L3 — interactive. Brighter at rest; hover answers with light, not motion
+   alone. Reduced motion keeps the border/glow feedback and drops the lift. */
+.glass-3 {
+  background: linear-gradient(180deg, rgba(148, 163, 184, 0.1) 0%, rgba(148, 163, 184, 0.045) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.17);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.35);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease,
+    background-color 0.15s ease;
+}
+.glass-3:hover {
+  border-color: rgba(148, 163, 184, 0.28);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(94, 141, 255, 0.12),
+    0 14px 34px -16px rgba(94, 141, 255, 0.18);
+  transform: translateY(-1px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .glass-3:hover {
+    transform: none;
+  }
+}
+
+/* Hover recipe for rows INSIDE a panel (a divided list), where a border and
+   lift would tear the parent surface apart. */
+.row-hover {
+  transition: background-color 0.15s ease;
+}
+.row-hover:hover {
+  background-color: rgba(148, 163, 184, 0.07);
+}
+
+/* L4 — floating. The second and last permitted blur. Scrims behind it are
+   opacity-only, never blurred. */
+.glass-overlay {
+  background: rgba(17, 23, 37, 0.84);
+  backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+    0 24px 64px -16px rgba(0, 0, 0, 0.7),
+    0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* L5 — the hero surface: lit from within, gradient-edged, at most one per
+   screen. The hue channel says WHY it is the hero — accent for intelligence,
+   amber for "needs a human", danger for "broken" — while the alphas stay
+   identical: state changes hue, never intensity. */
+.glass-hero {
+  --hero-rgb: 94, 141, 255;
+  position: relative;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(var(--hero-rgb), 0.1), transparent 55%),
+    linear-gradient(rgba(16, 22, 38, 0.85), rgba(16, 22, 38, 0.85)) padding-box;
+  border: 1px solid rgba(var(--hero-rgb), 0.32);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.09),
+    0 0 0 1px rgba(var(--hero-rgb), 0.06),
+    0 32px 80px -24px rgba(var(--hero-rgb), 0.16),
+    0 24px 64px -16px rgba(0, 0, 0, 0.65);
+}
+.glass-hero--amber {
+  --hero-rgb: 232, 177, 92;
+}
+.glass-hero--danger {
+  --hero-rgb: 248, 113, 113;
+}
+
+/* The mono micro-label that sits above display headings — the recurring
+   header signature. A machine voice introducing a human one. */
+.eyebrow-mono {
+  font-family: var(--font-app-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* Machine facts — timecodes, join codes, refs — always wear the mono voice
+   in a quiet chip, so operational truth stays legible inside the atmosphere. */
+.chip-mono {
+  font-family: var(--font-app-mono);
+  font-size: 0.75rem;
+  background: rgba(148, 163, 184, 0.09);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 0.4rem;
+  padding: 0.1rem 0.45rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Reading
+
+   Lecture prose and generated answers are the one place someone reads more
+   than a line at a time. 17px / 1.75 with a hard measure limit.
+--------------------------------------------------------------------------- */
+.prose-reading {
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--ink);
+  max-width: 68ch;
+}
+
+.prose-reading p,
+.prose-reading ul,
+.prose-reading ol,
+.prose-reading blockquote {
+  margin-block: 0.9em;
+}
+
+.prose-reading > :first-child {
+  margin-block-start: 0;
+}
+
+.prose-reading > :last-child {
+  margin-block-end: 0;
+}
+
+.prose-reading ul,
+.prose-reading ol {
+  padding-inline-start: 1.35em;
+}
+
+.prose-reading ul {
+  list-style: disc;
+}
+
+.prose-reading ol {
+  list-style: decimal;
+}
+
+.prose-reading li {
+  margin-block: 0.35em;
+}
+
+.prose-reading h2,
+.prose-reading h3 {
+  font-size: 1.05em;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-block: 1.6em 0.5em;
+}
+
+.prose-reading strong {
+  font-weight: 600;
+}
+
+.prose-reading em {
+  font-style: italic;
+}
+
+.prose-reading blockquote {
+  border-inline-start: 2px solid var(--line);
+  padding-inline-start: 1em;
+  color: var(--ink-soft);
+}
+
+.prose-reading code {
+  font-family: var(--font-app-mono);
+  font-size: 0.88em;
+  background: var(--surface-sunken);
+  padding: 0.1em 0.35em;
+  border-radius: 0.35rem;
+}
+
+.prose-reading a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+/* ---------------------------------------------------------------------------
+   Motion
+
+   Three movements, all short, all meaningful: content arriving, an overlay
+   opening, and the one pulse that says "the system is working on this".
+   Nothing else animates — motion that decorates has to be watched.
+--------------------------------------------------------------------------- */
+@keyframes cm-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes cm-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.motion-rise {
+  animation: cm-rise 260ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.motion-fade {
+  animation: cm-fade 180ms ease-out both;
+}
+
+/* The active pipeline stage breathes; everything settled holds still. Under
+   reduced motion it collapses to a steady lit state via the global rule. */
+@keyframes cm-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+.cm-breathe {
+  animation: cm-breathe 1.8s ease-in-out infinite;
+}
+
+/* Evidence highlight: when a student clicks a citation the transcript seeks
+   and the cited span flashes, connecting the click to where it landed. Amber,
+   because the trace is the product's signature. */
+@keyframes cm-flash {
+  from {
+    background-color: var(--warn-soft);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+.cm-flash {
+  animation: cm-flash 1.8s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

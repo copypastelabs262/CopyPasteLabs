@@ -1,0 +1,114 @@
+{
+  "run": "2026-08-31",
+  "target": {
+    "name": "signed-in-home-flow",
+    "screens": ["landing", "signin", "home-student", "home-faculty"],
+    "regressionScreens": ["course-student", "course-faculty"],
+    "why": "The signed-in home is the screen every user sees every session and the one that answers 'what should I do next'. It currently reads as a generic SaaS dashboard, renders with real local data for both roles, and shares its shell and tokens with every other screen, so identity work here compounds. Course views are captured as regression evidence only — they inherit tokens but are not compositionally redesigned this run."
+  },
+  "safetyGuard": { "maxMajorIterations": 5 },
+  "iterations": [
+    {
+      "n": 0,
+      "label": "before",
+      "capturedAt": "2026-08-31",
+      "evidence": "runs/2026-08-31/before/",
+      "verdict": "IMPROVE",
+      "notes": [
+        "Faculty home renders a raw Sarvam 402 JSON error string, twice, as body text.",
+        "Visual identity is generic: white cards on grey, default blue, no focal point, no depth.",
+        "Student home was an empty state because student.test was unenrolled; enrolled into CC101 (free local write) so the screen renders with real data.",
+        "Money guard verified: zero blocked paid-endpoint attempts during capture (see manifests).",
+        "Specialist reports preserved in runs/2026-08-31/findings/."
+      ]
+    },
+    {
+      "n": 1,
+      "label": "iter-1",
+      "capturedAt": "2026-08-31",
+      "evidence": "runs/2026-08-31/iter-1/",
+      "decision": "runs/2026-08-31/findings/decision-iter-1.md",
+      "changes": [
+        "Committed dark identity 'The Observatory': token layer rewritten, L0 atmosphere, L1-L5 material classes (two backdrop-filters app-wide).",
+        "Fraunces/Inter/JetBrains Mono via next/font; mono eyebrows over serif display titles.",
+        "friendlyLectureError + TechnicalDisclosure: raw payloads never render as body copy.",
+        "PipelineTrack: five-segment stage narrative with 'failed here' pinpointing.",
+        "TeacherHome: hero band, amber Attention Beacon (L5), de-duplicated recents, courses rail (12-col asymmetric grid).",
+        "StudentHome: retitled 'Catch up', luminous Ask door panel (link-only, never a live input), compact empty states with forward actions.",
+        "Landing: Trace vignette (answer -> amber 42:17 chip -> waveform with lit playhead), numbered spine.",
+        "Signin restyled onto the token system; dev-tools badge hidden via devIndicators:false."
+      ],
+      "verify": "tsc PASS, eslint PASS",
+      "verdict": "IMPROVE",
+      "notes": [
+        "Course page (regression screen) double-printed the failure: friendly note plus raw JSON from FacultyWorkspace's own error line.",
+        "Landing quote highlight used cm-flash, which rests transparent — invisible."
+      ]
+    },
+    {
+      "n": 2,
+      "label": "iter-2",
+      "capturedAt": "2026-08-31",
+      "evidence": "runs/2026-08-31/iter-2/",
+      "changes": [
+        "FacultyWorkspace: raw payload collapsed into TechnicalDisclosure; human-sounding stall reasons still print as text.",
+        "Landing quote highlight is a static amber trace tint."
+      ],
+      "verify": "tsc PASS, eslint PASS",
+      "verdict": "IMPROVE",
+      "gates": {
+        "ux": "PASS",
+        "visual": "PASS",
+        "comparative": "PASS",
+        "blockers": [
+          "Failed card must end in an action",
+          "Landing background seam through step 04 (fixed-position atmosphere painted viewport only)",
+          "Course-title truncation on desktop; ref chip wraps mid-token on mobile"
+        ]
+      }
+    },
+    {
+      "n": 3,
+      "label": "iter-3",
+      "capturedAt": "2026-08-31",
+      "evidence": "runs/2026-08-31/iter-3/",
+      "changes": [
+        "Failed card ends in 'Open lecture' (retrying is a paid operator-gated call, so the lecture page is the honest verb).",
+        "Atmosphere layer is absolute over the whole document; seam gone at every breakpoint.",
+        "Course titles line-clamp-2 instead of truncating; ref shortened to 12 chars and nowrap.",
+        "EmptyState drops its action below the text on phones."
+      ],
+      "verify": "tsc PASS, eslint PASS, next build PASS (label 'final')",
+      "verdict": "PASS",
+      "notes": [
+        "Gate judge re-reviewed: all three blockers fixed at every breakpoint, no regressions on judged screens; identity generalizes to course pages.",
+        "New finding carried into iter-4: course page rendered the failure as red prose; home's calm gray is correct.",
+        "Render-regression specialist (iter-2 evidence, 18 shots, pixel-level): no blockers, no overflow, no contrast failure on informational text; its D1/D2/D4/D6 were already fixed in iter-3; D3 (bare term numeral) and D5 (ambiguous Ask disabled state) carried into iter-4."
+      ]
+    },
+    {
+      "n": 4,
+      "label": "iter-4",
+      "capturedAt": "2026-08-31",
+      "evidence": "runs/2026-08-31/iter-4/",
+      "changes": [
+        "FacultyWorkspace failure prose is always the quiet voice; pill and stage track carry the alarm.",
+        "termLabel(): bare numeric terms render as 'Term 7' at the render boundary on both homes and the course header.",
+        "Ask submit is a quiet secondary until a question exists, then the glowing primary; the empty-ask guard stays."
+      ],
+      "verify": "tsc PASS, eslint PASS; production build re-run as label 'final-2'",
+      "verdict": "PASS"
+    }
+  ],
+  "knownDevArtifacts": [
+    "The floating 'N' badge in before-shots was the Next.js dev-tools indicator; hidden via devIndicators:false from iter-1 on."
+  ],
+  "deferred": [
+    "Retry/re-transcribe affordance on failed lectures (paid path; operator decision required).",
+    "Password recovery flow on sign-in.",
+    "Faculty desktop right-rail secondary module (dead zone below course cards).",
+    "One committed backdrop-blur glass moment if the identity should move further from 'dark editorial' toward literal glass.",
+    "Header 'Sign in' link still shows on /signin itself; landing hero CTA shares the 'Sign in' label with the header link.",
+    "Compositional redesign of course and lecture screens (they inherit tokens only)."
+  ]
+}
