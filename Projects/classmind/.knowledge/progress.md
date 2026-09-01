@@ -112,6 +112,9 @@ The design loop is deliberately not part of the day.
 **Not recorded, honestly:** whether that baseline run completed, whether a `processing_runs`
 row exists, and **what it cost** — the record-the-cost rule went unmet because the session left
 no record at all. Must be answered from `processing_runs` before the next paid reasoning run.
+*(Resolved 2026-09-01 evening: the row exists — `ff0721de`, partial, 19/20 windows, 46,735
+tokens, ~19 min, fully metered. The operator closed the Groq experiment with it as the final
+recorded outcome. See the 2026-09-01 closing entry above.)*
 
 **Blocked:** unchanged from 2026-08-30 (night) — the 36-minute ceiling, the background-job
 migration, Option D; "no clean baseline" is now *status unknown* pending the ledger check above.
