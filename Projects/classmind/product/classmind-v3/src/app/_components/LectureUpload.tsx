@@ -233,7 +233,7 @@ export default function LectureUpload({
   const dragDepth = useRef(0);
 
   const choose = useCallback((picked: File | null) => {
-    setPickError(null); setError(null); setPhase("idle");
+    setPickError(null); setError(null); setAuthNotice(null); setPhase("idle");
     setProgress(0); setProviderStatus(null); setLectureId(null); setFailure(null);
     if (!picked) { setFile(null); return; }
     // Judged on type OR extension -- Windows hands over many real recordings
