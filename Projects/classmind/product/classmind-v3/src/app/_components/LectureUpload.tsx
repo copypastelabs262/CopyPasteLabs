@@ -192,10 +192,12 @@ export default function LectureUpload({
     setPickError(null); setError(null); setPhase("idle");
     setProgress(0); setProviderStatus(null); setLectureId(null); setFailure(null);
     if (!picked) { setFile(null); return; }
-    if (!(ALLOWED_MIME_TYPES as readonly string[]).includes(picked.type)) {
+    // Judged on type OR extension -- Windows hands over many real recordings
+    // (.m4a, .opus, .amr) with no type at all, and those must not be refused.
+    if (!isAllowedAudio(picked.type, picked.name)) {
       setFile(null);
       setPickError(
-        `${picked.name} is not an audio recording ClassMind can read. Upload an MP3, M4A, WAV, WebM or OGG file.`,
+        `${picked.name} is not an audio recording ClassMind can read. Upload an audio file — MP3, M4A, WAV, AAC, FLAC, OGG/Opus, AMR, WMA, WebM and more are all fine.`,
       );
       return;
     }
