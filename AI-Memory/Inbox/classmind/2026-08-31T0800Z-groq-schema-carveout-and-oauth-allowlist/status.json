@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "session_id": "2026-08-31T0800Z-groq-schema-carveout-and-oauth-allowlist",
+  "project": "classmind",
+  "state": "pending",
+  "state_set_at": "2026-09-01T13:30:00Z",
+  "state_set_by": "End-Session (hand-authored retroactive capture)",
+  "review": {
+    "reviewed_at": null,
+    "reviewed_by": null,
+    "candidate_outcomes": [],
+    "notes": ""
+  }
+}
