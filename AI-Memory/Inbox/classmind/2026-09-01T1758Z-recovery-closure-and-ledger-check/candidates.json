@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "session_id": "2026-09-01T1758Z-recovery-closure-and-ledger-check",
+  "project": "classmind",
+  "generated_by": "End-Session/1.0.0 (hand-authored)",
+  "generated_at": "2026-09-01T17:58:00Z",
+  "candidates": [
+    {
+      "id": "cand-001",
+      "type": "decision",
+      "title": "The Groq provider experiment is closed; run ff0721de is its final recorded outcome — and this answers the 2026-08-31 entry's open question (cand-005)",
+      "body": "Operator decision, 2026-09-01: no further Groq baseline attempts, no re-runs, no further investigation of historical runs or costs. The final recorded outcome of the Groq experiment is processing_runs row ff0721de (2026-08-31 07:36 UTC): groq / openai/gpt-oss-120b, llm-reconstruct/1.1.0, over lecture dfd7312d — outcome partial, complete=false, 19/20 windows succeeded, the one failure being the 400 json_validate_failed that motivated the one-retry schema_validation carve-out (in the tree, never yet exercised in anger). Cost fully metered: 20 HTTP attempts, 19 completions, 0 retries, 0 rate-limits at rpm=1/concurrency=2, 27,891 prompt + 18,844 completion = 46,735 tokens, 1,147 s. The row is excluded from the reuse index by design, so it can never be served; the Sarvam baseline (24 items) is untouched. Reasoning work continues on the paid Gemini key as a separate phase, which will write its own cache-key rows.\n\nFOR THE PROMOTER: this candidate ANSWERS AND CLOSES cand-005 of AI-Memory/Inbox/classmind/2026-08-31T0800Z-groq-schema-carveout-and-oauth-allowlist/ (an open_question). Per the write-once rule that entry was not edited; when reviewing it, resolve cand-005 against this candidate rather than promoting it as still-open.",
+      "confidence": "high",
+      "basis": "The operator's explicit closure directive in this session, plus the read-only processing_runs query performed in this session whose row ff0721de carries every figure quoted above.",
+      "evidence_refs": [
+        "processing_runs row ff0721de-5b4b-479f-9bfa-3b3b6fea8dd0 (live database; query documented in this entry's session.md)",
+        "AI-Memory/Inbox/classmind/2026-08-31T0800Z-groq-schema-carveout-and-oauth-allowlist/candidates.json (cand-005)",
+        "Projects/classmind/product/classmind-v3/src/lib/reasoning/openai-compatible.ts (classifyStatus comment)"
+      ],
+      "proposed_scope": "project",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-002",
+      "type": "learning",
+      "title": "Completion-token volume varies ~6x between model families on identical work — budget output tokens from measurement, not window count",
+      "body": "Two providers ran the same reconstruction (same lecture, same method llm-reconstruct/1.1.0, same window plan, 19 successful windows each) and their completion-token bills differ by ~5.7x: openai/gpt-oss-120b emitted 18,844 completion tokens where gemini-3.5-flash emitted 3,281, against similar prompt-side totals (27,891 vs 22,420). A reasoning-style model spends output tokens on deliberation even when the requested artifact (a small JSON object per window) is identical.\n\nConsequence: a cost or rate-limit budget derived from window count plus expected artifact size will be wrong by the model family's verbosity factor — and on providers that charge rate-limit budget on the reservation (input + max_tokens), the verbosity also forces a larger max_tokens reservation, compounding the effect. Measure one real run per model family and budget from the ledger, not the plan.",
+      "confidence": "medium",
+      "basis": "processing_runs rows 92069828 (gemini/gemini-3.5-flash: 19 successful calls, 22,420 prompt / 3,281 completion) and ff0721de (groq/openai/gpt-oss-120b: 19 successful calls, 27,891 prompt / 18,844 completion), same lecture and method/version, read in this session's read-only ledger query. Confidence medium: one lecture, one pair of models — the ~6x figure is real but its generality is a single comparison.",
+      "evidence_refs": [
+        "processing_runs rows 92069828-ebab-4cdd-94f1-c0f0cc9a84da and ff0721de-5b4b-479f-9bfa-3b3b6fea8dd0 (live database; query documented in this entry's session.md)"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-003",
+      "type": "decision",
+      "title": "The Inbox backlog is deliberate: promotion waits until a proper skill exists around End-Session and Knowledge-Promoter",
+      "body": "Operator decision, 2026-09-01: the pending Inbox entries (8 after this one) are to accumulate, un-promoted, until the operator builds a proper skill implementation around both End-Session and Knowledge-Promoter, which will then be run over the backlog. Until then, no session should treat the growing backlog as the failure mode the charter warns about, and no session should attempt promotion itself (which the charter already forbids). The known cost, accepted: knowledge captured since 2026-08-21 stays findable only through the Inbox, not through INDEX.md, for the duration.",
+      "confidence": "high",
+      "basis": "The operator's explicit statement in this session's conversation: it is okay for the Inbox to fill; a skill will be built around both pipeline stages and then run.",
+      "evidence_refs": [
+        "AI-Memory/Inbox/ (8 pending entries as of this capture)"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    }
+  ]
+}
