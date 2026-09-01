@@ -107,18 +107,55 @@ Three nested navigation levels, left to right:
 - **Fluent visual identity** (Segoe, Fluent icons, Teams color tokens) — grammar yes,
   skin no. The Observatory stays.
 
-## 4. What the operator's screenshots must settle (open questions)
+## 4. What the screenshots settled (2026-09-02, student account, live class teams)
 
-1. Where does the eye land first inside a class — Posts or the tab bar? (Decides whether
-   Home or Ask is our default tab.)
-2. How does the assignment *detail* page order title / due / instructions / attachments —
-   and what does its mobile compression drop first?
-3. How does the stream visually separate system posts ("assignment posted") from
-   discussion? (Our stream is all system posts; the styling lesson still matters.)
-4. How does mobile Teams collapse the three columns into bottom-nav — what survives as a
-   top-level destination? (Our students will live on phones.)
-5. What does the composer do beyond text (attach, mention, format) — and which of those
-   does Ask genuinely need? (Suspected answer: none.)
+**Corrections to §1 — the current EDU client differs from the generic docs:**
+
+- **Navigation is two-level, and the per-class nav list is primary.** Entering a class
+  shows a left column of class sections — *Home page · Class Notebook · Classwork ·
+  Assignments · Grades · Reflect* — with channels ("Main Channels → General") below
+  them, and only *then* the channel's tab bar (**Posts | Shared** — "Files" is now
+  "Shared"). For ClassMind's four destinations a single flat tab bar is still the right
+  call (Microsoft's own guidance: limit nav), but the observed grammar is rail → class →
+  section list → tabs.
+- **The class list groups "Classes" separately from ordinary "Teams"** — class-ness is a
+  first-class concept, not a naming convention. Cards carry name + avatar only.
+- **Assignments exist twice**: as a section inside each class AND as a global app-bar
+  destination aggregating every class — tabs *Upcoming | Past due | Completed*,
+  date-grouped, each row carrying its class name, a red "You have past due assignments"
+  banner on top, and a "Further out" divider. **Adopt this aggregate shape for the
+  student home's due-items view** — it is exactly what our cross-course "catch up"
+  wants to be.
+
+**Confirmations:**
+
+- **The class stream is announcement-shaped in real use.** The student account is muted
+  in a class ("You've been muted, so you can't start a conversation") — teachers run
+  Posts as a broadcast surface. Our pipeline-written stream isn't a compromise; it
+  matches observed practice.
+- **Assignment detail order (student view):** title → due + submission policy →
+  Instructions (prose, incl. file-name format!) → Reference materials → My work
+  (Attach/New) → Points and status on the right → **Turn in** as the single primary
+  action, top-right. Our assignment detail mirrors this order, with Confirm (teacher) /
+  evidence timestamps (student) where Turn in sits.
+- **Ask's composer needs nothing but text + send.** The heavy composer (format, emoji,
+  attach, loop) belongs to social chat — which lives OUTSIDE the class anyway: the real
+  collaboration observed happens in a self-organized 31-member group chat, not in the
+  class team. Strongest possible evidence for the §3 rejection of building chat — the
+  audience already has chat and uses it; the class team is used for *structure*
+  (assignments, materials, announcements).
+- **Materials in practice** = teacher-uploaded PDFs/PPTs in a pinned "Class Materials"
+  folder under Shared. Maps to our course-context uploads; a browsable Materials
+  surface is a later, cheap addition to the Lectures tab, not a new system.
+- One more gap confirmed in our favour: Teams' "Recap/Recording is ready" exists only
+  for *online meetings*. The in-room lecture — everything ClassMind processes — has no
+  capture path in Teams at all.
+
+**Still open (needs 2–3 phone screenshots when convenient):**
+
+1. How mobile Teams collapses the shell — what earns a bottom-nav slot, and where
+   Assignments goes on a phone.
+2. What the assignment detail drops first under mobile compression.
 
 ## 5. What this feeds
 
