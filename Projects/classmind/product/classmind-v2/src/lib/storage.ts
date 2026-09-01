@@ -62,14 +62,22 @@ export function isAllowedAudio(contentType: string, filename: string): boolean {
 }
 
 // The type that is stored, sent to the bucket, and handed to the
-// transcription provider. Always audio/* -- the bucket admits only audio/*,
-// so a browser that reported nothing (or application/octet-stream, or
-// video/webm for an audio-only recording) gets the canonical type for its
-// extension instead of its own guess.
+// transcription provider. Always audio/* -- the bucket admits only audio/*.
+//
+// THE CURATED MAPPING OUTRANKS THE BROWSER'S REPORT. The first version kept
+// any reported audio/* verbatim and only consulted the extension map for
+// typeless files -- and the first real upload proved that wrong: Windows
+// reports .aac as audio/vnd.dlna.adts, a real audio type that Sarvam's
+// allowlist refuses, and the stored value rode all the way to a 400 at
+// /start. Every value in AUDIO_EXTENSION_MIME is on Sarvam's allowlist, so
+// when the extension is recognised its mapping wins; the reported type is
+// only trusted when the filename tells us nothing.
 export function canonicalAudioContentType(contentType: string, filename: string): string {
-  const reported = contentType.trim().toLowerCase();
-  if (reported.startsWith("audio/")) return reported.split(";")[0].trim();
-  return AUDIO_EXTENSION_MIME[extensionOf(filename)] ?? "audio/mpeg";
+  const mapped = AUDIO_EXTENSION_MIME[extensionOf(filename)];
+  if (mapped) return mapped;
+  const reported = contentType.trim().toLowerCase().split(";")[0].trim();
+  if (reported.startsWith("audio/")) return EXOTIC_AUDIO_ALIASES[reported] ?? reported;
+  return "audio/mpeg";
 }
 
 export function lectureObjectPath(lectureId: string, filename: string): string {
