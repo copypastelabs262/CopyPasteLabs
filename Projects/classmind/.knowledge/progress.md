@@ -222,6 +222,10 @@ migration already drafted and still unapplied.
 **No clean baseline run exists.** Three attempts, three different failures, nothing written by any
 of them. The Sarvam baseline is intact at 24 items / 28 evidence and no Sarvam reasoning call was
 made all session.
+*(2026-09-01: a fourth attempt ran on 2026-08-31 and came within one window — ledger row
+`ff0721de`, partial, 19/20, 46,735 tokens, not reusable by design. The operator then closed the
+Groq experiment with that as its final outcome; reasoning moves to the paid Gemini key. The
+clean-baseline goal transfers to the Gemini phase. See the 2026-09-01 closing entry.)*
 
 **Verified:** 311 offline checks pass (providers 100, extraction 76, transcript 33, reconstruction
 55, knowledge-plan 47); tsc and eslint clean.
