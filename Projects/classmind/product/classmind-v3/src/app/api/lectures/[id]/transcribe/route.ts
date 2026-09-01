@@ -128,7 +128,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     // this guard does not apply on a deployment, where a live call is the
     // product rather than an accident.
     if (!replaySlug && !liveCallIsAllowedHere()) {
-      return NextResponse.json({ error: liveCallRefusalReason() }, { status: 400 });
+      // `code` lets the upload UI tell "spending is switched off here" apart
+      // from a transcription that actually broke, and render instructions
+      // instead of an error. The message stays for scripts and logs.
+      return NextResponse.json(
+        { error: liveCallRefusalReason(), code: "live_transcription_disabled" },
+        { status: 400 },
+      );
     }
 
     // The object's presence in Storage is the proof of upload. There is no
