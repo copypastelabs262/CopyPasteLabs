@@ -74,6 +74,7 @@ const FAILURE_COPY: Record<FailureKind, string> = {
     "The lecture was transcribed, but the step that reads it for what was taught did not finish. The transcript is safe: open the lecture and run it again.",
   quarantine:
     "The recording was transcribed, but the transcript did not look like a lecture — so nothing was read out of it. This usually means the audio was too quiet, too noisy, or in a different language from the course. Upload a clearer recording.",
+  authorize: `Your recording is uploaded and safe, and nothing was charged. ${SPEND_GUIDE}`,
 };
 
 // Re-running the whole sequence only helps when the failure was in getting the
