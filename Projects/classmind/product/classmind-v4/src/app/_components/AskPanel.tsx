@@ -30,9 +30,9 @@ import { AlertIcon, BookIcon } from "./ui/icons";
 
 // A cited unit: the stored shape minus the two fields the route does not send,
 // plus the citation number the prose refers back to.
-type Source = Omit<KnowledgeUnit, "courseId" | "confidence"> & { ref: number };
+export type Source = Omit<KnowledgeUnit, "courseId" | "confidence"> & { ref: number };
 
-interface Answer {
+export interface Answer {
   question: string;
   answered: boolean;
   answer: string;
