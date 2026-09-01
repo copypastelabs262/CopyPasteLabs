@@ -60,6 +60,15 @@ function stepForPhase(phase: Phase): number {
   }
 }
 
+// What the teacher-developer reads instead of a failure when the money guard
+// declines locally. Shown before anything is created (pre-flight) and, should
+// the flow get as far as the transcribe route's own refusal, after upload too.
+const SPEND_GUIDE =
+  "This development server starts with paid transcription switched off, so nothing spends " +
+  "money by accident. To transcribe a real recording: stop the dev server, start it with " +
+  "`npm run dev:spend`, and upload the recording again. That server permits live " +
+  "transcription only until you stop it.";
+
 // One sentence per way this can end badly. Every one of them names what
 // survived and what to do next -- a teacher who cannot tell whether their
 // recording still exists will re-record the lecture rather than retry.
