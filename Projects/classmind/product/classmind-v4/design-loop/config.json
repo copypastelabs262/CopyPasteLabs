@@ -1,6 +1,6 @@
-﻿{
+{
   "baseUrl": "http://localhost:3500",
-  "colorScheme": "light",
+  "colorScheme": "dark",
   "viewports": {
     "desktop": { "width": 1440, "height": 900 },
     "tablet": { "width": 820, "height": 1180 },
@@ -11,19 +11,47 @@
     "faculty": { "email": "faculty.test@classmind.local", "password": "ClassMindTest!2026" }
   },
   "targets": [
-    { "name": "landing", "path": "/", "role": "anon" },
-    { "name": "signin", "path": "/signin", "role": "anon" },
-    { "name": "home-student", "path": "/courses", "role": "student" },
-    { "name": "home-faculty", "path": "/courses", "role": "faculty" },
+    { "name": "my-classes-faculty", "path": "/courses", "role": "faculty" },
+    { "name": "my-classes-student", "path": "/courses", "role": "student" },
     {
-      "name": "course-student",
+      "name": "class-home-faculty",
+      "path": "/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975",
+      "role": "faculty"
+    },
+    {
+      "name": "class-home-student",
       "path": "/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975",
       "role": "student"
     },
     {
-      "name": "course-faculty",
-      "path": "/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975",
+      "name": "ask-student",
+      "path": "/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975/ask",
+      "role": "student"
+    },
+    {
+      "name": "lectures-faculty",
+      "path": "/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975/lectures",
       "role": "faculty"
+    },
+    {
+      "name": "lectures-student",
+      "path": "/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975/lectures",
+      "role": "student"
+    },
+    {
+      "name": "assignments-faculty",
+      "path": "/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975/assignments",
+      "role": "faculty"
+    },
+    {
+      "name": "assignments-student",
+      "path": "/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975/assignments",
+      "role": "student"
+    },
+    {
+      "name": "lecture-detail-student",
+      "path": "/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975/lectures/dfd7312d-8baf-44bc-8dcb-b9608d28e9d3",
+      "role": "student"
     }
   ]
 }
