@@ -261,7 +261,7 @@ export default function LectureUpload({
   const reset = useCallback(() => {
     setFile(null); setTitle(""); setPhase("idle"); setProgress(0);
     setProviderStatus(null); setLectureId(null);
-    setError(null); setPickError(null); setFailure(null); setFailedStep(0);
+    setError(null); setPickError(null); setAuthNotice(null); setFailure(null); setFailedStep(0);
     if (inputRef.current) inputRef.current.value = "";
   }, []);
 
