@@ -400,7 +400,7 @@ export default function LectureUpload({
             id={fileInputId}
             ref={inputRef}
             type="file"
-            accept={ALLOWED_MIME_TYPES.join(",")}
+            accept={AUDIO_ACCEPT}
             // Clearing on open makes re-picking the SAME file fire `change`.
             // Without it, choosing the file you just replaced does nothing.
             onClick={(e) => { e.currentTarget.value = ""; }}
