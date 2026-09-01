@@ -7,6 +7,39 @@ Entries are snapshots of what was true when written and are never rewritten. Whe
 resolves something an earlier one recorded as blocked, the earlier line gets a dated marker
 pointing forward — it does not get edited away.
 
+## 2026-09-01 (closing) — The recovery chapter ends: the ledger answers the Groq question, and the experiment is closed
+
+**Done.** One read-only `processing_runs` query (operator-approved; no writes, no paid
+endpoints) resolved the open question left by the recovered 2026-08-31 record. **The ledger
+row exists and the meter worked**: row `ff0721de`, 2026-08-31 07:36 UTC, `groq /
+openai/gpt-oss-120b`, `llm-reconstruct/1.1.0`, over the same "WhatsApp.mp3" lecture as every
+baseline attempt. Outcome **`partial`, `complete=false`** — 19 of 20 windows succeeded, the
+one failure being the `teaching 881s` window's `400 json_validate_failed`, exactly the failure
+the one-retry carve-out was written against later that hour. Cost, fully metered: 20 HTTP
+attempts, 19 completions, 0 retries, 0 rate-limits at rpm=1/concurrency=2, **27,891 prompt +
+18,844 completion = 46,735 tokens**, 1,147 s. 37 items proposed; `knowledge_total` stayed 24,
+so **the Sarvam baseline is untouched**. The row is excluded from the reuse index by design.
+The timeline corroborates end to end: client fix 12:36 IST → 19-minute run ending 13:06 IST →
+carve-out by 13:30 IST. The two older rows are the documented 2026-08-30 Gemini free-tier
+failures — consistent, no surprises.
+
+**Decided (operator).** **The Groq provider experiment is closed**; `ff0721de` is its final
+recorded outcome — no re-runs, no further historical investigation. Reasoning continues on the
+**paid Gemini key as a separate next phase** (key obtained and topped up 2026-09-01; Sarvam
+also topped up; a new lecture recording exists). The Inbox backlog (8 pending entries) is
+**deliberate** until a proper skill is built around End-Session and Knowledge-Promoter.
+Measured side-finding, captured as a candidate: `gpt-oss-120b` emitted ~5.7× the completion
+tokens of `gemini-3.5-flash` for the same 19 windows — budget output tokens from the ledger,
+not the window plan.
+
+**Verified:** nothing to verify — this closure touched records only. Working tree clean and
+pushed.
+
+**Next:** the Gemini phase, from the operator's two-day brief: paid Gemini as reasoning
+provider, tested on stored transcripts; finalize the processing engine (the 36-minute ceiling
+and the standing backend blockers); then the live faculty walkthrough with the new lecture.
+The Groq result is context, not a task.
+
 ## 2026-09-01 — Real recordings are accepted, and spending is asked about before anything exists
 
 **Recorded retroactively the same evening** — this work ran 13:39–17:46 IST as Auto-saves only;
