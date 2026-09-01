@@ -45,7 +45,7 @@ export interface Answer {
 // The four questions the product exists to answer, in the words a student would
 // use. A blank box invites a blank stare; these say what kind of thing can be
 // asked here without anyone having to write instructions.
-const SUGGESTIONS = [
+export const SUGGESTIONS = [
   "What was taught?",
   "What assignment was given?",
   "Was there a deadline?",
