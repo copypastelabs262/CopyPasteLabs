@@ -345,17 +345,9 @@ export default function FacultyWorkspace({
         </form>
       </Dialog>
 
-      {/* "Confirmed course knowledge" was the old heading and it was false
-          twice over: the panel read a store nothing writes verdicts into any
-          more, so it was permanently empty, and what belongs here is everything
-          the course knows -- taught material enters automatically, only
-          actionable items wait on a verdict. */}
-      <CourseKnowledgePanel
-        courseId={courseId}
-        heading="What this course covers"
-        knowledge={knowledge}
-        showAsk
-      />
+      {/* v4: the course-wide knowledge panel and the Ask panel that used to
+          close this page moved to their own tabs (Ask, Assignments, and each
+          lecture's page). This surface now does one job: the recordings. */}
     </>
   );
 }
