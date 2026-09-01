@@ -7,6 +7,51 @@ Entries are snapshots of what was true when written and are never rewritten. Whe
 resolves something an earlier one recorded as blocked, the earlier line gets a dated marker
 pointing forward — it does not get edited away.
 
+## 2026-09-01/02 — Gemini phase day one: two clean baselines, the first true end-to-end run, and the grammar decision
+
+**Done.**
+
+1. **The first clean, complete, reusable reconstruction baseline in project history.**
+   Controlled paid run over the stored Cloud Computing transcript — after snapshotting the
+   Sarvam-era reading to `.knowledge/baselines/` (a complete pass replaces unjudged items by
+   design; operator chose snapshot-then-run). Ledger `77408ea3`: `gemini/gemini-3.5-flash-lite`,
+   20/20 windows, 0 retries, 27,979 tokens, 118.7 s. All 35 quotes verified verbatim; Gemini
+   independently re-derived the confirmed research-paper assignment. Fully inspected read-only in
+   `.knowledge/reports/2026-09-02-gemini-run-77408ea3-inspection.md` — findings **R1** (teaching
+   windows share boundary segments; teaching pass has no dedupe → two duplicate item pairs) and
+   **R2** (raw responses discarded though `model_raw` exists), both assembly-level, neither
+   model-level.
+2. **The first true end-to-end product run** — operator as faculty, real noisy recording.
+   Found and fixed our MIME bug (Windows reports `.aac` as `audio/vnd.dlna.adts`; the curated
+   extension map now outranks the browser's report in v2+v3; Sarvam's own 400 handed us its
+   allowlist verbatim). MP3 retry ran the whole pipeline: ASR job `20260901_22466f9c` →
+   validation pass (0.421 supported-rate — honest near-threshold on unclear audio) → ledger
+   `6ac53dca`, 7/7 windows, 5,993 tokens — **second clean baseline**; "Transformation
+   Assignment" correctly pending review.
+3. **Ask, used in anger, set the next frontier.** One billed call produced a vague answer;
+   diagnosis: the lecture names three specific students, the extraction contract has no
+   audience concept, so the stored item couldn't say and Ask can never see the transcript. Ask
+   usage is also entirely unmetered. Five items recorded in `roadmap.md` § "Backlog from first
+   live use" (Ask routing/no-API grounded answers · honest gap-naming · audience in the
+   extraction contract · chat-first lecture page · meter Ask).
+4. **Product direction decided: steal the grammar, not the product.** Classroom-app grammar
+   (class rail, per-class Home/Ask/Lectures/Assignments, confirm-as-posting as hero) around
+   ClassMind's differentiator — zero-entry, provenance-verified classroom memory; LMS and
+   communication features explicitly rejected. Research in
+   `.knowledge/design/teams-grammar/grammar.md`, verified against nine screenshots of the
+   operator's real student account (which corrected the docs and *strengthened* the chat
+   rejection — real collaboration already lives outside class teams).
+
+**Cost of the whole day:** ~34K Gemini tokens + one ~7-minute ASR job, every metered number
+read back from the ledger; three Ask calls estimated only (that gap is R6).
+
+**In progress:** the **v4 overnight autonomous build** (grammar shell over the Observatory
+skin; v3 freezes as pre-shell baseline; mechanically zero-spend — provider keys stripped,
+network guard on). Standing zero-spend rule in force until Ask routing is solved.
+
+**Next:** the overnight handoff review, then the two-day backend brief (36-minute ceiling,
+Option D, background jobs) and R1/R2/R6.
+
 ## 2026-09-01 (closing) — The recovery chapter ends: the ledger answers the Groq question, and the experiment is closed
 
 **Done.** One read-only `processing_runs` query (operator-approved; no writes, no paid
