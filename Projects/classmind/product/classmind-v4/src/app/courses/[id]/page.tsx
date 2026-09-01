@@ -1,10 +1,7 @@
-import { redirect } from "next/navigation";
-import { currentUser } from "@/lib/auth";
-import CourseClient from "@/app/_components/CourseClient";
+import ClassHome from "@/app/_components/shell/ClassHome";
 
-export default async function CoursePage({ params }: { params: Promise<{ id: string }> }) {
-  const user = await currentUser();
-  if (!user) redirect("/signin");
-  const { id } = await params;
-  return <CourseClient courseId={id} />;
+// The class's Home tab: what happened, what needs me. The session guard and
+// the shell live in layout.tsx; this page is just the destination.
+export default function ClassHomePage() {
+  return <ClassHome />;
 }
