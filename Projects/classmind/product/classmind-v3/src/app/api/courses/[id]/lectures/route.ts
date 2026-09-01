@@ -120,7 +120,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       original_filename: body.originalFilename,
       storage_path: path,
       file_size_bytes: body.fileSizeBytes,
-      content_type: body.contentType,
+      // Canonicalised, never raw: the bucket admits only audio/*, and this is
+      // also the Content-Type later handed to the transcription provider.
+      content_type: canonicalAudioContentType(body.contentType ?? "", body.originalFilename),
       checksum_sha256: claimed,
       recorded_on: body.recordedOn || null,
     };
