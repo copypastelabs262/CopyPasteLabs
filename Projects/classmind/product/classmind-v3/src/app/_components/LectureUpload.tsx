@@ -217,6 +217,10 @@ export default function LectureUpload({
   const [lectureId, setLectureId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pickError, setPickError] = useState<string | null>(null);
+  // The money guard's pre-flight verdict, rendered in the idle card. Not an
+  // error: nothing failed, nothing was created, the server simply is not
+  // authorized to spend yet.
+  const [authNotice, setAuthNotice] = useState<string | null>(null);
   const [failure, setFailure] = useState<FailureKind | null>(null);
   const [failedStep, setFailedStep] = useState(0);
   const [dragging, setDragging] = useState(false);
