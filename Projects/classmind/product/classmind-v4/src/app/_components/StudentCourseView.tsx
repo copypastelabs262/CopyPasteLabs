@@ -102,6 +102,6 @@ export default function StudentCourseView({
           </ul>
         )}
       </Section>
-    </Page>
+    </>
   );
 }
