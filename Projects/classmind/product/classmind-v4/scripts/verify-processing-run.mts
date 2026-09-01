@@ -1,4 +1,4 @@
-// Drives ONE real /extract through the real route and reports exactly what it
+﻿// Drives ONE real /extract through the real route and reports exactly what it
 // cost and what it produced.
 //
 //   node --env-file=.env.local scripts/verify-processing-run.mts <lectureId> [--force]
@@ -24,10 +24,10 @@ import { normalizeRawTranscript } from "../src/lib/transcript/normalize.ts";
 // pipeline actually uses, so it is what this must use.
 import { __internals } from "../src/lib/reasoning/reconstruct.ts";
 
-// 3400 is THIS app's dev port. The default used to be 3300 — classmind-v2's
-// port — which would have driven a paid extraction through the wrong codebase
+// 3500 is THIS app's dev port. The default used to be 3300 â€” classmind-v2's
+// port â€” which would have driven a paid extraction through the wrong codebase
 // had a v2 server been listening. The default must always be v3's own port.
-const BASE = process.env.E2E_BASE_URL ?? "http://localhost:3400";
+const BASE = process.env.E2E_BASE_URL ?? "http://localhost:3500";
 const svc = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -106,7 +106,7 @@ const beforeConfirmed = before.items.filter((i) => i.status === "confirmed" || i
 // Node's built-in fetch is undici with a 300s headers timeout, and that limit
 // is not configurable without installing undici as a dependency. /extract
 // sends no response bytes until the whole reconstruction is done, and at
-// Groq's real sustained rate (~1 req/min — the budget is charged on the
+// Groq's real sustained rate (~1 req/min â€” the budget is charged on the
 // reservation, input + max_tokens, not on usage) a 20-window run is 20+
 // minutes of headerless silence. The 2026-08-30 baseline attempt died at
 // exactly 300s, and the client abort took the server-side run with it: Next
@@ -132,7 +132,7 @@ function postAndWait(url: string, headers: Record<string, string>): Promise<{ st
 section("Running /extract" + (force ? "?force=1" : ""));
 const started = Date.now();
 const heartbeat = setInterval(() => {
-  console.log(`  ... still running (${Math.round((Date.now() - started) / 60_000)} min — the route answers only when the whole run is done)`);
+  console.log(`  ... still running (${Math.round((Date.now() - started) / 60_000)} min â€” the route answers only when the whole run is done)`);
 }, 120_000);
 let res: { status: number; text: string };
 try {

@@ -1,4 +1,4 @@
-// Starts the v3 dev server with LIVE SARVAM SPENDING ENABLED -- for exactly as
+﻿// Starts the v3 dev server with LIVE SARVAM SPENDING ENABLED -- for exactly as
 // long as this process lives, and not one second longer.
 //
 //   npm run dev:spend
@@ -23,7 +23,7 @@ console.log(`
 ==============================================================================
 `);
 
-const child = spawn("npx", ["next", "dev", "-p", "3400"], {
+const child = spawn("npx", ["next", "dev", "-p", "3500"], {
   stdio: "inherit",
   env: { ...process.env, ALLOW_LIVE_SARVAM: "1" },
   // npx is npx.cmd on Windows, which spawn only finds through a shell.

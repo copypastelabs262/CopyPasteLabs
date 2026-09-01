@@ -1,4 +1,4 @@
-# ClassMind V3
+﻿# ClassMind V3
 
 The ClassMind product. A faculty member uploads a lecture; it is transcribed, academic
 information is extracted as **candidates**, and nothing reaches a student until a human confirms
@@ -6,23 +6,23 @@ it. Students then read confirmed knowledge, ask questions, and open the evidence
 timestamp it was spoken.
 
 This is the Product Platform. `../../lab/v0-ingestion` is the research environment and is
-separate — nothing here reads its tables.
+separate â€” nothing here reads its tables.
 
 ## Run it
 
 ```
 npm install
 npm run setup:db     # creates the `lectures` storage bucket; idempotent
-npm run dev          # http://localhost:3400  (v1 used 3100, v2 uses 3300)
+npm run dev          # http://localhost:3500  (v1 used 3100, v2 uses 3300)
 ```
 
 `.env.local` needs the keys listed in `.env.example`. To replay a captured Sarvam response
-instead of paying for a real call, name it per lecture — `replayFixture: "<slug>"` on
+instead of paying for a real call, name it per lecture â€” `replayFixture: "<slug>"` on
 `POST /api/courses/:id/lectures`. There is no `TRANSCRIPTION_PROVIDER` any more, and a filename
 never selects a transcript. Replay is refused on any deployment. A live call from a developer
 machine needs `ALLOW_LIVE_SARVAM=1`, so nothing spends money by accident.
 
-To transcribe a real recording locally, run `npm run dev:spend` instead of `npm run dev` — it
+To transcribe a real recording locally, run `npm run dev:spend` instead of `npm run dev` â€” it
 starts the same server with spending enabled **for that process only** and prints a banner
 saying so. Stop it and the next plain `npm run dev` is safe again; `.env.local` is never
 touched. The upload page checks this before creating anything, so with spending off it tells
@@ -37,7 +37,7 @@ npm run test:e2e          # 67 checks, needs the dev server running
 npm run test:languages    # 33 checks, needs the dev server running
 ```
 
-`test:e2e` drives the whole product over HTTP exactly as a browser does — upload, transcribe,
+`test:e2e` drives the whole product over HTTP exactly as a browser does â€” upload, transcribe,
 extract, review, then re-enter as a student and ask a question. Its most important checks are
 negative: a student's lecture payload carries zero candidates, a student cannot rule on one, and
 the anon key cannot read any product table directly.
@@ -73,8 +73,8 @@ re-run.
 
 No live Sarvam call has ever been made from this app. There is no romanized-Hinglish ASR fixture,
 which is the case the extraction lexicon covers most heavily. Question answering retrieves
-confirmed items rather than generating prose — it cannot hallucinate, and it will miss a
+confirmed items rather than generating prose â€” it cannot hallucinate, and it will miss a
 paraphrase sharing no words with the item. Extraction accuracy is unmeasured; `confidence` orders
 the review queue and means nothing else.
 
-Longer version, with the reasoning: `../../../../HANDOFF.md` § 11.
+Longer version, with the reasoning: `../../../../HANDOFF.md` Â§ 11.

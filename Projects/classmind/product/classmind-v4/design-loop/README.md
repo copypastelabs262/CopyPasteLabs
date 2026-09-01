@@ -1,8 +1,8 @@
-# Design Master Loop
+﻿# Design Master Loop
 
 A reusable improvement loop that operates on the **running** ClassMind V3 app:
 
-> inspect → render → critique → decide → implement → render again → compare → verify → improve/revert → repeat
+> inspect â†’ render â†’ critique â†’ decide â†’ implement â†’ render again â†’ compare â†’ verify â†’ improve/revert â†’ repeat
 
 Design decisions here are made against **rendered screenshots of the real product**, never
 against source code alone, and every iteration leaves evidence on disk.
@@ -11,12 +11,12 @@ against source code alone, and every iteration leaves evidence on disk.
 
 ```
 design-loop/
-├── config.json      targets (route × role), viewports, capture accounts, base URL
-├── capture.mts      renders the real app, screenshots every target × viewport
-├── verify.mts       tsc + eslint (+ next build with --build), writes results per run
-├── state.json       the loop's memory: selected target, iteration history, verdicts
-├── runs/<runId>/    evidence — one folder per label (before, iter-1, …), committed
-└── .auth/           saved sign-in sessions (gitignored — contains live tokens)
+â”œâ”€â”€ config.json      targets (route Ã— role), viewports, capture accounts, base URL
+â”œâ”€â”€ capture.mts      renders the real app, screenshots every target Ã— viewport
+â”œâ”€â”€ verify.mts       tsc + eslint (+ next build with --build), writes results per run
+â”œâ”€â”€ state.json       the loop's memory: selected target, iteration history, verdicts
+â”œâ”€â”€ runs/<runId>/    evidence â€” one folder per label (before, iter-1, â€¦), committed
+â””â”€â”€ .auth/           saved sign-in sessions (gitignored â€” contains live tokens)
 ```
 
 ## Running the loop
@@ -24,7 +24,7 @@ design-loop/
 1. **Start the app** (the loop drives a live server):
 
    ```
-   npm run dev          # port 3400
+   npm run dev          # port 3500
    ```
 
 2. **Capture the current state:**
@@ -35,7 +35,7 @@ design-loop/
    ```
 
    Useful flags: `--target <name>` (repeatable, names from config.json),
-   `--scheme light|dark`, `--base-url http://localhost:3400`.
+   `--scheme light|dark`, `--base-url http://localhost:3500`.
 
 3. **Critique** the screenshots from the specialist perspectives recorded in
    `state.json` (UX, visual direction, glass/art direction, technical). Findings and the
@@ -53,7 +53,7 @@ design-loop/
    npm run design:verify -- --run 2026-08-31 --label final --build   # + production build
    ```
 
-7. Repeat until the quality gates pass or the safety guard (3–5 major iterations per run)
+7. Repeat until the quality gates pass or the safety guard (3â€“5 major iterations per run)
    is reached. On guard exhaustion: keep the best verified state, record remaining issues
    in `state.json`, stop honestly.
 
@@ -61,20 +61,20 @@ design-loop/
 
 Edit `targets` in `config.json`. A target is `{ name, path, role }`;
 `role` is `anon`, `student`, or `faculty` (accounts also in config). Optional
-`clickFirst: "<css selector>"` navigates by clicking the first match after load —
+`clickFirst: "<css selector>"` navigates by clicking the first match after load â€”
 use it to follow real data ("the first course this account sees") instead of
 hardcoding ids.
 
 ## The money guard
 
-Rendering must never spend money (root `CLAUDE.md` § "Spending the operator's money").
+Rendering must never spend money (root `CLAUDE.md` Â§ "Spending the operator's money").
 `capture.mts` aborts, at the browser network layer, every request to
 `/api/lectures/*/extract|transcribe|poll`, `/api/courses/*/ask`, and all external
-AI-provider hosts. Blocked attempts are recorded in the run's `manifest--*.json` —
+AI-provider hosts. Blocked attempts are recorded in the run's `manifest--*.json` â€”
 a screen that tries to spend money on render is a finding, not a bill.
 
 ## Resuming a run
 
 `state.json` carries the full iteration history and the last verdict. To resume, read it,
 re-capture with a new label, and continue from the recorded iteration number. Evidence in
-`runs/` is append-only — nothing is overwritten unless the same run + label is re-captured.
+`runs/` is append-only â€” nothing is overwritten unless the same run + label is re-captured.

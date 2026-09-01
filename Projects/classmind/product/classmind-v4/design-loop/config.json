@@ -1,5 +1,5 @@
-{
-  "baseUrl": "http://localhost:3400",
+﻿{
+  "baseUrl": "http://localhost:3500",
   "colorScheme": "light",
   "viewports": {
     "desktop": { "width": 1440, "height": 900 },
