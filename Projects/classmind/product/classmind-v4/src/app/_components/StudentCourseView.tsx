@@ -37,9 +37,8 @@ export default function StudentCourseView({
   // ids rather than the array: `lectures` is a fresh array on every parent
   // render, so keying on it would refetch continuously.
   const readyIds = lectures.filter((l) => l.status === "ready").map((l) => l.id).join(",");
-  const { units, awaitingReview, loading } = useCourseKnowledge(courseId, readyIds);
+  const { units, loading } = useCourseKnowledge(courseId, readyIds);
 
-  const owed = actionableUnits(units);
   // Grouped per lecture so each row in the index can say what it covered
   // without a second pass over the whole set for every row.
   const topicsByLecture = new Map<string, KnowledgeUnit[]>();
