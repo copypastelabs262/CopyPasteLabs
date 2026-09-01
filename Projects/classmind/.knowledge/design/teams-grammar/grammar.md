@@ -1,8 +1,9 @@
 # The classroom-app grammar — what we steal from Teams, and what we refuse
 
-**Status:** Draft — built from Microsoft's public design documentation on 2026-09-02.
-Awaiting the operator's screenshots in [`screenshots/`](screenshots/) to verify against the
-*experienced* product; the open questions in §4 are what the screenshots settle.
+**Status:** Draft — built from Microsoft's public design documentation on 2026-09-02,
+then verified the same day against nine screenshots of the operator's real student
+account in live class teams ([`screenshots/`](screenshots/)). §4 records what the
+screenshots confirmed, corrected, and still leave open (mobile).
 **Rule of engagement:** we take interaction grammar and information architecture only —
 never pixels, icons, branding, or Fluent's visual identity. The Observatory (our own
 design system, `product/classmind-v3/`) stays the skin. Grammar and layout patterns are
