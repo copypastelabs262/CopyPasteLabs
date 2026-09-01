@@ -236,7 +236,7 @@ export default function AskPanel({
 // be. No spinner: a spinner says "something is running", which the student can
 // already see, whereas the skeleton says how much text is about to arrive and
 // keeps the page from jumping when it does.
-function Looking({ scope }: { scope: "lecture" | "course" }) {
+export function Looking({ scope }: { scope: "lecture" | "course" }) {
   return (
     <div className="motion-fade">
       <p className="text-[15px] leading-relaxed text-ink-soft">
