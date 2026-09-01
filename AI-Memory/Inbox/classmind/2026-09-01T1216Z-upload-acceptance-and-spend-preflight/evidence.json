@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "session_id": "2026-09-01T1216Z-upload-acceptance-and-spend-preflight",
+  "project": "classmind",
+  "secondary_projects": [],
+  "generated_by": { "producer": "claude", "tool": "End-Session/1.0.0 (hand-authored retroactively, same day)" },
+  "generated_at": "2026-09-01T13:40:00Z",
+  "repository": { "branch": "master", "upstream": "origin/master" },
+  "session_boundary": {
+    "base": "5695d42",
+    "head": "7f904a2",
+    "base_strategy": "capture_commit_range — base is the last Auto-save of the 2026-08-31 daytime stream; head is the intentional commit of the stream's one file left uncommitted (.env.example), made at capture on 2026-09-01. All intermediate commits are Auto-saves from this work stream (645c884..b28165e)."
+  },
+  "context_completeness": "partial",
+  "context_note": "No conversation transcript existed; reconstructed same-day from git diffs and code comments. Only high-confidence candidates emitted (cand-002 medium, stated).",
+  "duration_known": false,
+  "duration_minutes": null,
+  "duration_source": "unavailable — commit timestamps span 13:39–17:46 IST (08:09–12:16 UTC)",
+  "working_tree_note": ".env.example was left uncommitted by the work stream and committed at capture as 7f904a2 with its own message, before the capture commits, so the intentional message would not be swallowed by an autosave sweep.",
+  "changes_summary": {
+    "created": [
+      "Projects/classmind/product/classmind-v3/scripts/dev-spend.mjs (per-process ALLOW_LIVE_SARVAM opt-in wrapper)",
+      "Projects/classmind/product/classmind-v3/src/app/api/transcription/authorization/route.ts (read-only spend pre-flight)"
+    ],
+    "modified": [
+      "Projects/classmind/product/classmind-v3/src/lib/storage.ts (+59 — AUDIO_EXTENSION_MIME, isAllowedAudio, canonicalAudioContentType, AUDIO_ACCEPT)",
+      "Projects/classmind/product/classmind-v3/src/app/api/courses/[id]/lectures/route.ts (+21 — refuse before row/URL exists; canonicalised content_type stored)",
+      "Projects/classmind/product/classmind-v3/src/app/_components/LectureUpload.tsx (+110 — pre-flight, ApiError code channel, authorize failure copy, canonical type for row+PUT, accept list)",
+      "Projects/classmind/product/classmind-v3/src/app/api/lectures/[id]/transcribe/route.ts (+8 — refusal carries code live_transcription_disabled)",
+      "Projects/classmind/product/classmind-v3/scripts/setup-storage.mts (+24 — converge existing bucket instead of skipping)",
+      "Projects/classmind/product/classmind-v3/package.json (dev:spend script)",
+      "Projects/classmind/product/classmind-v3/README.md (dev:spend workflow)",
+      "Projects/classmind/product/classmind-v3/.env.example (recommend dev:spend; committed at capture, 7f904a2)",
+      "Projects/classmind/product/classmind-v2/src/lib/storage.ts (mirror of the acceptance rewrite)",
+      "Projects/classmind/product/classmind-v2/src/app/api/courses/[id]/lectures/route.ts (mirror)",
+      "Projects/classmind/product/classmind-v2/src/app/_components/LectureUpload.tsx (acceptance + canonical type only — no spend pre-flight in v2)",
+      "Projects/classmind/product/classmind-v2/scripts/setup-storage.mts (mirror of the convergence change)"
+    ],
+    "session_docs": [
+      "Projects/classmind/.knowledge/sessions/2026-09-01-upload-acceptance-and-spend-preflight.md",
+      "AI-Memory/Inbox/classmind/2026-09-01T1216Z-upload-acceptance-and-spend-preflight/"
+    ]
+  },
+  "verification": {
+    "typescript": "pass — npx tsc --noEmit clean in classmind-v3 AND classmind-v2, run at capture 2026-09-01",
+    "eslint": "pass — npx eslint . --max-warnings 0 clean in classmind-v3 AND classmind-v2, run at capture 2026-09-01",
+    "next_build": "not run at capture (offline checks only)",
+    "paid_calls": "none — no /extract, /ask, /transcribe or provider call was made by this work or its capture"
+  },
+  "diff": {
+    "stored": true,
+    "file": "changes.patch",
+    "regenerate_command": "git diff 5695d42..7f904a2 -- Projects/classmind/product"
+  }
+}
