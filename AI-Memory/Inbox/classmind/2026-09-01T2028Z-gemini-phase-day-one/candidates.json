@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "session_id": "2026-09-01T2028Z-gemini-phase-day-one",
+  "project": "classmind",
+  "generated_by": "End-Session/1.0.0 (hand-authored)",
+  "generated_at": "2026-09-01T20:28:00Z",
+  "candidates": [
+    {
+      "id": "cand-001",
+      "type": "learning",
+      "title": "Canonicalise upload content types from a curated extension map that outranks the browser's report",
+      "body": "A browser-reported MIME type can be real-but-exotic: Windows reports .aac files as audio/vnd.dlna.adts, which is genuinely audio but absent from the downstream provider's allowlist. Accepting any type in the right family and forwarding it verbatim means the exotic label rides through storage into the provider call and fails far from its cause. The robust order: a curated extension→MIME map (every value verified against the consumer's documented allowlist) wins whenever the extension is recognised; the browser's report is trusted only when the filename says nothing; known-exotic aliases are mapped explicitly, extended only from observed refusals. Bonus discipline: when a provider's 400 enumerates its allowlist verbatim, that error text is authoritative evidence — audit the whole curated map against it on the spot (that audit caught .3gp→audio/3gpp as a second latent failure).",
+      "confidence": "high",
+      "basis": "The first real end-to-end upload (2026-09-02): Sarvam /start returned 400 'Invalid file type: audio/vnd.dlna.adts' with its full allowlist; the fix (extension-map precedence + alias + 3gp remap) was applied to both product trees and the MP3 retry then completed the pipeline end to end.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v3/src/lib/storage.ts (canonicalAudioContentType, EXOTIC_AUDIO_ALIASES)",
+        "Projects/classmind/product/classmind-v2/src/lib/storage.ts"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-002",
+      "type": "learning",
+      "title": "A grounded Q&A system's quality ceiling is its extraction contract, not its answer model",
+      "body": "In a retrieval-grounded architecture where the answer model sees only stored knowledge (never the source), any fact the extraction contract has no field for is unanswerable forever, no matter how good the answer model is. Observed concretely: a lecture named the three specific students an assignment was for; the extraction schema has no audience/for-whom concept and the prompt never asks; the stored item carried no audience; the answer engine, asked 'who is this for?', could only pad. Two consequences: (1) Q&A failures must be diagnosed against the STORED knowledge first — the fix usually belongs in the extraction contract (versioned), not in the answer prompt; (2) the answer prompt must instruct naming the gap ('the stored knowledge does not record who') rather than improvising, because in this architecture a graceful admission is the correct output, not a failure.",
+      "confidence": "high",
+      "basis": "The 2026-09-02 Ask failure on the Robotics lecture: names verified present in the raw transcript, absent from the stored item, vague billed answer produced; diagnosis run read-only against knowledge_items/evidence and the transcript.",
+      "evidence_refs": [
+        "Projects/classmind/.knowledge/roadmap.md (Backlog from first live use)",
+        "Projects/classmind/product/classmind-v3/src/lib/knowledge/answer.ts"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-003",
+      "type": "mistake",
+      "title": "A new paid path (Ask) shipped with no metering — the unmeasured-cost defect recurred in a second shape",
+      "body": "Weeks after the 2026-08-30 incident ('nothing in the product counts what it spends') produced the processing_runs ledger for extraction, the Ask path went live billing one reasoning call per question with its returned token usage discarded and no record anywhere — the same defect class in a new location. The generalisation: cost metering is a property every paid path must carry AT BIRTH, not a retrofit to the path that already burned you; when adding any provider call, the review question is 'where is its usage recorded?' before 'does it work?'. Three real questions were asked before anyone could say what they cost; the honest answer was an estimate.",
+      "confidence": "high",
+      "basis": "answerFromKnowledge calls the provider and returns only text; the 2026-09-02 cost report for the day had to estimate Ask usage from prompt shapes while extraction was exact to the token from its ledger. Recorded as roadmap item R6.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v3/src/lib/knowledge/answer.ts",
+        "Projects/classmind/.knowledge/roadmap.md (Meter Ask)"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": ["AI-Memory/Inbox/classmind/2026-08-30T1947Z-cost-controls-and-provider-abstraction/ (the original incident's candidates — this is its recurrence evidence, which itself may promote the original to Validated)"],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-004",
+      "type": "decision",
+      "title": "ClassMind adopts the classroom-app grammar but refuses the LMS/communication product: identity is zero-entry, provenance-verified classroom memory",
+      "body": "Operator decision, 2026-09-02, after an argued assessment. ClassMind restructures its UX around the established classroom-app grammar (class rail; per-class Home/Ask/Lectures/Assignments; stream-shaped Home; confirm-as-posting as the hero moment) and deliberately does NOT build the commodity collaboration product: no person-to-person chat, no meetings, no file submission/grading. Rationale: Microsoft gives Teams to colleges free and is bolting Copilot on; a three-founder team cannot win a feature race, and the defensible differentiator is what Teams structurally lacks — the teacher just teaches, the system hears the assignment, one tap confirms it, students get it with the professor's voice as evidence. Real-usage evidence reinforced the rejection: in the operator's own college, collaboration happens in a self-organized group chat OUTSIDE the class team, and class streams are run muted/broadcast. Cost accepted: users comparing feature lists will find ClassMind 'smaller'; the bet is sharper beats bigger. Implementation begins with v4 (grammar shell over the Observatory skin, v3 frozen as pre-shell baseline).",
+      "confidence": "high",
+      "basis": "The 2026-09-02 conversation: operator proposed a Teams-like direction, the counter-argument (grammar yes, product no) was made and explicitly endorsed ('steal the grammar, not the product... let's steal it better'); grammar research written and screenshot-verified the same day; v4 overnight build commissioned on this basis.",
+      "evidence_refs": [
+        "Projects/classmind/.knowledge/design/teams-grammar/grammar.md",
+        "Projects/classmind/.knowledge/design/teams-grammar/screenshots/"
+      ],
+      "proposed_scope": "project",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    }
+  ]
+}
