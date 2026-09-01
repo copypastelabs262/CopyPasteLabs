@@ -269,6 +269,16 @@ export default function LectureUpload({
     if (!file) return;
     setError(null); setFailure(null); setProgress(0);
     setProviderStatus(null); setLectureId(null);
+
+    // PRE-FLIGHT: would this server be allowed to transcribe for real? Asked
+    // while there is still nothing to orphan -- a refusal after create+upload
+    // leaves a pending_upload row nothing can resume. The transcribe route
+    // keeps its own guard either way; this only moves the answer earlier.
+    if (!(await liveTranscriptionAllowed())) {
+      setAuthNotice(SPEND_GUIDE);
+      return;
+    }
+    setAuthNotice(null);
     // Which sentence the teacher gets if this throws. Moved forward as the run
     // advances, so the catch does not have to reverse-engineer the phase.
     let stage: FailureKind = "upload";
