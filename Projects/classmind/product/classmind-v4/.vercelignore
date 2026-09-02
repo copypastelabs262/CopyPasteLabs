@@ -1,0 +1,5 @@
+# Keep deploys lean: the design-loop harness, its screenshot evidence and the
+# overnight docs are repo material, not app runtime.
+design-loop
+V4-OVERNIGHT-REPORT.md
+V4-ARCHITECTURE.md
