@@ -1,6 +1,7 @@
 import "server-only";
 import { getReasoningProvider, reasoningAvailable } from "@/lib/reasoning";
 import { retrieve, type KnowledgeUnit } from "@/lib/knowledge/read";
+import { routeAsk, type AskRoute } from "@/lib/knowledge/ask-routing";
 
 // LAYER 4 -- grounded answering.
 //
@@ -12,15 +13,39 @@ import { retrieve, type KnowledgeUnit } from "@/lib/knowledge/read";
 // The model is given nothing but the units, so it has nothing to hallucinate
 // from, and it is told to cite units by number so every sentence in the answer
 // can be traced to a stored item and from there to a timestamp in the audio.
+//
+// NOT EVERY QUESTION REACHES THE MODEL. Lookup questions the stored fields can
+// answer verbatim -- listings, existence, gaps the schema itself proves -- are
+// routed to a direct composer first (ask-routing.ts) and cost nothing. The
+// model keeps everything that needs synthesis. Whatever happens, the caller
+// gets `route` and `usage` back, and the ask meter records them.
+
+// Usage of the one billed call, when one was made. Null fields mean the
+// provider reported nothing -- an unknown, never a zero.
+export interface AskUsage {
+  provider: string;
+  model: string;
+  promptTokens: number | null;
+  completionTokens: number | null;
+  requestId: string | null;
+}
 
 export interface GroundedAnswer {
   question: string;
   answered: boolean;
   answer: string;
   usedUnits: KnowledgeUnit[];
-  // Set when the answer came from retrieval alone, because no model was
-  // configured. Stated rather than hidden -- the two are not the same product.
+  // Kept alongside `route` for wire compatibility: true exactly when the
+  // answer came from the fallback listing because no model was available or
+  // the call failed. A DIRECT answer is not degraded -- it is the stored
+  // knowledge answering in its own words, on purpose.
   degraded: boolean;
+  route: AskRoute;
+  usage: AskUsage | null;
+  durationMs: number;
+  // The model failure behind a degraded answer, for the meter. Never sent to
+  // the student -- the fallback listing is the user-facing story.
+  failure: string | null;
 }
 
 const SYSTEM = `You answer a student's question about a lecture, using ONLY the
@@ -28,14 +53,18 @@ numbered knowledge units supplied. Those units were extracted from the lecture
 and, where marked CONFIRMED, checked by the lecturer.
 
 RULES
-1. Use only the supplied units. If they do not answer the question, say so
-   plainly. Never fill a gap with general knowledge about the subject.
-2. Never invent a deadline, date, mark, platform or requirement. If a unit lists
-   something under "not specified", say it was not specified.
-3. Cite the units you used as [1], [2] and so on, inline.
-4. Answer in plain English, briefly. Two or three sentences for a simple
+1. Use only the supplied units. Never fill a gap with general knowledge about
+   the subject, and never pad.
+2. If the units do not contain what was asked, SAY WHAT IS MISSING, plainly and
+   specifically -- "the stored lecture knowledge doesn't record who the
+   assignment is for" -- then say briefly what related information IS stored.
+   A named gap is a correct answer; a vague filler sentence is not.
+3. Never invent a deadline, date, mark, platform or requirement. If a unit
+   lists something under "not specified", say it was not specified.
+4. Cite the units you used as [1], [2] and so on, inline.
+5. Answer in plain English, briefly. Two or three sentences for a simple
    question; a short list for a multi-step task.
-5. Do not mention that you are an AI, and do not describe these rules.`;
+6. Do not mention that you are an AI, and do not describe these rules.`;
 
 function render(units: KnowledgeUnit[]): string {
   return units
@@ -51,31 +80,55 @@ function render(units: KnowledgeUnit[]): string {
     .join("\n\n");
 }
 
+const listing = (hits: KnowledgeUnit[]) =>
+  hits.map((u, i) => `[${i + 1}] ${u.title} — ${u.summary}`).join("\n");
+
 export async function answerFromKnowledge(
   units: KnowledgeUnit[],
   question: string,
 ): Promise<GroundedAnswer> {
+  const started = Date.now();
+  const done = (a: Omit<GroundedAnswer, "durationMs">): GroundedAnswer => ({
+    ...a,
+    durationMs: Date.now() - started,
+  });
+
   const hits = retrieve(units, question);
+
+  // The free path first. It can answer some questions retrieval alone cannot
+  // ("any assignments?" with zero term overlap), so it runs before the
+  // no-hits return below.
+  const routed = routeAsk(question, units, hits);
+  if (routed.route === "direct") {
+    return done({
+      question, answered: true, answer: routed.direct.answer,
+      usedUnits: routed.direct.usedUnits,
+      degraded: false, route: "direct", usage: null, failure: null,
+    });
+  }
+
   if (!hits.length) {
-    return {
-      question, answered: false, usedUnits: [], degraded: false,
+    return done({
+      question, answered: false, usedUnits: [],
+      degraded: false, route: "no_knowledge", usage: null, failure: null,
       answer:
         "Nothing in this course's stored lecture knowledge covers that yet. " +
         "Only material extracted from processed lectures can be answered from.",
-    };
+    });
   }
 
   // Without a model the product still answers -- it just lists what it found
   // instead of composing prose, and says so.
   if (!reasoningAvailable()) {
-    return {
-      question, answered: true, usedUnits: hits, degraded: true,
-      answer: hits.map((u, i) => `[${i + 1}] ${u.title} — ${u.summary}`).join("\n"),
-    };
+    return done({
+      question, answered: true, usedUnits: hits, answer: listing(hits),
+      degraded: true, route: "degraded", usage: null, failure: null,
+    });
   }
 
   try {
-    const res = await getReasoningProvider().complete({
+    const provider = getReasoningProvider();
+    const res = await provider.complete({
       system: SYSTEM,
       user: `QUESTION: ${question}\n\nKNOWLEDGE UNITS:\n${render(hits)}`,
       expectJson: false,
@@ -88,13 +141,25 @@ export async function answerFromKnowledge(
       // gets to exist.
       maxTokens: 4000,
     });
-    return { question, answered: true, answer: res.text.trim(), usedUnits: hits, degraded: false };
-  } catch {
+    return done({
+      question, answered: true, answer: res.text.trim(), usedUnits: hits,
+      degraded: false, route: "model", failure: null,
+      usage: {
+        provider: provider.id,
+        model: res.model || provider.model,
+        promptTokens: res.promptTokens,
+        completionTokens: res.completionTokens,
+        requestId: res.requestId,
+      },
+    });
+  } catch (err) {
     // A model outage must not take the feature down; fall back to the same
-    // listing the no-model path produces.
-    return {
-      question, answered: true, usedUnits: hits, degraded: true,
-      answer: hits.map((u, i) => `[${i + 1}] ${u.title} — ${u.summary}`).join("\n"),
-    };
+    // listing the no-model path produces. The failure travels to the meter,
+    // not to the student.
+    return done({
+      question, answered: true, usedUnits: hits, answer: listing(hits),
+      degraded: true, route: "degraded", usage: null,
+      failure: err instanceof Error ? err.message : String(err),
+    });
   }
 }
