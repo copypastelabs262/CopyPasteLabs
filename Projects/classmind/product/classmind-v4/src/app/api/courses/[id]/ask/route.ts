@@ -3,12 +3,16 @@ import { requireUser, requireCourseAccess, errorResponse } from "@/lib/auth";
 import { readKnowledge } from "@/lib/knowledge/read";
 import { serviceClient } from "@/lib/supabase/service";
 import { answerFromKnowledge } from "@/lib/knowledge/answer";
+import { recordAskRun } from "@/lib/knowledge/ask-meter";
 
 // LAYER 4 -- a student asks a question of the course's memory.
 //
 // This used to return a ranked list of confirmed rows and call it an answer.
 // It now retrieves the relevant stored knowledge units and has a model compose
-// a grounded answer from them, citing the units it used.
+// a grounded answer from them, citing the units it used -- unless the routing
+// layer can answer from the stored fields directly, in which case no model is
+// called at all. Either way the ask is METERED: one line in the server log and
+// one row in ask_runs, so this paid path can never again spend invisibly.
 //
 // The model never sees a transcript. It sees only knowledge that has already
 // been reconstructed and, where it matters, confirmed by the lecturer -- so the
