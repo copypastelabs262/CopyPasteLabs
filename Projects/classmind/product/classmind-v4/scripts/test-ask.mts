@@ -131,7 +131,7 @@ for (const q of [
   "Did sir give any assignment?",
   "What tasks do we have pending?",
 ]) {
-  const r = routeAsk(q, COURSE, retrieveLike(q, COURSE));
+  const r = routeAsk(q, COURSE, retrieve(COURSE, q));
   check(r.route === "direct", `direct: "${q}"`);
   if (r.route === "direct") {
     check(r.direct.answer.includes(ASSIGNMENT.title), `  lists the assignment: "${q}"`);
