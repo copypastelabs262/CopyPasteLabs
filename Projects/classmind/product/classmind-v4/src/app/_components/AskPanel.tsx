@@ -39,6 +39,10 @@ export interface Answer {
   sources: Source[];
   /** On the wire and deliberately never rendered -- see the note above. */
   degraded: boolean;
+  /** How the answer was produced: "direct" cost nothing (answered from stored
+   *  fields, no model call), "model" was one billed call. Optional so an older
+   *  server shape still renders. */
+  route?: "model" | "direct" | "degraded" | "no_knowledge";
   knowledgeUnitsAvailable: number;
 }
 
