@@ -203,6 +203,40 @@ export function composeDirectAnswer(
   }
 }
 
+// Retrieval for question answering.
+//
+// Term overlap over a few dozen stored units, not embeddings. The retrieval set
+// for one course is small enough that a vector index would be infrastructure
+// with no problem to solve, and lexical matching over a knowledge base whose
+// text is already a clean English summary behaves well. This is the piece to
+// revisit first if recall becomes the complaint.
+//
+// Moved here from read.ts 2026-09-03 so scripts/test-ask.mts covers it, and
+// fixed on the way: the confirmed-status bonus used to be unconditional, which
+// made every confirmed item a "hit" for EVERY question -- a gibberish question
+// against a course with one confirmed assignment retrieved that assignment and
+// went on to pay a model to answer from it. Confirmation now breaks ties among
+// units that already matched; it cannot create a match from nothing.
+export function retrieve(units: KnowledgeUnit[], question: string, limit = 8): KnowledgeUnit[] {
+  const terms = question.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((t) => t.length > 2);
+  if (!terms.length) return units.slice(0, limit);
+
+  const WANTS_ACTIONABLE = /(assign|homework|submit|deadline|due|exam|task|deliver|marks?)/i.test(question);
+
+  const scored = units.map((u) => {
+    const hay = `${u.title} ${u.summary} ${u.steps.join(" ")} ${u.kind}`.toLowerCase();
+    let score = 0;
+    for (const t of terms) if (hay.includes(t)) score += 2;
+    // A question about work should surface work, even when the words differ.
+    if (WANTS_ACTIONABLE && u.category === "actionable") score += 3;
+    // A confirmed item outranks an automatic one at EQUAL RELEVANCE: a human
+    // has vouched for it. Only where something already matched -- see above.
+    if (score > 0 && u.status === "confirmed") score += 1;
+    return { u, score };
+  });
+  return scored.filter((s) => s.score > 0).sort((a, b) => b.score - a.score).slice(0, limit).map((s) => s.u);
+}
+
 export type RouteDecision = { route: "direct"; direct: DirectAnswer } | { route: "model" };
 
 // The one entry point. "model" here means "let the existing pipeline decide"
