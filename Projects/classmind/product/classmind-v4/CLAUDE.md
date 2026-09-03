@@ -28,7 +28,12 @@ default. A missing reasoning provider is an error, not a reason to reach for Sar
 `test:replay-gate` · any curl or browser click reaching `/extract`, `/ask` or `/transcribe`.
 
 **Free** (run freely): `test:extraction` · `test:transcript` · `test:reconstruction` ·
-`test:knowledge-plan` — pure functions over stored fixtures.
+`test:knowledge-plan` · `test:ask` — pure functions over stored fixtures.
+
+Ask is METERED (2026-09-03): every question logs one `[ask-meter]` line and inserts one
+`ask_runs` row (migration `20260903100000`), $0 routes included. Simple lookups are routed
+model-free by `src/lib/knowledge/ask-routing.ts`; a question that reaches `/ask` may still
+bill the reasoning provider, so the ask-first rule above is unchanged.
 
 ## The processing ledger
 
