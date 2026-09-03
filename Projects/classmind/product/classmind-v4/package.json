@@ -11,6 +11,7 @@
     "design:verify": "node design-loop/verify.mts",
     "lint": "eslint",
     "setup:db": "node --env-file=.env.local scripts/setup-storage.mts",
+    "test:ask": "node --conditions=react-server scripts/test-ask.mts",
     "test:extraction": "node scripts/test-extraction.mts",
     "test:reconstruction": "node --conditions=react-server scripts/test-reconstruction.mts",
     "test:knowledge-plan": "node --conditions=react-server scripts/test-knowledge-plan.mts",
