@@ -11,7 +11,7 @@
 //      else it mentions. The failure mode of routing is a question answered
 //      worse than it would have been; these tests are the fence.
 //   2. THE HONEST GAP IS AN ANSWER. "Who is the assignment for" and "when is
---      it due" against a schema that does not store those facts must come back
+//      it due" against a schema that does not store those facts must come back
 //      naming the gap, at $0, never padding around it.
 //   3. THE METER NEVER LIES. Unknown token counts stay null (never zero), the
 //      question is capped, and the meter line always states the route.
