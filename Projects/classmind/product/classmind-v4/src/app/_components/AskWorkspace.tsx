@@ -130,6 +130,14 @@ export default function AskWorkspace() {
                           Showing the matching lecture notes directly — a composed answer
                           isn&rsquo;t available right now.
                         </p>
+                      ) : t.answer.route === "direct" ? (
+                        /* The $0 path, named. Same calm register as the degraded
+                           chip: this is provenance, not a boast — the answer came
+                           straight from the stored knowledge, nothing composed it. */
+                        <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-line px-3 py-1.5 text-[12px] text-ink-soft">
+                          <BookIcon size={13} />
+                          Answered straight from the stored lecture knowledge.
+                        </p>
                       ) : null}
                       <AnswerView answer={t.answer} nav={nav} scope="course" />
                     </>
