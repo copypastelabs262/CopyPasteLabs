@@ -283,18 +283,22 @@ const MODEL_RUN: AskRunRecord = {
 }
 
 /* ------------------------------------------------------------------------- */
+/* 8. Retrieval                                                               */
+/* ------------------------------------------------------------------------- */
 
-// A term-overlap stand-in for retrieve() so this test does not import read.ts
-// at runtime (which would drag in the Supabase client). Same contract:
-// score > 0 units, actionable boosted for work questions.
-function retrieveLike(question: string, units: KnowledgeUnit[]): KnowledgeUnit[] {
-  const terms = question.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((t) => t.length > 2);
-  const wantsWork = /(assign|homework|submit|deadline|due|exam|task|deliver|marks?)/i.test(question);
-  return units.filter((u) => {
-    const hay = `${u.title} ${u.summary}`.toLowerCase();
-    return terms.some((t) => hay.includes(t)) || (wantsWork && u.category === "actionable");
-  });
+console.log("retrieval:");
+check(retrieve(COURSE, "zzzqqq plumbus?").length === 0,
+  "a question matching nothing retrieves nothing -- confirmation alone is not relevance");
+check(retrieve(COURSE, "is there homework?").some((u) => u.id === ASSIGNMENT.id),
+  "a work question surfaces work even with zero term overlap");
+{
+  const twin = unit({ title: "What VoIP Is, Revisited", summary: "Voice carried over IP networks." });
+  const ranked = retrieve([twin, unit({ ...TEACHING[0], status: "confirmed" } as Partial<KnowledgeUnit>), ASSIGNMENT], "what is voip?");
+  check(ranked.length >= 2 && ranked[0].status === "confirmed",
+    "at equal relevance the confirmed unit still ranks first");
 }
+check(retrieve(COURSE, "of an it").length > 0,
+  "a question with only short words falls back to the first units rather than nothing");
 
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed > 0 ? 1 : 0);
