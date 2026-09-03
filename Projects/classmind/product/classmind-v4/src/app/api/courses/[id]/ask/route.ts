@@ -108,6 +108,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         evidence: u.evidence,
       })),
       degraded: result.degraded,
+      route: result.route,
+      // Cost on the wire, so the operator can see what a question spent
+      // without opening a log. Null when no model was called.
+      usage: result.usage
+        ? { promptTokens: result.usage.promptTokens, completionTokens: result.usage.completionTokens }
+        : null,
+      meter: meter.state,
       knowledgeUnitsAvailable: units.length,
       scope: lectureId ? "lecture" : "course",
     });
