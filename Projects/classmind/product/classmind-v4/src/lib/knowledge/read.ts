@@ -225,29 +225,5 @@ export async function readKnowledge(opts: Options): Promise<KnowledgeUnit[]> {
     : fromServableLecture.filter((u) => u.status !== "rejected");
 }
 
-// Retrieval for question answering.
-//
-// Term overlap over a few dozen stored units, not embeddings. The retrieval set
-// for one course is small enough that a vector index would be infrastructure
-// with no problem to solve, and lexical matching over a knowledge base whose
-// text is already a clean English summary behaves well. This is the piece to
-// revisit first if recall becomes the complaint.
-export function retrieve(units: KnowledgeUnit[], question: string, limit = 8): KnowledgeUnit[] {
-  const terms = question.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((t) => t.length > 2);
-  if (!terms.length) return units.slice(0, limit);
-
-  const WANTS_ACTIONABLE = /(assign|homework|submit|deadline|due|exam|task|deliver|marks?)/i.test(question);
-
-  const scored = units.map((u) => {
-    const hay = `${u.title} ${u.summary} ${u.steps.join(" ")} ${u.kind}`.toLowerCase();
-    let score = 0;
-    for (const t of terms) if (hay.includes(t)) score += 2;
-    // A question about work should surface work, even when the words differ.
-    if (WANTS_ACTIONABLE && u.category === "actionable") score += 3;
-    // A confirmed item outranks an automatic one at equal relevance: a human
-    // has vouched for it.
-    if (u.status === "confirmed") score += 1;
-    return { u, score };
-  });
-  return scored.filter((s) => s.score > 0).sort((a, b) => b.score - a.score).slice(0, limit).map((s) => s.u);
-}
+// Retrieval for question answering lives in ./ask-routing.ts (pure, tested
+// offline by scripts/test-ask.mts) alongside the route decision it feeds.
