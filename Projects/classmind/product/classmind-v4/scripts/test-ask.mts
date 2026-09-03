@@ -293,7 +293,8 @@ check(retrieve(COURSE, "is there homework?").some((u) => u.id === ASSIGNMENT.id)
   "a work question surfaces work even with zero term overlap");
 {
   const twin = unit({ title: "What VoIP Is, Revisited", summary: "Voice carried over IP networks." });
-  const ranked = retrieve([twin, unit({ ...TEACHING[0], status: "confirmed" } as Partial<KnowledgeUnit>), ASSIGNMENT], "what is voip?");
+  const confirmedTwin: KnowledgeUnit = { ...TEACHING[0], id: "u-confirmed", status: "confirmed" };
+  const ranked = retrieve([twin, confirmedTwin, ASSIGNMENT], "what is voip?");
   check(ranked.length >= 2 && ranked[0].status === "confirmed",
     "at equal relevance the confirmed unit still ranks first");
 }
