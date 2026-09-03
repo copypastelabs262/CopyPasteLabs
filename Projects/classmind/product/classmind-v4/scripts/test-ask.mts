@@ -19,6 +19,7 @@
 import {
   classifyForDirect,
   composeDirectAnswer,
+  retrieve,
   routeAsk,
 } from "../src/lib/knowledge/ask-routing.ts";
 import { buildAskRunRow, meterLine, type AskRunRecord } from "../src/lib/knowledge/ask-meter.ts";
