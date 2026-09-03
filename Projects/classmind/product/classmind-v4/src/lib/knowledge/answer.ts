@@ -1,7 +1,7 @@
 import "server-only";
 import { getReasoningProvider, reasoningAvailable } from "@/lib/reasoning";
-import { retrieve, type KnowledgeUnit } from "@/lib/knowledge/read";
-import { routeAsk, type AskRoute } from "@/lib/knowledge/ask-routing";
+import type { KnowledgeUnit } from "@/lib/knowledge/read";
+import { retrieve, routeAsk, type AskRoute } from "@/lib/knowledge/ask-routing";
 
 // LAYER 4 -- grounded answering.
 //
