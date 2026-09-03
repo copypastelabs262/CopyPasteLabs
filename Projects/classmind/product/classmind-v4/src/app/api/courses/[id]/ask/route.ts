@@ -66,6 +66,27 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const units = await readKnowledge({ courseId: id, lectureId, forStudent: !isOwner });
     const result = await answerFromKnowledge(units, q);
 
+    // Metered before it is returned, $0 routes included -- "which questions
+    // cost nothing" is half of what the meter is for. Awaited (one insert),
+    // but never allowed to fail the answer: recordAskRun reports state
+    // instead of throwing.
+    const meter = await recordAskRun({
+      courseId: id,
+      lectureId: lectureId ?? null,
+      userId: user.id,
+      question: q,
+      route: result.route,
+      provider: result.usage?.provider ?? null,
+      model: result.usage?.model ?? null,
+      requestId: result.usage?.requestId ?? null,
+      promptTokens: result.usage?.promptTokens ?? null,
+      completionTokens: result.usage?.completionTokens ?? null,
+      unitsAvailable: units.length,
+      unitsCited: result.usedUnits.length,
+      durationMs: result.durationMs,
+      error: result.failure,
+    });
+
     return NextResponse.json({
       question: result.question,
       answered: result.answered,
