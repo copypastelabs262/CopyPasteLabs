@@ -65,7 +65,7 @@ async function main() {
   const token = signIn.data.session!.access_token;
 
   const courses = await api(token, "/api/courses");
-  const course = (courses.json?.courses ?? [])[0];
+  const course = [...(courses.json?.enrolled ?? []), ...(courses.json?.owned ?? [])][0];
   if (!course) throw new Error("The test student is enrolled in no course; run verify-course-units first.");
   console.log(`course: ${course.title ?? course.id}`);
 
