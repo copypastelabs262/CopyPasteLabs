@@ -17,7 +17,7 @@ import { ChevronDownIcon } from "./ui/icons";
 // the browser, but every server component on the next screen was rendered with
 // the old session cookie already read; without the refresh the app can land on
 // /signin still showing the previous user's name in the header.
-function useSignOut() {
+export function useSignOut() {
   const router = useRouter();
   return useCallback(async () => {
     await browserClient().auth.signOut();
