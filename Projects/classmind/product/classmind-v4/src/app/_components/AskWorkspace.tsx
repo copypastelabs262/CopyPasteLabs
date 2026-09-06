@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AnswerView, Looking, SUGGESTIONS, type Answer } from "./AskPanel";
 import type { EvidenceNav } from "./KnowledgeUnit";
 import { useClassDataMaybe } from "./shell/ClassContext";
+import { CARRIED_QUESTION_KEY } from "./ask-carry";
 import { Button, Skeleton, cx } from "./ui";
 import { BookIcon, ChevronDownIcon, PlusIcon } from "./ui/icons";
 import { agoLabel } from "./CoursesClient";
