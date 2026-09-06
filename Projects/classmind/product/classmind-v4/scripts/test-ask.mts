@@ -316,6 +316,12 @@ check(classifyForDirect("Who has to submit it by Friday?", [ASSIGNMENT]) === "au
   "who-question containing a date stays an audience question");
 check(classifyForDirect("what is due this week", [ASSIGNMENT]) === "assignments",
   "bare 'due' is a listing, not a deadline");
+check(classifyForDirect("Which one is due first?", [ASSIGNMENT]) === null,
+  "a comparative deadline question goes to the model, not a re-listing");
+check(classifyForDirect("Which lecture covered G.711?", [ASSIGNMENT]) === null,
+  "'which lecture covered X' is a where-lookup for the model, not a syllabus dump");
+check(retrieve(COURSE, "What do I need to work on?").some((u) => u.id === ASSIGNMENT.id),
+  "'what do I need to work on' surfaces recorded work");
 check(classifyForDirect("when is it due?", [ASSIGNMENT]) === "deadline",
   "'when…due' with an actionable hit is a deadline even without the noun");
 check(classifyForDirect("when is it due?", TEACHING) === null,
