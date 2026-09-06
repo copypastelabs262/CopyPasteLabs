@@ -214,6 +214,10 @@ check(subjectAsk.json.route === "direct" &&
 section("GLOBAL -- cross-subject listing at $0");
 const gList0 = await api(student, "/api/ask/conversations");
 check(gList0.status === 200 && gList0.json.state === "ok", "the global conversation listing answers");
+// POST-only by design: a GET that answers questions would spend money and
+// write rows on a top-level cross-site navigation (SameSite=Lax).
+const getAsk = await api(student, `/api/ask?q=${encodeURIComponent(DIRECT_Q)}`);
+check(getAsk.status === 405, "GET /api/ask is refused (405) -- a link must never spend", getAsk.status);
 const g1 = await api(student, "/api/ask", {
   body: { question: "What assignments do I have?", persist: true },
 });
