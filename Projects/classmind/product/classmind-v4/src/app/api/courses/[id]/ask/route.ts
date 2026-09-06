@@ -85,8 +85,13 @@ async function handleAsk(courseId: string, input: AskInput) {
   let conversationNote: string | null = null;
   const conversationId = input.conversationId?.trim() || undefined;
   const wantsPersistence = Boolean(conversationId || input.persist);
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
   if (conversationId) {
+    // A malformed id is a 404, not a database error on the wire.
+    if (!UUID.test(conversationId)) {
+      return NextResponse.json({ error: "That conversation was not found." }, { status: 404 });
+    }
     const got = await getConversation(svc, user.id, conversationId);
     if (got.state === "not_found") {
       return NextResponse.json({ error: "That conversation was not found." }, { status: 404 });
@@ -96,6 +101,26 @@ async function handleAsk(courseId: string, input: AskInput) {
     } else {
       if (got.conversation.courseId !== courseId) {
         return NextResponse.json({ error: "That conversation was not found." }, { status: 404 });
+      }
+      // A request that names a DIFFERENT lecture than the thread's own is a
+      // refusal, not a silent correction -- continuing a thread must never
+      // quietly move it to another part of the course.
+      const requestedLecture = input.lectureId?.trim() || null;
+      if (
+        requestedLecture &&
+        !contextMatches(
+          {
+            scope: got.conversation.scope,
+            courseId: got.conversation.courseId,
+            lectureId: got.conversation.lectureId,
+          },
+          { courseId, lectureId: requestedLecture },
+        )
+      ) {
+        return NextResponse.json(
+          { error: "That conversation belongs to a different part of this course." },
+          { status: 409 },
+        );
       }
       conversation = got.conversation;
       storedHistory = messagesToHistory(got.messages);
