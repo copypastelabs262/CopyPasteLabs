@@ -139,6 +139,10 @@ const mmss = (ms: number): string => {
 export interface AnswerContext {
   scope: "lecture" | "course" | "global";
   courseNames?: Map<string, string>;
+  // Subjects the global fan-out cap left unread. Almost always zero; when it
+  // isn't, the SUBJECTS line must say so, because a truncated world presented
+  // as complete makes the model confidently deny work that exists.
+  subjectsOmitted?: number;
 }
 
 // At most this many units reach the prompt; retrieval already ranks them.
