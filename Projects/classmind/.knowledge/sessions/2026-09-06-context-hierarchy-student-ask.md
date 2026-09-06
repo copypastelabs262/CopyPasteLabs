@@ -108,14 +108,15 @@ full-page captures remains a known capture artifact, not a product bug.
 Gemini: 5 calls, 8,510 tokens (~₹0.12), all in the deliberate scope eval.
 Sarvam: 0. Every other check in the milestone was free by construction.
 
-## HUMAN-ONLY items open
+## HUMAN-ONLY items
 
-1. Apply `supabase/migrations/20260906180000_ask_runs_global.sql` (drops NOT
-   NULL on `ask_runs.course_id`), then re-run `npm run verify:conversations` —
-   the global meter line currently reports `meter: "unavailable"` naming that
-   migration; course/lecture metering is unaffected.
-2. Google OAuth click-throughs (carried): allowlist `http://localhost:3500/**`
-   in Supabase Auth, one Google signup per role.
+1. ~~Apply `20260906180000_ask_runs_global.sql`~~ — **applied by the operator
+   the same day.** Verified immediately: `verify:conversations` re-run went to
+   **48/48** with the global meter now a hard pin (`meter: "ok"`), and
+   null-course rows confirmed directly in `ask_runs` (route=direct,
+   promptTokens=0 — the verification itself stayed $0).
+2. Google OAuth click-throughs (carried, still open): allowlist
+   `http://localhost:3500/**` in Supabase Auth, one Google signup per role.
 
 ## Not done, on purpose
 
