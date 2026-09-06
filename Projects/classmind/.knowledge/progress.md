@@ -7,6 +7,31 @@ Entries are snapshots of what was true when written and are never rewritten. Whe
 resolves something an earlier one recorded as blocked, the earlier line gets a dated marker
 pointing forward — it does not get edited away.
 
+## 2026-09-06 (IV) — Context Hierarchy + Student Ask V1: one architecture, three boundaries
+
+**Done, 8,510 Gemini tokens (~₹0.12), 0 Sarvam.** Architecture doc:
+`product/classmind-v4/CONTEXT-HIERARCHY.md`; full record in
+[`sessions/2026-09-06-context-hierarchy-student-ask.md`](sessions/2026-09-06-context-hierarchy-student-ask.md).
+
+The three-level academic context is real: lecture, subject and global are ONE
+retrieval architecture (`loadAcademicContext`) with scope as an authoritative
+ceiling — the global boundary is enumerated server-side from the session user's
+own memberships (no client id participates), everything reads through the same
+gated `readKnowledge`, and history never overrides scope. The student home
+opens into a global Ask surface (`/ask`, `POST /api/ask`) on persistent
+conversations: cross-subject listings stay direct at $0 with per-subject
+grouping, synthesis goes to Gemini with FACTS explicitly separated from
+RECOMMENDATIONS, and every source names its subject and lecture. The paid eval
+(one pass + one retry) caught three routing defects, all fixed and pinned. An
+adversarial review found two real holes — global threads skipping the
+membership re-check on resume, and a money-spending GET — both fixed and
+proven live (un-enroll/re-enroll probe; GET is 405), and the home→/ask carried
+question moved off the URL into a consumed-once sessionStorage key so no
+crafted link can spend on page load. Design loop fixed three rendering defects
+across 18 shots. **526 offline + 47 live checks green; build clean; v1.2.0
+engine untouched; nothing pushed.** HUMAN-ONLY: apply `20260906180000` (global
+meter), then re-run `verify:conversations`; OAuth click-throughs still carried.
+
 ## 2026-09-06 (III, closed) — Persistent Conversations V1 verified end-to-end
 
 Migration applied by the operator; the full live contract passed **27/27** (ownership,
