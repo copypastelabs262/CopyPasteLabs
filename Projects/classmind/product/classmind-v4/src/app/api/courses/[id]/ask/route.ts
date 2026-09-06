@@ -210,6 +210,7 @@ async function handleAsk(courseId: string, input: AskInput) {
       });
       exchangeState = appended.state;
       if (appended.note) conversationNote = appended.note;
+      conversation = { ...conversation, title: appended.title };
     }
   }
 
