@@ -147,13 +147,19 @@ const MAX_UNITS = 8;
 // transcript dump, which this layer exists to avoid.
 const MAX_QUOTES = 2;
 
-function render(units: KnowledgeUnit[]): string {
+function render(units: KnowledgeUnit[], context?: AnswerContext): string {
   return units
     .map((u, i) => {
       const parts = [
         `[${i + 1}] (${u.category}/${u.kind}${u.status === "confirmed" ? ", CONFIRMED by lecturer" : ""}) ${u.title}`,
         `    ${u.summary}`,
       ];
+      if (context?.scope === "course") {
+        parts.push(`    lecture: ${u.lectureTitle}`);
+      } else if (context?.scope === "global") {
+        const subject = context.courseNames?.get(u.courseId);
+        parts.push(`    from: ${subject ?? "another subject"} — ${u.lectureTitle}`);
+      }
       if (u.audience) parts.push(`    for: ${u.audience}`);
       if (u.steps.length) parts.push(`    steps: ${u.steps.map((s, n) => `${n + 1}) ${s}`).join("  ")}`);
       if (u.unspecified.length) parts.push(`    not specified: ${u.unspecified.join("; ")}`);
