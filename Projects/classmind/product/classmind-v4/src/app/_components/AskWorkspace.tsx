@@ -469,7 +469,7 @@ export default function AskWorkspace({
                           Answered straight from the stored lecture knowledge.
                         </p>
                       ) : null}
-                      <AnswerView answer={t.answer} nav={nav} scope={scope} />
+                      <AnswerView answer={t.answer} nav={nav} scope={scope} collapsibleSources />
                     </>
                   ) : null}
                 </div>
