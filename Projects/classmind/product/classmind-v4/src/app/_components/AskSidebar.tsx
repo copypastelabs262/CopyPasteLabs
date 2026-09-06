@@ -104,7 +104,7 @@ export default function AskSidebar({
       <button
         type="button"
         onClick={() => {
-          router.push("/ask");
+          router.push(newHref);
           onNavigate?.();
         }}
         className={cx(
