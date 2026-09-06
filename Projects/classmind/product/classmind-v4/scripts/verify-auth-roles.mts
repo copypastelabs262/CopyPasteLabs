@@ -51,7 +51,11 @@ function check(ok: boolean, label: string, detail?: unknown): void {
   }
 }
 
-const PASSWORD = "CmVerify!2026-role";
+// Generated fresh every run -- this file is committed to a PUBLIC repo, and a
+// literal password here would be a usable credential for the throwaway
+// accounts during the seconds they exist. Random, never printed, gone with
+// the accounts at cleanup.
+const PASSWORD = `Cm!${randomBytes(15).toString("base64url")}`;
 const stamp = Date.now().toString(36);
 const createdIds: string[] = [];
 
