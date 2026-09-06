@@ -265,6 +265,28 @@ export default function AskWorkspace({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId, lectureId, global]);
 
+  // SIDEBAR-DRIVEN SWITCHING. In the chat workspace the sidebar changes the URL
+  // (?c=<id> to resume, /ask to start a new chat) and this pane reacts. The
+  // mount effect already handled the first ?c=, so the first run here is
+  // skipped; after that a changed ?c= switches conversations and a cleared ?c=
+  // starts fresh. openConversation/startFresh re-sync the URL to a value that
+  // matches the loaded state, so this never loops.
+  const sidebarSynced = useRef(false);
+  useEffect(() => {
+    if (!withSidebar || storeState !== "ok") return;
+    if (!sidebarSynced.current) {
+      sidebarSynced.current = true;
+      return;
+    }
+    if (asking) return;
+    if (requestedId) {
+      if (requestedId !== conversationId) void openConversation(requestedId);
+    } else if (conversationId !== null || turns.length > 0) {
+      startFresh();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestedId, withSidebar, storeState]);
+
   // The Recent popover closes on outside pointerdown and Escape, same manners
   // as the user menu.
   useEffect(() => {
