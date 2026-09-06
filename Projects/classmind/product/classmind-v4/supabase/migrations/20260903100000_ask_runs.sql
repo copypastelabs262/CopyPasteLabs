@@ -1,7 +1,9 @@
 -- The ask meter: what every student question cost, including the ones that
 -- cost nothing.
 --
--- WRITTEN 2026-09-03. NOT APPLIED. Apply deliberately.
+-- WRITTEN 2026-09-03. APPLIED by the operator 2026-09-06 (verified live: ask_runs
+-- rows exist and every ask logs one). The note below is kept because it
+-- documents the fail-safe the code still carries if run against an unmigrated db.
 -- Until it is applied the code degrades: every ask still prints one meter line
 -- to the server log, and the API response says `meter: "unavailable"` rather
 -- than pretending the row was written.
