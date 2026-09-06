@@ -28,7 +28,9 @@ default. A missing reasoning provider is an error, not a reason to reach for Sar
 `test:replay-gate` · any curl or browser click reaching `/extract`, `/ask` or `/transcribe`.
 
 **Free** (run freely): `test:extraction` · `test:transcript` · `test:reconstruction` ·
-`test:knowledge-plan` · `test:ask` — pure functions over stored fixtures.
+`test:knowledge-plan` · `test:ask` · `test:auth` — pure functions over stored fixtures.
+`verify:auth` is also free (real Supabase auth + local server, throwaway accounts,
+deleted on exit) but writes to the live auth service — run it deliberately.
 
 Ask is METERED (2026-09-03): every question logs one `[ask-meter]` line and inserts one
 `ask_runs` row (migration `20260903100000`), $0 routes included. Simple lookups are routed
