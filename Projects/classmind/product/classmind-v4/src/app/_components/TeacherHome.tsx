@@ -282,14 +282,42 @@ export default function TeacherHome({
                 </div>
               }
             >
+              {/* Grouped, not mixed: a course this teacher OWNS and a course
+                  they merely joined as a student are different relationships,
+                  and folding them into one undifferentiated list made the
+                  teaching home quietly include a class they don't teach. The
+                  headings carry the distinction, so the row itself drops the
+                  redundant "Teaching"/"Student" token. Membership is untouched;
+                  this is presentation only. */}
               <Card padded={false}>
-                <ul className="divide-y divide-line">
-                  {data.courses.map((course) => (
-                    <li key={course.id}>
-                      <CourseRow course={course} />
-                    </li>
-                  ))}
-                </ul>
+                {owned.length ? (
+                  <div>
+                    <p className="px-4 pt-3.5 pb-1 text-[10px] font-medium uppercase tracking-[0.16em] text-ink-faint sm:px-5">
+                      Teaching
+                    </p>
+                    <ul className="divide-y divide-line">
+                      {owned.map((course) => (
+                        <li key={course.id}>
+                          <CourseRow course={course} />
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+                {enrolled.length ? (
+                  <div className={owned.length ? "border-t border-line" : undefined}>
+                    <p className="px-4 pt-3.5 pb-1 text-[10px] font-medium uppercase tracking-[0.16em] text-ink-faint sm:px-5">
+                      Enrolled as a student
+                    </p>
+                    <ul className="divide-y divide-line">
+                      {enrolled.map((course) => (
+                        <li key={course.id}>
+                          <CourseRow course={course} />
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
               </Card>
             </Section>
           </div>
