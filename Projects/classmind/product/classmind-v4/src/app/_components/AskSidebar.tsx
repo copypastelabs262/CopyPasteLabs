@@ -71,7 +71,7 @@ export default function AskSidebar({
     let cancelled = false;
     const load = async () => {
       try {
-        const res = await fetch("/api/ask/conversations");
+        const res = await fetch(listEndpoint);
         const body = (await res.json().catch(() => null)) as
           | { state?: string; conversations?: Convo[] }
           | null;
