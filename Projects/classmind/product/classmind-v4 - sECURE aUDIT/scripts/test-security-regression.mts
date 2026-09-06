@@ -63,6 +63,16 @@ function source(path: string): string {
   return readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 }
 
+// Several checks below scan for a code shape. This codebase explains itself at
+// length, and its comments quote the very patterns being searched for -- so a
+// scan that reads comments reports the explanation of a fixed bug as the bug.
+function stripComments(src: string): string {
+  return src
+    .split("\n")
+    .filter((line) => !line.trimStart().startsWith("//"))
+    .join("\n");
+}
+
 // ---------------------------------------------------------------------------
 console.log("--- OPEN REDIRECT: safeNext (fixed 2026-09-07) ---");
 // The URL parser DELETES tab, LF and CR before resolving. The old validator
@@ -369,6 +379,14 @@ console.log("\n--- AUTHORIZATION: the shape of the route sources ---");
     // what stops it leaving the server.
     const onTheWire = /NextResponse\.json\(\s*\{[^}]*error:\s*[A-Za-z_$][\w$]*(\?)?\.message/;
     check(!onTheWire.test(s), `no raw database message on the wire: ${r}`);
+    // AND the shape that hid two of these from the first sweep: a driver message
+    // SPLICED INTO A SENTENCE rather than used as the whole value. The original
+    // version of this check looked only for `error: err.message` and passed on
+    // `error: \`... : ${err.message}\``, which leaks exactly as much.
+    check(
+      !/\$\{[A-Za-z_$][\w$.]*\.message\}/.test(stripComments(s)),
+      `no driver message interpolated into a response sentence: ${r}`,
+    );
   }
 }
 {
@@ -419,6 +437,15 @@ console.log("\n--- AUTHORIZATION: the shape of the route sources ---");
   );
   check(/mode === "navigate"/.test(mw), "a navigation to an API route is refused");
   check(/originHost !== expectedHost/.test(mw), "a foreign Origin is refused");
+  check(
+    /accept\.includes\("text\/html"\)/.test(mw),
+    "an /api request that wants HTML is refused -- closes the navigation class " +
+      "without depending on Sec-Fetch, which the browsers most at risk do not send",
+  );
+  check(
+    /request\.headers\.get\("host"\) \?\?/.test(mw),
+    "Origin is compared against Host (browser-set), not X-Forwarded-Host (forgeable)",
+  );
   check(/Content-Security-Policy/.test(mw), "a CSP is set");
   check(/frame-ancestors 'none'/.test(mw), "framing is denied");
   check(/microphone=\(\)/.test(mw), "the microphone is denied -- this app records audio");

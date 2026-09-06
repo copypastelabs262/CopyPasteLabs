@@ -186,18 +186,26 @@ export async function DELETE(_r: Request, { params }: { params: Promise<{ id: st
       .from(LECTURE_BUCKET)
       .remove([lecture.storage_path as string]);
     if (storageError) {
+      // The driver text is logged, not returned. Interpolating it into a
+      // sentence is what hid these two from the first sweep AND from the
+      // regression test that asserts no raw message reaches the wire -- the
+      // test looked for `error: err.message` as a whole value, and a message
+      // spliced into a template does not match that shape. Storage errors name
+      // buckets and object keys, and an object key here is a lecture id.
+      console.error("[lecture.delete] storage remove failed:", storageError.message);
       return NextResponse.json(
-        { error: `Could not delete the audio, so nothing was deleted: ${storageError.message}` },
+        { error: "Could not delete the audio, so nothing was deleted. Please try again." },
         { status: 502 },
       );
     }
 
     const { error: rowError } = await svc.from("lectures").delete().eq("id", id);
     if (rowError) {
+      console.error("[lecture.delete] row delete failed:", rowError.message);
       return NextResponse.json(
         {
           error:
-            `The audio was deleted but the lecture record was not: ${rowError.message}. ` +
+            "The audio was deleted but the lecture record was not. " +
             "Deleting the lecture again will finish the job.",
         },
         { status: 500 },

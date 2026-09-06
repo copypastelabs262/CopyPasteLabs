@@ -222,6 +222,29 @@ function crossSiteRefusal(request: NextRequest): NextResponse | null {
     );
   }
 
+  // A REQUEST THAT WANTS HTML IS A NAVIGATION, whatever it says about itself.
+  //
+  // Everything above depends on Sec-Fetch-*, and a browser old enough not to
+  // send those headers also sends no Origin on a top-level GET navigation -- so
+  // the one shape this gate exists to stop (a crafted link, clicked by a
+  // signed-in student, billing the reasoning provider through
+  // GET /api/courses/{id}/ask) had no check left covering it on exactly the
+  // browsers least able to defend themselves.
+  //
+  // `Accept` closes it with no dependency on any modern header at all. A
+  // top-level navigation asks for `text/html`; fetch() asks for */* unless
+  // told otherwise, and every script in scripts/ uses fetch defaults. Nothing
+  // that legitimately calls this API wants an HTML document back, so preferring
+  // HTML is a reliable statement of intent -- and it is the browser making it,
+  // not a page.
+  const accept = request.headers.get("accept") ?? "";
+  if (accept.includes("text/html")) {
+    return NextResponse.json(
+      { error: "This endpoint is not a page. Call it with fetch from the application." },
+      { status: 403 },
+    );
+  }
+
   // Origin, for browsers that send it but not Sec-Fetch-*. Absent is allowed
   // (server-to-server, and same-origin GETs do not send it); present and
   // foreign is refused.
