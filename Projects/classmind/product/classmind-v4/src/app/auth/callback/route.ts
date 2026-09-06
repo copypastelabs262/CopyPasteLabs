@@ -54,40 +54,27 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // A Google user never saw the faculty/student toggle at sign-up, so the
-  // profile row has to be created here. Insert only when absent: this route
-  // runs on EVERY Google sign-in, and a blind upsert would overwrite a name or
-  // role the user has since changed with whatever Google last told us.
-  const svc = serviceClient();
-  const { data: existing } = await svc
-    .from("profiles")
-    .select("id")
-    .eq("id", data.user.id)
-    .maybeSingle();
+  // The role selected on the sign-in page travels as a short-lived cookie set
+  // just before the OAuth handoff -- NOT a query param. Supabase glob-matches
+  // the whole redirect URL against its allow-list, and a non-matching query
+  // string silently rerouted the sign-in to the Site URL, dropping the param
+  // (recorded 2026-08-31): that drop is what created students as faculty. A
+  // cookie on this origin survives the provider round trip regardless.
+  const pendingRole = parseRole(request.cookies.get(PENDING_ROLE_COOKIE)?.value);
 
-  if (!existing) {
-    const metadata = data.user.user_metadata as
-      | { full_name?: string; name?: string }
-      | null;
-    const roleParam = url.searchParams.get("role");
-    // The sign-in page forwards whichever role the user had selected. Anything
-    // else in this param is ignored rather than trusted -- it is query string,
-    // and "faculty" is what currentUser() already defaults to.
-    const role =
-      roleParam === "faculty" || roleParam === "student" ? roleParam : "faculty";
+  // One provisioning path for every account shape. Insert-only: an existing
+  // profile's role is untouched no matter what the cookie or metadata say, so
+  // signing in again can never rewrite who someone is.
+  const ensured = await ensureProfile(data.user, pendingRole);
 
-    // Not fatal if it fails: the session is already established, and
-    // currentUser() treats a missing profile as a faculty account rather than
-    // an error. Bouncing an authenticated user back to /signin would be worse.
-    await svc.from("profiles").upsert(
-      {
-        id: data.user.id,
-        full_name: metadata?.full_name?.trim() || metadata?.name?.trim() || null,
-        role,
-      },
-      { onConflict: "id" },
-    );
-  }
+  // No explicit role selection has ever happened for this account: do NOT
+  // guess. The account is sent to choose -- "faculty" as a silent fallback is
+  // exactly the bug this route used to have.
+  const next = safeNext(url.searchParams.get("next"));
+  const dest = ensured.role ? next : `/choose-role?next=${encodeURIComponent(next)}`;
 
-  return NextResponse.redirect(new URL(safeNext(url.searchParams.get("next")), origin));
+  const response = NextResponse.redirect(new URL(dest, origin));
+  // Single-use either way: consumed, invalid, or superseded by an existing row.
+  response.cookies.delete(PENDING_ROLE_COOKIE);
+  return response;
 }
