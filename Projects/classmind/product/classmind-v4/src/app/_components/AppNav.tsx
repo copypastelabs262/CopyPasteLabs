@@ -149,6 +149,7 @@ export default function AppNav({
                     <li key={item.href}>
                       <Link
                         href={item.href}
+                        onClick={() => setOpen(false)}
                         aria-current={active ? "page" : undefined}
                         className={cx(
                           "flex items-center gap-3 rounded-xl px-3.5 py-3 text-[15px] transition-colors",
