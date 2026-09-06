@@ -7,6 +7,17 @@ Entries are snapshots of what was true when written and are never rewritten. Whe
 resolves something an earlier one recorded as blocked, the earlier line gets a dated marker
 pointing forward — it does not get edited away.
 
+## 2026-09-06 (III, closed) — Persistent Conversations V1 verified end-to-end
+
+Migration applied by the operator; the full live contract passed **27/27** (ownership,
+resume, continuation, scope separation, meter honesty). The paid multi-turn eval over
+stored threads (13,060 tokens ≈ ₹0.2) caught two real defects — the short-words
+retrieval fallback suppressing history augmentation, and the direct deadline composer
+contradicting a "next week" stated in the summary — both fixed, pinned in tests, and
+re-verified live. The seeded design pass folded per-answer evidence into disclosures
+(a 5-answer thread went from a 10,349px wall to ~3,600px of readable conversation).
+Final: **511 offline + 27 live checks green.** Details in the session log addendum.
+
 ## 2026-09-06 (III) — Persistent Conversations V1: the product grows a memory
 
 **Done, 0 Gemini tokens** (every live verification rides direct $0 routes by

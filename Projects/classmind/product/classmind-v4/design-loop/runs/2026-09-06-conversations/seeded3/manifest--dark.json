@@ -1,0 +1,26 @@
+{
+  "baseUrl": "http://localhost:3500",
+  "scheme": "dark",
+  "capturedAt": "2026-09-06T10:38:56.297Z",
+  "shots": [
+    {
+      "target": "my-classes-student",
+      "viewport": "desktop",
+      "file": "my-classes-student--desktop--dark.png",
+      "finalUrl": "http://localhost:3500/courses"
+    },
+    {
+      "target": "my-classes-student",
+      "viewport": "tablet",
+      "file": "my-classes-student--tablet--dark.png",
+      "finalUrl": "http://localhost:3500/courses"
+    },
+    {
+      "target": "my-classes-student",
+      "viewport": "mobile",
+      "file": "my-classes-student--mobile--dark.png",
+      "finalUrl": "http://localhost:3500/courses"
+    }
+  ],
+  "blocked": []
+}
