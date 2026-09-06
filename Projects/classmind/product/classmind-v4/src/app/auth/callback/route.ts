@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
   // One provisioning path for every account shape. Insert-only: an existing
   // profile's role is untouched no matter what the cookie or metadata say, so
   // signing in again can never rewrite who someone is.
-  const ensured = await ensureProfile(data.user, pendingRole);
+  const ensured = await ensureProfile(serviceClient(), data.user, pendingRole);
 
   // No explicit role selection has ever happened for this account: do NOT
   // guess. The account is sent to choose -- "faculty" as a silent fallback is
