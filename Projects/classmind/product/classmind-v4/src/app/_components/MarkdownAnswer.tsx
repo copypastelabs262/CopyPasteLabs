@@ -146,6 +146,9 @@ function inline(
     if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
       return <strong key={key}>{part.slice(2, -2)}</strong>;
     }
+    if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
+      return <em key={key}>{part.slice(1, -1)}</em>;
+    }
     return part ? renderText(part, key) : null;
   });
 }
