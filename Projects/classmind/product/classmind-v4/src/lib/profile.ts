@@ -1,13 +1,17 @@
 import "server-only";
-import type { User } from "@supabase/supabase-js";
-import { serviceClient } from "@/lib/supabase/service";
-import { parseRole, planProfileProvision, type ProfileRole } from "@/lib/profile-role";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
+import { parseRole, planProfileProvision, type ProfileRole } from "./profile-role.ts";
 
 // THE ONE PLACE a profiles row is provisioned from auth signals. The OAuth
 // callback and the /choose-role page both call this; the decision itself is
 // planProfileProvision, which is pure and tested offline. Keeping the write
 // here means "insert, never upsert" is enforced once: an existing row is never
 // touched, so no sign-in path can overwrite a role.
+//
+// The client is INJECTED (callers pass serviceClient()) for the same reason
+// reconstructLecture takes an injectable provider: it lets verify-auth-roles
+// exercise this exact function against the real database, rather than a copy
+// of it, without this module having to resolve "@/" aliases under plain node.
 
 export interface EnsuredProfile {
   role: ProfileRole | null;
@@ -15,10 +19,10 @@ export interface EnsuredProfile {
 }
 
 export async function ensureProfile(
+  svc: SupabaseClient,
   user: Pick<User, "id" | "user_metadata">,
   pendingRole: ProfileRole | null,
 ): Promise<EnsuredProfile> {
-  const svc = serviceClient();
   const { data: existing } = await svc
     .from("profiles")
     .select("role")
