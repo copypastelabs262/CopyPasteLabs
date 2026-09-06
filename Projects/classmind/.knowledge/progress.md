@@ -36,6 +36,15 @@ baseline lecture (~28K tokens, proves v1.2.0 reproduces `77408ea3` minus the dup
 and Robotics (~6K tokens, proves audience capture on the recording whose transcript
 names the assignees). Then the role-bug fix.
 
+**Night — audience verified end-to-end; the extraction-engine proof is complete.** One
+operator-approved surgical step: the confirmed Robotics assignment re-opened to pending,
+one forced 7-window re-run (ledger `748c39af`, 6,293 tokens), and the full chain
+observed: Gemini → `audience: "Shyam, Shiv aur dusra ye Darshan"` (lecturer's own words)
+→ column → read → retrieval → owner Ask answers direct/$0 with the audience, no gap
+wording. Fresh assignment `96749c92` awaits re-confirmation (this pass dropped "five
+times"/"next week" details — old wording preserved in the baseline snapshot for
+edit-on-confirm). Total session Gemini spend: 42,074 tokens ≈ $0.006; Sarvam 0.
+
 **Evening — migration applied; Validations A and B both clean; engine READY.** Ledgers
 `84050a79` (baseline: 20/20, 28,804 tokens, duplicate pairs gone, model_raw 22/22,
 verdicts kept) and `886797f6` (Robotics: 7/7, 6,492 tokens, verdict guard skipped the
