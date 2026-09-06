@@ -192,7 +192,7 @@ export default function StudentHome({ eyebrow, data, onJoinCourse }: Props) {
               made visible. Renders ONLY when threads actually exist: an empty
               promise band would be a dashboard card, and this screen does not
               do those. */}
-          {data.recentConversations.length ? (
+          {data.recentConversations?.length ? (
             <Section
               title="Pick up where you left off"
               description="Your conversations are saved. Open one and keep going."
