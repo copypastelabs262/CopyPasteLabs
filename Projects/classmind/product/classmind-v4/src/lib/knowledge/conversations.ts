@@ -144,10 +144,7 @@ export async function getConversation(
     .eq("id", conversationId)
     .eq("owner_id", ownerId)
     .maybeSingle();
-  if (error) {
-    if (isMissingSchemaError(error)) return { state: "unavailable", note: UNAVAILABLE };
-    return { state: "unavailable", note: error.message };
-  }
+  if (error) return { state: "unavailable", note: degradeNote(error) };
   // Absent and not-yours are the SAME answer on purpose: a 404 that
   // distinguishes them confirms to a guesser that the id exists.
   if (!data) return { state: "not_found" };
@@ -157,12 +154,13 @@ export async function getConversation(
     .select("id, role, content, payload, seq, created_at")
     .eq("conversation_id", conversationId)
     .eq("owner_id", ownerId)
-    .order("seq", { ascending: true });
-  if (msgError) return { state: "unavailable", note: msgError.message };
+    .order("seq", { ascending: false })
+    .limit(MESSAGE_READ_LIMIT);
+  if (msgError) return { state: "unavailable", note: degradeNote(msgError) };
   return {
     state: "ok",
     conversation: rowToConversation(data),
-    messages: (rows ?? []).map(rowToMessage),
+    messages: (rows ?? []).map(rowToMessage).reverse(),
   };
 }
 
