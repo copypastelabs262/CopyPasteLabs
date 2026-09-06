@@ -1,5 +1,6 @@
 import "server-only";
 import { getReasoningProvider, reasoningAvailable } from "@/lib/reasoning";
+import type { ReasoningProvider } from "@/lib/reasoning/types";
 import type { KnowledgeUnit } from "@/lib/knowledge/read";
 import { retrieve, routeAsk, type AskRoute } from "@/lib/knowledge/ask-routing";
 import { classifyAnswerIntent, INTENT_GUIDANCE } from "@/lib/knowledge/answer-intent";
