@@ -144,6 +144,12 @@ export function composeDirectAnswer(
       const candidates = inHits.length ? inHits : units.filter((u) => u.category === "actionable");
       if (candidates.length !== 1) return null;
       const u = candidates[0];
+      // When the summary itself carries temporal wording ("submit it next
+      // week"), "the lecture didn't specify a deadline" would be MISLEADING
+      // even though the exact-date gap is real -- the multi-turn eval caught
+      // exactly this on the Transformation assignment. Reading that wording is
+      // the model's job, so this composer stands down for it.
+      if (SUMMARY_TIME.test(u.summary)) return null;
       const gaps = u.unspecified.filter((g) => /date|deadline|due|time|when|submit/i.test(g));
       if (!gaps.length) return null;
       return {
