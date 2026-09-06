@@ -427,6 +427,7 @@ export function AnswerView({
               </li>
             ))}
           </ol>
+          ) : null}
         </div>
       ) : null}
 
