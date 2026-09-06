@@ -87,8 +87,8 @@ for (const item of QUESTIONS) {
     res = await asGet();
   }
   const wall = Date.now() - started;
-  let body: Record<string, any> = {};
-  try { body = (await res.json()) as Record<string, any>; } catch { body = { error: `non-JSON response (HTTP ${res.status})` }; }
+  let body: Record<string, unknown> & { usage?: { provider?: string; model?: string; promptTokens?: number; completionTokens?: number } | null } = {};
+  try { body = (await res.json()) as typeof body; } catch { body = { error: `non-JSON response (HTTP ${res.status})` }; }
   const answer = String(body.answer ?? body.error ?? "");
   answers.set(item.id, answer);
   const usage = body.usage ?? null;
