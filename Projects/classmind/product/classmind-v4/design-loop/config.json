@@ -52,6 +52,11 @@
       "name": "lecture-detail-faculty",
       "path": "/courses/fb7c7416-6450-4ad0-8d9e-7e3415e8c975/lectures/03f38b9e-9566-47dc-96d5-1cfcc78baf6f",
       "role": "faculty"
+    },
+    {
+      "name": "lecture-chat-student",
+      "path": "/courses/6a8484f7-be19-4044-b725-8d66efdfaa4a/lectures/87a4a143-2f88-40fd-9bc2-8e1bd71c0ce8",
+      "role": "student"
     }
   ]
 }
