@@ -81,7 +81,7 @@ check(!/two or three sentences/i.test(S), "the blanket brevity cap is gone");
 check(/never present it as something the lecturer said/i.test(S), "explanation must not be attributed to the lecturer");
 check(/NEVER invent lecture facts/.test(S), "inventing lecture facts stays forbidden");
 check(/SAY WHAT IS MISSING/.test(S), "named gaps remain the honest-failure contract");
-check(/cited inline as \[1\], \[2\]/.test(S), "citations remain required");
+check(/cited[\s\S]{0,4}inline as \[1\], \[2\]/.test(S), "citations remain required");
 check(/markdown/i.test(S), "the answer may use light markdown structure");
 
 /* ---------------------------------------------------------------------------
