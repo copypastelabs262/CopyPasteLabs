@@ -23,7 +23,7 @@
             "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/autosave.sh\"",
             "timeout": 45,
             "async": true,
-            "statusMessage": "Saving to GitHub..."
+            "statusMessage": "Checkpointing locally..."
           }
         ]
       }
