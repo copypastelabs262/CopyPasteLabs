@@ -63,6 +63,14 @@ const LISTS = /\b(what|which|any|list|show|is\s+there|are\s+there|do\s+(?:we|i)\
 
 const COVERED = /\b(covered|discussed|taught|topics?)\b/i;
 
+// Temporal wording inside an assignment SUMMARY that makes the "no deadline
+// was specified" direct answer misleading. Deliberately narrow: these are
+// stated time references, not submission verbs -- "submit it" alone says
+// nothing about WHEN and must not push a genuinely dateless assignment onto
+// the paid route.
+const SUMMARY_TIME =
+  /\b(next (?:week|month|class|lecture|session)|this (?:week|friday|monday)|tomorrow|tonight|by (?:mon|tues|wednes|thurs|fri|satur|sun)day|by \d|due (?:on|by|next)|in \d+ (?:days?|weeks?))\b/i;
+
 export function classifyForDirect(question: string, hits: KnowledgeUnit[]): DirectIntent | null {
   const q = question.trim();
   if (!q) return null;
