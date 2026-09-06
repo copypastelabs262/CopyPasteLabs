@@ -28,10 +28,17 @@ export default async function ChooseRolePage({
   const { data } = await supabase.auth.getUser();
   if (!data.user) redirect("/signin");
 
-  // Replays user_metadata.role when present; insert-only, so an existing
-  // profile is never touched. A role on record means nothing to ask.
+  // Replays a STUDENT selection from metadata when present; insert-only, so an
+  // existing profile is never touched, and a faculty signal is never
+  // auto-provisioned (it routes here to enter the code). A role on record means
+  // nothing to ask.
   const ensured = await ensureProfile(serviceClient(), data.user, null);
   if (ensured.role) redirect(dest);
 
-  return <ChooseRoleForm next={dest} />;
+  // Prefill the name from the Google/identity profile so the common case is a
+  // single confirmation, while staying fully editable.
+  const meta = (data.user.user_metadata ?? {}) as { full_name?: string; name?: string };
+  const initialName = (meta.full_name ?? meta.name ?? "").trim();
+
+  return <ChooseRoleForm next={dest} initialName={initialName} />;
 }
