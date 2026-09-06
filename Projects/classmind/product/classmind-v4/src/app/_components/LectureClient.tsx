@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import ActionableReview from "./ActionableReview";
 import LectureProgress from "./LectureProgress";
 import DeleteLecture from "./DeleteLecture";
-import AskPanel from "./AskPanel";
+import AskWorkspace from "./AskWorkspace";
 import AudioPlayer, { type AudioPlayerHandle } from "./AudioPlayer";
 import LectureTranscript, { type TranscriptSegment } from "./LectureTranscript";
 import { LectureKnowledge, StillWorking } from "./KnowledgePanel";
