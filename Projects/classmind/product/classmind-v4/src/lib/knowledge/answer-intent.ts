@@ -60,11 +60,12 @@ export function classifyAnswerIntent(question: string, hasHistory: boolean): Ans
 // (what may be said at all) live in the base prompt and apply to every
 // intent equally.
 export const INTENT_GUIDANCE: Record<AnswerIntent, string> = {
-  explain: `SHAPE: a clear, genuinely explanatory answer. Lead with the simplest
-useful statement of the idea, then explain the core mechanism in a few
-sentences. Define any term of art the first time you use it. A short concrete
-example is welcome when it earns its place. Aim for a tight paragraph or two --
-enough to actually understand, never padding.`,
+  explain: `SHAPE: a clear, genuinely explanatory answer. The FIRST sentence
+states what the thing is -- commit to it; no "generally refers to" hedging.
+Then explain the core mechanism in a few sentences. Define any term of art the
+first time you use it. A short concrete example is welcome when it earns its
+place. Aim for a tight paragraph or two -- enough to actually understand,
+never padding.`,
 
   teach: `SHAPE: a short lesson, not a definition. Start from the intuition --
 why this concept exists and what problem it solves. Then how it works, built up
