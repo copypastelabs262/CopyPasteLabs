@@ -3,38 +3,54 @@
 import { useEffect, useState } from "react";
 import AskSidebar from "./AskSidebar";
 import AskWorkspace from "./AskWorkspace";
+import { useClassDataMaybe } from "./shell/ClassContext";
 import { cx } from "./ui";
 import { ChatIcon, CloseIcon } from "./ui/icons";
 
-// THE GLOBAL CHAT WORKSPACE — two layers, one screen.
+// THE CHAT WORKSPACE — two layers, one screen, at any scope.
 //
 //   conversation history (this sidebar)  ·  the conversation itself (the pane)
 //
+// GLOBAL (/ask) and COURSE (/courses/[id]) are the SAME workspace: the same
+// sidebar, the same pane (AskWorkspace in its sidebar-driven mode), the same
+// grounding, citations, cost routing and metering — only the academic SCOPE
+// changes, expressed by which conversation list and which URLs the sidebar is
+// given. A student moving from Global Ask into a course does not enter a
+// different application; the answers just narrow to that course.
+//
 // It is deliberately separate from the app's global navigation (the top-left
 // drawer): navigation moves between PLACES, this moves between CONVERSATIONS.
-// The pane is the same AskWorkspace the course and lecture surfaces use, in its
-// sidebar-driven mode, so the intelligence, grounding, citations and cost
-// routing are exactly what was already built and tested — only the shell around
-// them is new.
-//
-// On a phone the sidebar can't stay open, so it becomes an overlay reached from
-// a "Conversations" control; the app nav stays the hamburger, a distinct layer.
+// On a phone the sidebar becomes an overlay reached from a "Conversations"
+// control; the app nav stays the hamburger, a distinct layer.
 
-const INTRO = {
+const GLOBAL_INTRO = {
   title: "What are we working on?",
   description:
     "Ask across everything you're learning. Every answer is built only from what your lectures actually recorded — cited to the second, so you can check it. Follow up freely; this conversation remembers the thread.",
 };
-
-const SUGGESTIONS = [
+const GLOBAL_SUGGESTIONS = [
   "What do I need to work on?",
   "What assignments do I have?",
   "What topics have we covered?",
   "What am I behind on?",
 ];
 
-export default function AskChat() {
+const COURSE_INTRO = {
+  title: "Ask this class anything",
+  description:
+    "Answers come only from what was actually said in THIS class's lectures — cited to the second, so you can hear it for yourself. Follow up freely; the conversation remembers the thread.",
+};
+const COURSE_SUGGESTIONS = [
+  "What topics have we covered?",
+  "What assignment was given?",
+  "Was there a deadline?",
+  "Explain a concept from this class",
+];
+
+export default function AskChat({ courseId }: { courseId?: string } = {}) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // Only meaningful inside a course; null on /ask, where there is no class.
+  const classData = useClassDataMaybe();
 
   useEffect(() => {
     if (!drawerOpen) return;
@@ -45,12 +61,22 @@ export default function AskChat() {
     return () => document.removeEventListener("keydown", onKey);
   }, [drawerOpen]);
 
+  const isCourse = Boolean(courseId);
+  const sidebarProps = isCourse
+    ? {
+        listEndpoint: `/api/courses/${courseId}/conversations`,
+        newHref: `/courses/${courseId}`,
+        itemHref: (id: string) => `/courses/${courseId}?c=${id}`,
+        scopeLabel: classData?.course?.code ?? classData?.course?.title ?? "this class",
+      }
+    : { scopeLabel: "All classes" };
+
   return (
     <div className="lg:grid lg:grid-cols-[15.5rem_minmax(0,1fr)] lg:gap-10">
       {/* Desktop: the sidebar is a persistent, quietly-scrolling column. */}
       <aside className="hidden lg:block">
         <div className="sticky top-20 h-[calc(100vh-7.5rem)]">
-          <AskSidebar />
+          <AskSidebar {...sidebarProps} />
         </div>
       </aside>
 
@@ -67,7 +93,14 @@ export default function AskChat() {
           </button>
         </div>
 
-        <AskWorkspace global withSidebar intro={INTRO} suggestions={SUGGESTIONS} />
+        {/* global on /ask; inside a course AskWorkspace reads the course scope
+            from ClassContext, so no `global` and no courseId prop needed here. */}
+        <AskWorkspace
+          global={!isCourse}
+          withSidebar
+          intro={isCourse ? COURSE_INTRO : GLOBAL_INTRO}
+          suggestions={isCourse ? COURSE_SUGGESTIONS : GLOBAL_SUGGESTIONS}
+        />
       </div>
 
       {drawerOpen ? (
@@ -98,7 +131,7 @@ export default function AskChat() {
               </button>
             </div>
             <div className="min-h-0 flex-1">
-              <AskSidebar onNavigate={() => setDrawerOpen(false)} />
+              <AskSidebar {...sidebarProps} onNavigate={() => setDrawerOpen(false)} />
             </div>
           </div>
         </div>
