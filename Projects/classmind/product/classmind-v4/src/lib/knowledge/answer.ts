@@ -220,7 +220,9 @@ export async function answerFromKnowledge(
 
   // Without a model the product still answers -- it just lists what it found
   // instead of composing prose, and says so.
-  if (!reasoningAvailable()) {
+  const provider =
+    opts?.injectedProvider ?? (reasoningAvailable() ? getReasoningProvider() : null);
+  if (!provider) {
     return done({
       question, answered: true, usedUnits: hits, answer: listing(hits),
       degraded: true, route: "degraded", usage: null, failure: null,
@@ -236,7 +238,6 @@ export async function answerFromKnowledge(
   ].join("\n\n");
 
   try {
-    const provider = getReasoningProvider();
     const res = await provider.complete({
       system,
       user,
