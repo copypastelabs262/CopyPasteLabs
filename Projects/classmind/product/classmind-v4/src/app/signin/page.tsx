@@ -42,14 +42,15 @@ function SignInForm() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (mode === "signup" && !role) {
-      setError("Choose whether you are faculty or a student.");
-      return;
-    }
     setBusy(true); setError(null); setNotice(null);
     const supabase = browserClient();
     try {
       if (mode === "signup") {
+        if (!role) {
+          setError("Choose whether you are faculty or a student.");
+          setBusy(false);
+          return;
+        }
         // The role rides in user_metadata as well as the /api/profile call
         // below, because with email confirmation ON there is no session yet
         // and the call never runs -- the metadata copy is what /choose-role
