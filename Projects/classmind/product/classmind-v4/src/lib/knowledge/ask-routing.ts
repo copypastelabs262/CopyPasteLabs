@@ -294,7 +294,12 @@ export function retrieve(units: KnowledgeUnit[], question: string, limit = 8): K
   const terms = question.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((t) => t.length > 2);
   if (!terms.length) return units.slice(0, limit);
 
-  const WANTS_ACTIONABLE = /(assign|homework|submit|deadline|due|exam|task|deliver|marks?)/i.test(question);
+  // "work on", "need to do", "to-do": a student asking what they OWE, in
+  // words the noun list misses -- the 2026-09-06 scope eval showed "what do I
+  // need to work on?" retrieving zero assignments and the model honestly
+  // denying any work existed.
+  const WANTS_ACTIONABLE =
+    /(assign|homework|submit|deadline|due|exam|task|deliver|marks?|work\s+on|need\s+to\s+(?:do|work|finish|complete)|to-?dos?)/i.test(question);
 
   const scored = units.map((u) => {
     const hay = `${u.title} ${u.summary} ${u.steps.join(" ")} ${u.kind}`.toLowerCase();
