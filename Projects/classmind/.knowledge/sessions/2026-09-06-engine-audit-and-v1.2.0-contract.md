@@ -88,3 +88,51 @@ routing / honest gaps / meter (2026-09-03) and audience/R1/R2 (today, validation
    carry them, and "who is the assignment for?" should answer at $0.
 
 No Sarvam spend in either (stored transcripts; ~90 credits untouched).
+
+## Addendum (same day, later): the Student→Faculty role bug is FIXED and verified
+
+Operator approved the full sequence (auth fix → migration → validation A → inspect → B)
+and made the auth fix priority one. Runs A and B are now approved, gated on the migration.
+
+**The fix (one architecture, five fallbacks removed).** The profiles row is the single
+source of truth, written only by explicit role-selection events:
+
+- The sign-in page's role toggle starts UNSELECTED; email sign-up requires a choice.
+- The role selected before "Continue with Google" travels as a short-lived, single-use
+  cookie (`cm-pending-role`, 10 min, consumed and deleted by the callback) — NOT a query
+  param, because Supabase's redirect allow-list glob silently drops non-matching query
+  strings (the recorded 2026-08-31 failure that created students as faculty).
+- Provisioning is ONE function, `ensureProfile` (`src/lib/profile.ts`), insert-only —
+  an existing row is never overwritten by any sign-in path. The pure decision
+  (`planProfileProvision`, `src/lib/profile-role.ts`) has its truth table pinned in
+  `test:auth`. Precedence: existing row > pending cookie > `user_metadata.role`
+  (recorded at email sign-up; covers the email-confirmation detour) > ASK.
+- An authenticated account with no recorded selection is sent to **/choose-role** —
+  a real page, no preselection — never defaulted. `SessionUser.role` is now nullable;
+  `requireRole` refuses role-shaped APIs with a 403 naming /choose-role; `/api/profile`
+  requires an explicit valid role at creation (400 otherwise) and refuses to change an
+  existing role (409). `currentUser()`'s "missing profile means faculty" is gone.
+
+**Verified** ($0, real database, real server): `test:auth` 25/25 offline;
+`npm run verify:auth` 21/21 live — throwaway accounts driven through ensureProfile and
+the HTTP APIs covering all five operator scenarios: A (Google+student → student),
+B (Google+faculty → faculty), C/D (re-sign-in keeps the role, hostile stray signals
+ignored), E (no signal → no row, 403 from role-shaped APIs, 400 on invalid role, then
+the explicit choice creates the row; a later role flip is refused 409). Full free suite
+after: 421 checks green, tsc/eslint/`next build` clean. **Not verified live:** the Google
+consent browser leg itself (simulated at the exact function the callback runs); a human
+click-through needs `http://localhost:3500/**` on the Supabase redirect allow-list.
+
+**Existing accounts untouched** — the five real Google-signup profiles are all still
+`faculty`; if any founder account was meant to be a student, flipping it is a deliberate
+operator-approved data fix, one UPDATE away.
+
+**Migration application is blocked on credentials**: this machine has no psql, no
+supabase CLI, no DB connection string — only the service-role key, which speaks PostgREST
+and cannot run DDL. The operator applies the one-line `alter table` in the SQL editor
+(same way `ask_runs` was applied), then runs A → inspect → B proceed.
+
+**Autosave note:** the root autosave hook committed and pushed each auth-fix file as it
+was written (`Auto-save:` stream) — review-before-push wasn't possible under it. Post-hoc
+sweep of everything pushed since `22c9f01`: exactly the 17 authored files, no secrets, no
+env files, no recordings. The intentional commit closing this addendum carries the story.

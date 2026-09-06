@@ -1,7 +1,7 @@
 # End-Session — Implementation Prompt
 
-**Implements:** `Skills/End-Session/specification.md` v1.0.0
-**Prompt version:** 1.0.0
+**Implements:** `Skills/End-Session/specification.md` v1.0.1
+**Prompt version:** 1.0.1
 
 The specification is the contract. Where this prompt and the specification disagree, the
 specification is correct and this prompt has a bug. Two points where exact implementation was
@@ -106,18 +106,29 @@ Determine `base` by the **first** strategy that yields a commit. Record which on
 | Order | Strategy value | How |
 |---|---|---|
 | 1 | `previous_inbox_entry` | Newest directory under `AI-Memory/Inbox/<primary-slug>/` by name sort; read its `evidence.json` → `.session_boundary.head`. Requires Phase 3 first — see note. |
-| 2 | `session_start_marker` | Only if `.claude/.session-start` contains a 40-hex SHA. It currently does not (§ D.2); this strategy will not fire. |
-| 3 | `upstream_merge_base` | `git merge-base HEAD origin/<branch>` |
+| 2 | `session_start_commit` | If `.claude/.session-start` holds an ISO-8601 timestamp, `git rev-list -1 --before="<ts>" HEAD` — the last commit at or before the session began. |
+| 3 | `upstream_divergence` | `git merge-base HEAD origin/<branch>`, but **only if it is not equal to `head`.** If it equals `head`, skip this strategy. |
 | 4 | `root_commit` | `git rev-list --max-parents=0 HEAD \| tail -1` |
 
+> **Fixed in v1.0.1 — the boundary used to collapse to `head`.** The old strategy 2 waited for
+> a 40-hex SHA the marker never contains, and the old strategy 3 was a bare
+> `git merge-base HEAD origin/<branch>`. Because `scripts/autosave.sh` pushes after every edit,
+> `origin/<branch>` tracks `head`, so that merge-base *equals* `head` — giving `base == head`,
+> `commits: []` for a session that made commits, and (no changed paths in range) a Phase 3
+> misroute to `_platform`. The marker holds an **ISO-8601 timestamp**, not a SHA, so the new
+> strategy 2 uses it to find the last commit before the session started — correct regardless of
+> push state. Strategy 3 is kept only for its intended case (a genuinely diverged local branch)
+> and is now guarded against the `== head` collapse.
+
 **Ordering note:** strategy 1 needs the project slug, which Phase 3 produces. Resolve by
-running Phase 3's path-attribution against the range `<strategy-3-or-4-base>..HEAD` first,
+running Phase 3's path-attribution against the range `<strategy-2-or-later-base>..HEAD` first,
 then re-deriving `base` via strategy 1 once the slug is known, then recomputing Phase 4
 evidence against the final range. Do not skip the recomputation — evidence must match the
 final recorded range exactly (Success criterion 4).
 
-If `base == head`, there are no commits in range. Continue; `commits` will be `[]`
-(edge case 12.2).
+If `base == head`, there are genuinely no commits in range (nothing was committed since the
+boundary). Continue; `commits` will be `[]` (edge case 12.2). With the v1.0.1 boundary this is
+now a true "nothing committed" signal rather than an artifact of a pushed branch.
 
 Set `base_source` to the file path used for strategy 1, otherwise `null`.
 

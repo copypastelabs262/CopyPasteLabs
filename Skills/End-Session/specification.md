@@ -3,11 +3,11 @@
 | | |
 |---|---|
 | **Skill** | `End-Session` |
-| **Spec version** | 1.0.0 |
+| **Spec version** | 1.0.1 |
 | **Status** | Approved for implementation |
 | **Owner** | CopyPasteLabs / BuilderOS |
 | **Created** | 2026-07-29 |
-| **Updated** | 2026-07-29 |
+| **Updated** | 2026-09-06 |
 | **Implements** | `CLAUDE.md` § "End of every session" |
 | **Downstream consumer** | `Skills/Knowledge-Promoter/` |
 

@@ -142,3 +142,11 @@ temp/
 *.tmp
 *.bak
 .knowledge-bootstrap/
+
+# ─────────────────────────────────────────────────────────────
+# BuilderOS runtime — never commit these.
+# End-Session's Inbox lock is a transient per-run file (pid + start time).
+# It must never enter a commit: Phase 8 stages AI-Memory/Inbox/, and a
+# committed lock would look "held" to the next run on a fresh clone.
+# ─────────────────────────────────────────────────────────────
+AI-Memory/Inbox/.lock

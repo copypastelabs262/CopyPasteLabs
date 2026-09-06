@@ -8,6 +8,32 @@ Specification versions. Semantic versioning applies to the **contract**, not the
 
 ---
 
+## 1.0.1 — 2026-09-06
+
+Patch — corrections found by real usage across the first ten captured entries. No contract
+change; existing Inbox entries remain valid.
+
+**Fixed:**
+
+- **Session-boundary collapse (Phase 2).** The boundary used to resolve to `head` on any pushed
+  branch, giving `commits: []` for sessions that had committed and a Phase 3 misroute to
+  `_platform`. Root cause: `scripts/autosave.sh` pushes after every edit, so
+  `git merge-base HEAD origin/<branch>` (old strategy 3) equalled `head`, and the marker-based
+  strategy 2 waited for a 40-hex SHA the marker never holds. New strategy 2 reads the marker's
+  **ISO-8601 timestamp** to find the last commit before the session began
+  (`git rev-list -1 --before=<ts> HEAD`); strategy 3 is retained only for a genuinely diverged
+  local branch and guarded against the `== head` collapse. This also removes the `_platform`
+  misroute, which was a downstream symptom of the empty range.
+- **`Inbox/.lock` is now gitignored** (repo `.gitignore`). Phase 8 stages `AI-Memory/Inbox/`;
+  a committed lock would read as "held" to the next run on a fresh clone. The Phase 1
+  release-before-stage workaround stays as defence in depth.
+
+**Deferred, not fixed (recorded so it is not rediscovered):** § D.2 — `context_completeness`
+is a model assertion but is written into `evidence.json` as well as `candidates.extraction_meta`,
+which weakens `evidence.json`'s byte-reproducibility guarantee for that one field. Relocating it
+to `extraction_meta` only is a schema-and-examples change worth a 1.0.2; left as-is this pass to
+keep the Promoter build the focus. Behaviour is unchanged and documented at § D.2.
+
 ## 1.0.0 — 2026-07-29
 
 Initial specification. Not yet implemented.
