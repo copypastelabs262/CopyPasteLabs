@@ -68,15 +68,13 @@ The two are different inputs and both always run:
 Unchanged: one `recordAskRun` per ask, direct routes at $0, persistence adds
 zero model calls (titles are deterministic; storage is storage).
 
-## Global Ask foundation (deliberately not built)
+## Global Ask foundation (built later the same day)
 
-The scope model is the foundation: 'global' is representable end-to-end
-(schema CHECK, `planConversationContext`, `contextMatches` — pinned by
-offline tests that scopes never bleed), and a future `/api/ask` serves it by
-widening retrieval across the student's enrolled courses over the SAME
-canonical knowledge — no second knowledge layer, no new tables. Nothing
-global is routed or rendered yet because no global surface exists to be
-honest about.
+The scope model was laid here as a foundation, and the Context Hierarchy
+milestone built on it hours later: `/api/ask` now serves scope 'global' by
+widening retrieval across the student's memberships over the SAME canonical
+knowledge — no second knowledge layer, no new tables, exactly as planned.
+The whole three-boundary architecture lives in **CONTEXT-HIERARCHY.md**.
 
 ## Degradation
 
