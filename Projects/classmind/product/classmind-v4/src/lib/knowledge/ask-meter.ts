@@ -88,10 +88,19 @@ export interface AskMeterResult {
 }
 
 function unavailable(message: string): string {
-  return /schema cache|does not exist|42P01|PGRST205/i.test(message)
-    ? "The ask meter table is not present -- migration 20260903100000 has not been applied. " +
+  if (/schema cache|does not exist|42P01|PGRST205/i.test(message)) {
+    return (
+      "The ask meter table is not present -- migration 20260903100000 has not been applied. " +
       "This ask was printed to the log but not recorded."
-    : `The ask meter could not be written: ${message}`;
+    );
+  }
+  if (/null value in column "course_id"|23502/i.test(message)) {
+    return (
+      "Global asks cannot be metered yet -- migration 20260906180000 has not been applied. " +
+      "This ask was printed to the log but not recorded."
+    );
+  }
+  return `The ask meter could not be written: ${message}`;
 }
 
 export async function recordAskRun(r: AskRunRecord): Promise<AskMeterResult> {
