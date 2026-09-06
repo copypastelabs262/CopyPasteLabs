@@ -272,10 +272,18 @@ export async function answerFromKnowledge(
 
   const intent = classifyAnswerIntent(question, history.length > 0);
   const system = `${SYSTEM}\n\nTHIS ANSWER\n${INTENT_GUIDANCE[intent]}`;
+  // A global answer reasons over the student's whole academic world, so the
+  // model is told what that world IS -- the subjects in scope -- before the
+  // retrieved units. Nothing outside this list exists for the answer.
+  const subjectsLine =
+    opts?.context?.scope === "global" && opts.context.courseNames?.size
+      ? [`THE STUDENT'S SUBJECTS: ${[...opts.context.courseNames.values()].join(" | ")}`]
+      : [];
   const user = [
+    ...subjectsLine,
     ...(history.length ? [`CONVERSATION SO FAR:\n${renderHistory(history)}`] : []),
     `QUESTION: ${question}`,
-    `KNOWLEDGE UNITS:\n${render(hits)}`,
+    `KNOWLEDGE UNITS:\n${render(hits, opts?.context)}`,
   ].join("\n\n");
 
   try {
