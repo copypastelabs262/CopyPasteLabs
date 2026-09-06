@@ -132,7 +132,23 @@ export default function AskWorkspace({
   const requestedId = searchParams.get("c");
   // A question carried in from another surface (the home hero): asked once,
   // as a FRESH thread — the student typed something new, not a continuation.
-  const carriedQuestion = requestedId ? null : searchParams.get("q");
+  // It arrives via sessionStorage (see CARRIED_QUESTION_KEY), read once here
+  // and removed on mount below, so it can never fire twice.
+  const [carriedQuestion] = useState<string | null>(() => {
+    if (!global || requestedId || typeof window === "undefined") return null;
+    try {
+      return sessionStorage.getItem(CARRIED_QUESTION_KEY);
+    } catch {
+      return null;
+    }
+  });
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem(CARRIED_QUESTION_KEY);
+    } catch {
+      /* nothing to consume */
+    }
+  }, []);
   const autoAsked = useRef(false);
 
   const askEndpoint = global ? "/api/ask" : `/api/courses/${courseId}/ask`;
