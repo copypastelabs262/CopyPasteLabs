@@ -15,18 +15,22 @@ import { BookIcon } from "./ui/icons";
 // stays fixed at the bottom of the viewport no matter how long the
 // conversation gets — the one thing the operator asked for by name.
 //
-// What this deliberately does NOT do:
+// ONE SURFACE, TWO SCOPES. Bare, it is the course Ask tab. Given a
+// `lectureId`, it becomes the lecture page's conversation: questions scope to
+// that lecture and citations seek the on-page player through `nav.onSeek`
+// instead of navigating away. Same turns, same composer, same rules.
 //
-//   FAKE PERSISTENCE. Nothing on the server stores a conversation, so leaving
-//   this tab ends it and the intro says so. Pretending otherwise would be a
-//   lie the first refresh exposes.
+// THE CONVERSATION NOW TRAVELS. Each ask POSTs the visible exchange so far, so
+// "give me an example" and "I didn't understand" land in context — the model
+// is shown exactly what the student can see on screen, nothing more. Nothing
+// on the server stores a conversation yet, and the intro says so; pretending
+// otherwise would be a lie the first refresh exposes.
 //
-//   HIDE DEGRADED MODE. When no reasoning model is configured, the route
-//   answers with the retrieved notes themselves (`degraded: true`). v3
-//   rendered that indistinguishably from a composed answer; here it is named,
-//   calmly, above the notes — because "here is what the lectures say" and
-//   "here is an answer written for you" are different promises, and a student
-//   is owed the difference.
+// DEGRADED MODE stays named. When no reasoning model is configured, the route
+// answers with the retrieved notes themselves (`degraded: true`) and that is
+// said, calmly, above the notes — because "here is what the lectures say" and
+// "here is an answer written for you" are different promises, and a student
+// is owed the difference.
 //
 // One question is in flight at a time. A conversation is sequential by
 // nature, and every ask can be a paid call — the composer disables while one
@@ -40,7 +44,28 @@ interface Turn {
   error?: string;
 }
 
-export default function AskWorkspace() {
+// How much of the visible conversation rides along with each ask. Four
+// exchanges keeps follow-ups grounded without growing the prompt without
+// bound; the server caps again regardless.
+const HISTORY_EXCHANGES = 4;
+
+export default function AskWorkspace({
+  lectureId,
+  nav: navOverride,
+  intro,
+  suggestions,
+  bottomInset = 0,
+}: {
+  /** Present on the lecture page: scopes every ask to this lecture. */
+  lectureId?: string;
+  /** Present on the lecture page: carries onSeek so citations move the player. */
+  nav?: EvidenceNav;
+  intro?: { title: string; description: string };
+  suggestions?: string[];
+  /** Height of any bar pinned below this surface (the engaged audio player),
+   *  so the composer sits above it instead of underneath it. */
+  bottomInset?: number;
+} = {}) {
   // Rendered only inside the class shell, whose provider is the one source of
   // which class this is — the same identity the header and rail display.
   const { courseId } = useClassData();
@@ -63,13 +88,12 @@ export default function AskWorkspace() {
     const text = question.trim();
     if (!text || asking) return;
     const id = nextId.current++;
-    // The conversation so far, oldest first, built from the turns on screen --
-    // the same exchange the student can see is exactly what the model is shown,
-    // nothing more. The server caps length; sending the last few exchanges
-    // keeps follow-ups ("give me another example", "why?") landing in context.
+    // The conversation so far, oldest first, built from the turns on screen —
+    // the same exchange the student can see is exactly what the model is
+    // shown, nothing more. The server caps length again regardless.
     const history = turns
       .filter((t) => t.state === "done" && t.answer)
-      .slice(-4)
+      .slice(-HISTORY_EXCHANGES)
       .flatMap((t) => [
         { role: "student" as const, text: t.question },
         { role: "classmind" as const, text: t.answer!.answer },
@@ -81,7 +105,7 @@ export default function AskWorkspace() {
       const res = await fetch(`/api/courses/${courseId}/ask`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: text, history }),
+        body: JSON.stringify({ question: text, history, ...(lectureId ? { lectureId } : {}) }),
       });
       const body = (await res.json().catch(() => null)) as (Partial<Answer> & { error?: string }) | null;
       if (!res.ok) {
@@ -111,15 +135,24 @@ export default function AskWorkspace() {
     }
   }
 
-  const nav: EvidenceNav = { courseId };
+  const nav: EvidenceNav = navOverride ?? { courseId };
+  const scope = lectureId ? "lecture" : "course";
+  const chips = suggestions ?? SUGGESTIONS;
 
   return (
     // The column owns the full remaining viewport so the composer's sticky
     // bottom edge has something to stick to on short conversations too.
     <div className="flex min-h-[62vh] flex-col">
-      <div className="flex-1">
+      {/* aria-live so a screen reader hears the answer arrive without having
+          to re-walk the page; polite, because the student just asked for it. */}
+      <div className="flex-1" aria-live="polite">
         {turns.length === 0 ? (
-          <Intro onAsk={(q) => void ask(q)} disabled={asking} />
+          <Intro
+            onAsk={(q) => void ask(q)}
+            disabled={asking}
+            intro={intro}
+            suggestions={chips}
+          />
         ) : (
           <ol className="space-y-12">
             {turns.map((t) => (
@@ -134,7 +167,7 @@ export default function AskWorkspace() {
 
                 <div className="mt-6">
                   {t.state === "asking" ? (
-                    <Looking scope="course" />
+                    <Looking scope={scope} />
                   ) : t.state === "failed" ? (
                     <p className="max-w-[52ch] text-[15px] leading-relaxed text-danger">{t.error}</p>
                   ) : t.answer ? (
@@ -154,7 +187,7 @@ export default function AskWorkspace() {
                           Answered straight from the stored lecture knowledge.
                         </p>
                       ) : null}
-                      <AnswerView answer={t.answer} nav={nav} scope="course" />
+                      <AnswerView answer={t.answer} nav={nav} scope={scope} />
                     </>
                   ) : null}
                 </div>
@@ -167,8 +200,12 @@ export default function AskWorkspace() {
 
       {/* The composer. Fixed to the viewport's bottom edge by position:sticky
           — the page scrolls beneath it, it never moves. Solid surface, no new
-          blur: the material budget (two backdrop-filters app-wide) is spent. */}
-      <div className="sticky bottom-0 z-10 -mx-2 mt-10 border-t border-line bg-surface px-2 pb-4 pt-4">
+          blur: the material budget (two backdrop-filters app-wide) is spent.
+          `bottomInset` lifts it above the lecture page's pinned player. */}
+      <div
+        className="sticky z-10 -mx-2 mt-10 border-t border-line bg-surface px-2 pb-4 pt-4"
+        style={{ bottom: bottomInset }}
+      >
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -182,7 +219,7 @@ export default function AskWorkspace() {
             ref={inputRef}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="Ask anything about this class"
+            placeholder={lectureId ? "Ask anything about this lecture" : "Ask anything about this class"}
             autoComplete="off"
             disabled={asking}
             className={cx(
@@ -210,22 +247,32 @@ export default function AskWorkspace() {
   );
 }
 
-// The empty conversation: what this place is, and four ways in. Centered and
+// The empty conversation: what this place is, and a few ways in. Centered and
 // generous — the intro is the one moment this surface is allowed to breathe
 // before content takes over.
-function Intro({ onAsk, disabled }: { onAsk: (q: string) => void; disabled: boolean }) {
+function Intro({
+  onAsk,
+  disabled,
+  intro,
+  suggestions,
+}: {
+  onAsk: (q: string) => void;
+  disabled: boolean;
+  intro?: { title: string; description: string };
+  suggestions: string[];
+}) {
   return (
     <div className="mx-auto flex max-w-xl flex-col items-start pt-6 sm:pt-14">
       <p className="eyebrow-mono">Ask</p>
       <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
-        Ask this class anything
+        {intro?.title ?? "Ask this class anything"}
       </h2>
       <p className="mt-3 max-w-[52ch] text-[15px] leading-relaxed text-ink-soft">
-        Every answer is built only from what was actually said in the lectures, cited down
-        to the second it was said — so you can hear it for yourself.
+        {intro?.description ??
+          "Every answer is built only from what was actually said in the lectures, cited down to the second it was said — so you can hear it for yourself."}
       </p>
       <div className="mt-8 flex flex-wrap gap-2">
-        {SUGGESTIONS.map((s) => (
+        {suggestions.map((s) => (
           <button
             key={s}
             type="button"

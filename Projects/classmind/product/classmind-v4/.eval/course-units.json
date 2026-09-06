@@ -1,0 +1,373 @@
+{
+  "course": "Cloud Computing (Test2)",
+  "items": [
+    {
+      "id": "7ec70b0c-bc0e-49fe-b703-56995a383f4e",
+      "category": "actionable",
+      "kind": "assignment",
+      "title": "Research Paper and Project Implementation",
+      "summary": "Students must find a current research paper topic, implement it, and deploy the resulting project to the cloud.",
+      "steps": [
+        "Start the research paper topic.",
+        "Write down questions, search for them, and find scenario-based questions.",
+        "Find a current research paper and implement it.",
+        "Deploy the implemented project to the cloud."
+      ],
+      "unspecified": [
+        "The specific research paper topic to be chosen.",
+        "The deadline for the assignment.",
+        "The maximum number of students who can speak.",
+        "The specific cloud platform for deployment."
+      ],
+      "status": "confirmed",
+      "audience": null,
+      "evidence": [
+        "Now you start the research paper ka topic",
+        "Questions likho search karo scenario based questions find out karo",
+        "Research paper ko aapko find karna hai current aur usko implement karna hai",
+        "Implement karke vo project ko aapko cloud pe deploy bhi karna hai"
+      ]
+    },
+    {
+      "id": "3b00bf0e-27f6-4529-b296-299b0f91d7d2",
+      "category": "actionable",
+      "kind": "assignment",
+      "title": "Draw diagram",
+      "summary": "Students are instructed to draw the diagram explaining hyper threading.",
+      "steps": [
+        "Draw diagram"
+      ],
+      "unspecified": [
+        "Submission deadline",
+        "Submission platform",
+        "Marking scheme"
+      ],
+      "status": "rejected",
+      "audience": null,
+      "evidence": [
+        "Bas diagram banao.",
+        "Agar task hai diagram."
+      ]
+    },
+    {
+      "id": "79504ca3-af05-4429-8a32-14461adb40db",
+      "category": "teaching",
+      "kind": "concept",
+      "title": "Control Layer",
+      "summary": "The control layer includes software tools responsible for managing and controlling the underlying cloud infrastructure, enabling the provisioning of IT resources to create cloud services by forwarding requests received from the service layer.",
+      "steps": [],
+      "unspecified": [
+        "exact technical protocols used for forwarding requests"
+      ],
+      "status": "auto",
+      "audience": null,
+      "evidence": [
+        "control layer it basically include the software tools which is responsible for managing and controlling underling cloud infrastructure it enable the producing of IT resources for creating the cloud services."
+      ]
+    },
+    {
+      "id": "88aaa2b3-d00f-460c-bb3a-62e187494452",
+      "category": "teaching",
+      "kind": "concept",
+      "title": "Key Functions of the Control Layer",
+      "summary": "The main functions performed by control layers are resource configuration, resource provisioning, and resource monitoring.",
+      "steps": [],
+      "unspecified": [
+        "detailed configuration parameters"
+      ],
+      "status": "auto",
+      "audience": null,
+      "evidence": [
+        "Key function for the control layers are resource configuration, resource provisioning and resource monitoring."
+      ]
+    },
+    {
+      "id": "aa2a3500-fb9b-47e6-a0ca-4deddb1ead5e",
+      "category": "teaching",
+      "kind": "concept",
+      "title": "Control Software",
+      "summary": "Control software ties together underlying resources, works with organization, performs resource pooling, dynamic allocation, optimization, provides a complete view of resources, and enables centralized management of IT resources.",
+      "steps": [],
+      "unspecified": [
+        "names of specific software products"
+      ],
+      "status": "auto",
+      "audience": null,
+      "evidence": [
+        "what are the control software exactly? Control software kya karta hai? Tie together the underlying resource and work in conjunction with the originalization."
+      ]
+    },
+    {
+      "id": "9522cee2-35bc-439a-b7c0-14c268dc57e6",
+      "category": "teaching",
+      "kind": "comparison",
+      "title": "Element Manager versus Unified Manager",
+      "summary": "An element manager manages things individually, whereas a unified manager uses a centralized approach to balance all things and provides a single manager interface for configurations and provisioning resources.",
+      "steps": [],
+      "unspecified": [],
+      "status": "auto",
+      "audience": null,
+      "evidence": [
+        "Eliminated manager mein humne dekha everything is managed individually but unified manager mein humne dekha ki this Centralized approach is therefore unified management software jo saari chizon ko balance karta hai."
+      ]
+    },
+    {
+      "id": "63e87f03-9224-49c3-ace3-8a6be58abcf4",
+      "category": "teaching",
+      "kind": "concept",
+      "title": "Unified Manager Features and Capabilities",
+      "summary": "The unified manager exposes APIs for orchestration layer integration and automated service provisioning, performs compliance checks, provides a dashboard showing resource utilization, and allows monitoring, reporting, and root cause analysis.",
+      "steps": [],
+      "unspecified": [],
+      "status": "auto",
+      "audience": null,
+      "evidence": [
+        "It exposes all the APIs that can be integrated with the orchestration layer and automated service producing."
+      ]
+    },
+    {
+      "id": "bd3cdf0c-4e61-4785-9a5e-94ec02d17660",
+      "category": "teaching",
+      "kind": "concept",
+      "title": "Key Phases in Provisioning",
+      "summary": "The key phases involved in provisioning include resource discovery, resource pool management, and resource provisioning.",
+      "steps": [],
+      "unspecified": [],
+      "status": "auto",
+      "audience": null,
+      "evidence": [
+        "Toh first is your resource discovery kyunki ultimately cloud mein important cheez hoti hai resource, resource ko discover karna, jo bhi request aata hai resource ko allocate karna."
+      ]
+    },
+    {
+      "id": "e4b8b8a9-36cb-46e0-a519-011c155c2f0c",
+      "category": "teaching",
+      "kind": "concept",
+      "title": "Resource Categories and Components",
+      "summary": "Physical layer resources are divided into compute, network, and storage categories, each containing specific components like CPU speed, blade model, network switches, VLAN, drive capacity, and RAID level.",
+      "steps": [],
+      "unspecified": [],
+      "status": "auto",
+      "audience": null,
+      "evidence": [
+        "Abhi alag-alag type ke resources ho sakte hain. Jaise humne physical air mein dekha teen type ke resources hai compute, network and storage."
+      ]
+    },
+    {
+      "id": "fe741e6c-e455-4619-bd39-145db7e9888b",
+      "category": "teaching",
+      "kind": "concept",
+      "title": "Resource Pool Management",
+      "summary": "Resource pool management involves categorizing resources into different grades like gold, silver, and bronze, where each grade has different features and pricing similar to cars.",
+      "steps": [],
+      "unspecified": [
+        "Exact pricing amounts"
+      ],
+      "status": "auto",
+      "audience": null,
+      "evidence": [
+        "Toh resource pool mein humne dekha ki teen type ke resources hain, unka category diya gold, silver and bronze."
+      ]
+    },
+    {
+      "id": "c8aa776c-6407-4e2d-9eff-1e026f1ada27",
+      "category": "teaching",
+      "kind": "concept",
+      "title": "Resource Provisioning",
+      "summary": "Resource provisioning involves allocating resources from a graded resource pool to service instances. It begins when a consumer selects a cloud service from the service catalog.",
+      "steps": [],
+      "unspecified": [],
+      "status": "auto",
+      "audience": null,
+      "evidence": [
+        "Involve allocating resources from graded resource pool to service instances."
+      ]
+    },
+    {
+      "id": "b660d530-36a8-4d0f-874b-64c3c2e3ca20",
+      "category": "teaching",
+      "kind": "concept",
+      "title": "Software Defined Approach",
+      "summary": "The software defined approach is a new model for managing resources that abstracts underlying infrastructure components and separates management functions from infrastructure components, enabling central IT infrastructure control.",
+      "steps": [],
+      "unspecified": [],
+      "status": "auto",
+      "audience": null,
+      "evidence": [
+        "it abstract the underling infrastructure component and separate the management function from the infrastructure component and external software then run our controller."
+      ]
+    },
+    {
+      "id": "107554c5-c756-4fa7-bb52-01725181a658",
+      "category": "teaching",
+      "kind": "topic",
+      "title": "Functions of Software Defined Controller",
+      "summary": "The lecturer explains the key functions and uses of the software-defined controller, which include discovering underlying resources, providing an aggregative view, abstracting hardware, enabling rapid processing and uniform policy application, providing an interface for external resource requests, improving business agility, minimizing provisioning time, and achieving a scale-out architecture at a lower cost.",
+      "steps": [],
+      "unspecified": [
+        "Specific AWS practical policy details for different users"
+      ],
+      "status": "auto",
+      "audience": null,
+      "evidence": [
+        "Now what are the key functions of the software define controller? Abhi ye approach jo hai iska kya-kya use hai? Ki discover the underlying resources and provide an aggregative view of resource, abstract the underlying hardware resource And pull them enable the rapid processing of resources based on the predefined policy."
+      ]
+    },
+    {
+      "id": "5e362ac6-0ef0-4246-9d90-6d5a9a4940c5",
+      "category": "teaching",
+      "kind": "concept",
+      "title": "Resource Management",
+      "summary": "Resource management is the process of allocating resources effectively to a service system from a pool of resources and monitoring them to maintain service levels. Its key goals are to control utilization, prevent service instances from monopolizing resources, centrally manage resources, define policies, and configure and monitor resources.",
+      "steps": [],
+      "unspecified": [],
+      "status": "auto",
+      "audience": null,
+      "evidence": [
+        "So process for allocating the resource effectively to a service system from a pool of resources and monitoring the resource that helps in maintaining the service level."
+      ]
+    },
+    {
+      "id": "60a11bcc-87ed-463c-989c-f20997e82d72",
+      "category": "teaching",
+      "kind": "comparison",
+      "title": "Resource Allocation Models",
+      "summary": "There are two resource allocation models: relative resource allocation and absolute resource allocation. Relative allocation means resource allocation to a constituent is defined proportional relative to others. Absolute allocation is based on defining a specific quantity or limit you want, featuring lower bounds for a guaranteed minimum and upper bounds to limit consumption beyond a maximum limit.",
+      "steps": [],
+      "unspecified": [],
+      "status": "auto",
+      "audience": null,
+      "evidence": [
+        "Now, what is the meaning of resource allocation model? So there are two allocation models are there. Relatively resource allocation and absolute resource allocation."
+      ]
+    },
+    {
+      "id": "3368f331-59fa-4c88-8ee2-53352896767a",
+      "category": "teaching",
+      "kind": "concept",
+      "title": "Lower Bound and Upper Bound Guarantees",
+      "summary": "The lecturer explains lower bound guarantee as a minimum amount of resource and upper bond limit as preventing a service from consuming resources beyond a maximum limit.",
+      "steps": [],
+      "unspecified": [],
+      "status": "auto",
+      "audience": null,
+      "evidence": [
+        "So lower bond guarantee guarantee minimum amount of resource upper bond limit the service from consuming resource beyond maximum limit."
+      ]
+    },
+    {
+      "id": "de54861b-9da5-4fff-983d-03078256055d",
+      "category": "teaching",
+      "kind": "comparison",
+      "title": "Relative vs Absolute Resource Allocation",
+      "summary": "The excerpt distinguishes between relative resource allocation and absolute resource allocation, noting that absolute allocation can give a specific limit like zero to 100.",
+      "steps": [],
+      "unspecified": [],
+      "status": "auto",
+      "audience": null,
+      "evidence": [
+        "Toh donon mein difference ye hai, relative resource allocation and absolute resource allocation. Toh do categories bhi hai."
+      ]
+    },
+    {
+      "id": "7adbcec6-d6be-4e60-b2eb-3c35ce41fb20",
+      "category": "teaching",
+      "kind": "concept",
+      "title": "Hyper Threading",
+      "summary": "Hyper threading makes a processor appear as a two logical core processor, allowing the OS to schedule two threads simultaneously by sharing the same physical resource.",
+      "steps": [],
+      "unspecified": [],
+      "status": "auto",
+      "audience": null,
+      "evidence": [
+        "So here it make a processor appear as a two logical core processor. Theek hai? Ever OS to schedule the two thread simultaneously."
+      ]
+    },
+    {
+      "id": "d07a518d-6ec5-481c-a642-9e1dbe1e3e79",
+      "category": "teaching",
+      "kind": "concept",
+      "title": "Dynamic memory allocation",
+      "summary": "A memory optimization technique that reclaims empty memory pages after a process finishes or when a virtual machine is uninstalled. Agents and the hypervisor work together to reclaim the memory, put it back into the memory pool, and assign those freed memory pages to other virtual machines that require them.",
+      "steps": [],
+      "unspecified": [
+        "exact internal technical mechanisms beyond what is stated"
+      ],
+      "status": "auto",
+      "audience": null,
+      "evidence": [
+        "Dynamic memory allocation. So memory optimization technique that reclaim the memory page."
+      ]
+    },
+    {
+      "id": "40e185de-e80f-4a59-9ce2-59a92ad5c956",
+      "category": "teaching",
+      "kind": "concept",
+      "title": "Virtual Storage Provisioning",
+      "summary": "Virtual storage provisioning is a method where storage is virtually allocated to virtual machines, allowing them to use the allocated storage as needed.",
+      "steps": [],
+      "unspecified": [],
+      "status": "auto",
+      "audience": null,
+      "evidence": [
+        "This is called as a virtual storage provision jismein hum virtually VM ko storage allocate karke dete hain aur jis tarah usko use karna hai vo total use kar sakte hain."
+      ]
+    },
+    {
+      "id": "8e10b2db-455a-4e87-a2c2-418501fda519",
+      "category": "teaching",
+      "kind": "concept",
+      "title": "Storage Pool Rebalancing",
+      "summary": "Storage pool rebalancing provides the ability to rebalance allocated exchanges on physical disk drives when new drives are added, helping to achieve higher overall pool performance and spread data equally.",
+      "steps": [],
+      "unspecified": [],
+      "status": "auto",
+      "audience": null,
+      "evidence": [
+        "So storage pull rebalancing tabhi aap storage pull ko balance kaise karo? Theek hai, you provide the ability to rebalance the located exchange on the physical disk drive over the pull when new drives are added."
+      ]
+    },
+    {
+      "id": "c40910ee-8ce9-473e-9218-9669de024f26",
+      "category": "teaching",
+      "kind": "concept",
+      "title": "Storage Space Reclamation",
+      "summary": "Storage space reclamation is the process of identifying unused space and returning it back to the storage pool to reuse it and achieve cost savings.",
+      "steps": [],
+      "unspecified": [],
+      "status": "auto",
+      "audience": null,
+      "evidence": [
+        "Reclamation ka matlab keh rahe hain ki jo aapne space use kar liya, usko reuse kaise karoge. Identify a new space within a theme and assign it to the storage to provide a cost saving."
+      ]
+    },
+    {
+      "id": "bb7b02f2-4fe3-42b2-b73a-b78395432b98",
+      "category": "teaching",
+      "kind": "concept",
+      "title": "Automated Storage Tiering",
+      "summary": "Automated storage tiering is a technique used to automatically store the right data at the right time in the correct storage tier, where each tier has different protection, performance, and cost levels. Data movement can occur as intra-array or inter-array.",
+      "steps": [],
+      "unspecified": [],
+      "status": "auto",
+      "audience": null,
+      "evidence": [
+        "It's a technique of establishing Tacky of different storage type of different category of data enables storing the right data automatically at the right time to meet the service level requirement."
+      ]
+    },
+    {
+      "id": "3088f99a-03f6-4eee-b89f-2d005792cac6",
+      "category": "teaching",
+      "kind": "topic",
+      "title": "Data Movement Techniques: Cache Tiering and Dynamic VM Load Balancing",
+      "summary": "The lecturer explains two techniques for data movement called intra and inter array. The first technique is cache tiering, which uses an SSD as tier one and dynamic RAM as tier zero to enable a large capacity secondary cache, tiering between DRAM and SSD, and performance during peak workload. The second technique is dynamic VM load balancing storage volume, which allows intelligent placement of VMs based on I/O load, available storage, and capacity.",
+      "steps": [],
+      "unspecified": [],
+      "status": "auto",
+      "audience": null,
+      "evidence": [
+        "It is called as intra and inter array. Do techniques hai data movement ka. So the first is your catch scaling."
+      ]
+    }
+  ]
+}
