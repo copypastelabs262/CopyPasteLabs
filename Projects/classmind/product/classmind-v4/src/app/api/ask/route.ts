@@ -84,7 +84,11 @@ async function handleGlobalAsk(input: GlobalAskInput) {
 
   const result = await answerFromKnowledge(units, q, {
     history: storedHistory ?? input.history,
-    context: { scope: "global", courseNames: academic.courseNames },
+    context: {
+      scope: "global",
+      courseNames: academic.courseNames,
+      subjectsOmitted: academic.subjectsOmitted,
+    },
   });
 
   const meter = await recordAskRun({
