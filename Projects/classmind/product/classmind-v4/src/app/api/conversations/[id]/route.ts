@@ -44,7 +44,15 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
     // Current course access, not historical. The refusal is indistinguishable
     // from absence on purpose.
+    //
+    // A course/lecture thread has ONE course to re-check; a global thread has
+    // none of its own, so its check is the caller's whole current membership:
+    // every stored source names its course, and a source from a course the
+    // reader can no longer open is withheld exactly as readKnowledge would
+    // withhold it today.
     let isOwner = false;
+    let ownedCourses = new Set<string>();
+    let accessibleCourses = new Set<string>();
     if (got.conversation.courseId) {
       try {
         ({ isOwner } = await requireCourseAccess(got.conversation.courseId, user.id));
@@ -52,6 +60,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         if (err instanceof HttpError) return NOT_FOUND;
         throw err;
       }
+    } else {
+      const memberships = await listCourseMemberships(serviceClient(), user.id);
+      ownedCourses = new Set(memberships.filter((m) => m.isOwner).map((m) => m.id));
+      accessibleCourses = new Set(memberships.map((m) => m.id));
     }
 
     // Which cited lectures may still be shown to THIS reader. Same rules as
@@ -69,11 +81,22 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const gateRows = citedLectureIds.length
       ? await fetchLectureGateRows({ ids: citedLectureIds })
       : [];
-    const servable = new Set(
-      gateRows
-        .filter((row) => (isOwner ? row.status === "ready" : lectureVisibleToStudents(row)))
-        .map((row) => row.id),
-    );
+    const gateById = new Map(gateRows.map((row) => [row.id, row]));
+
+    const sourceServable = (s: unknown): boolean => {
+      const lid = (s as { lectureId?: unknown }).lectureId;
+      if (typeof lid !== "string") return false;
+      const row = gateById.get(lid);
+      if (!row) return false;
+      if (got.conversation.courseId) {
+        return isOwner ? row.status === "ready" : lectureVisibleToStudents(row);
+      }
+      // Global thread: the source's own course decides, per the reader's
+      // CURRENT relationship to it. Unknown or inaccessible course = withheld.
+      const cid = (s as { courseId?: unknown }).courseId;
+      if (typeof cid !== "string" || !accessibleCourses.has(cid)) return false;
+      return ownedCourses.has(cid) ? row.status === "ready" : lectureVisibleToStudents(row);
+    };
 
     return NextResponse.json({
       state: "ok",
