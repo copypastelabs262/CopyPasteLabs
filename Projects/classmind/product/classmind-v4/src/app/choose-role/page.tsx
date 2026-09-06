@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { authClient } from "@/lib/supabase/server";
+import { serviceClient } from "@/lib/supabase/service";
 import { ensureProfile } from "@/lib/profile";
 import { safeNext } from "@/lib/safe-next";
 import ChooseRoleForm from "./ChooseRoleForm";
