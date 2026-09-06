@@ -45,16 +45,30 @@ export type ProvisionPlan =
   // A profile exists: signals are IGNORED, whatever they say. Signing in again
   // must never overwrite a role, so an existing row always wins.
   | { action: "keep" }
-  // No profile, and an explicit selection is on record: create from it. The
-  // pending cookie outranks metadata because it is the more recent choice.
+  // No profile, and an explicit STUDENT selection is on record: create from it.
+  // The pending cookie outranks metadata because it is the more recent choice.
+  // Only ever student -- faculty is never created here (see below).
   | { action: "create"; role: ProfileRole; source: "pending" | "metadata" }
-  // No profile and no explicit selection has EVER happened for this account.
-  // The answer is a question to the user, not a guess.
+  // No profile and no createable signal. Either no selection was ever made, or
+  // the selection was FACULTY -- which is never auto-provisioned, because
+  // faculty requires a server-validated code entered explicitly at
+  // /choose-role. The answer is a gated question to the user, not a guess and
+  // never a silent faculty account.
   | { action: "choose" };
 
+// FACULTY IS NEVER AUTO-PROVISIONED. A faculty signal from a cookie or from
+// auth metadata is not proof the person holds the institution's faculty code;
+// it is only a claim. So any faculty signal routes to /choose-role, where the
+// code is entered and verified server-side before the role is written. Only an
+// explicit STUDENT signal (which carries no privilege) is created directly.
+// This is the structural half of the gate: even if a faculty signal reaches
+// here, it cannot become a faculty account without the code.
 export function planProfileProvision(input: ProvisionInput): ProvisionPlan {
   if (input.hasProfile) return { action: "keep" };
-  if (input.pendingRole) return { action: "create", role: input.pendingRole, source: "pending" };
-  if (input.metadataRole) return { action: "create", role: input.metadataRole, source: "metadata" };
+  if (input.pendingRole === "faculty" || input.metadataRole === "faculty") {
+    return { action: "choose" };
+  }
+  if (input.pendingRole === "student") return { action: "create", role: "student", source: "pending" };
+  if (input.metadataRole === "student") return { action: "create", role: "student", source: "metadata" };
   return { action: "choose" };
 }
