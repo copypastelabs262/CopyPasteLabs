@@ -150,7 +150,13 @@ export default function AskWorkspace({
       {/* aria-live so a screen reader hears the answer arrive without having
           to re-walk the page; polite, because the student just asked for it. */}
       <div
-        className={cx("flex-1 pb-6", turns.length === 0 && "flex flex-col justify-center")}
+        className={cx(
+          "flex-1 pb-6",
+          // The course Ask tab centers its empty state in the room it owns;
+          // the lecture page keeps it top-aligned so the suggestions stay
+          // clear of the composer on a 900px viewport.
+          turns.length === 0 && !lectureId && "flex flex-col justify-center",
+        )}
         aria-live="polite"
       >
         {turns.length === 0 ? (
