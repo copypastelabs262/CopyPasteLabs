@@ -335,8 +335,9 @@ export default function TeacherHome({
 // carries neither, and folding them into one component with two flags would
 // make both harder to read.
 function CourseRow({ course }: { course: OverviewCourse }) {
+  // The group heading (Teaching / Enrolled) now states the relationship, so the
+  // row carries only what distinguishes it WITHIN its group.
   const meta = [
-    course.isOwner ? "Teaching" : "Student",
     termLabel(course.term),
     plural(course.lectureCount, "lecture", "lectures"),
     course.processingCount ? `${course.processingCount} processing` : null,
