@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireUser, requireCourseAccess, errorResponse, HttpError } from "@/lib/auth";
 import { serviceClient } from "@/lib/supabase/service";
 import { deleteConversation, getConversation } from "@/lib/knowledge/conversations";
+import { listCourseMemberships } from "@/lib/knowledge/academic-context";
 import { fetchLectureGateRows, lectureVisibleToStudents } from "@/lib/knowledge/read";
 
 // One stored conversation, whole: its identity and every message in order,
