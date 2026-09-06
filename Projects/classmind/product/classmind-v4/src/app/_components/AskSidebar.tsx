@@ -45,7 +45,22 @@ function groupByRecency(convos: Convo[]): Group[] {
     .filter((g) => g.items.length > 0);
 }
 
-export default function AskSidebar({ onNavigate }: { onNavigate?: () => void }) {
+export default function AskSidebar({
+  listEndpoint = "/api/ask/conversations",
+  newHref = "/ask",
+  itemHref = (id: string) => `/ask?c=${id}`,
+  onNavigate,
+}: {
+  // Scope is expressed by which list + hrefs the sidebar is given, so the SAME
+  // component serves Global Ask (/api/ask/conversations, /ask) and a course's
+  // Ask (/api/courses/<id>/conversations, /courses/<id>) with no branching. A
+  // course sidebar shows only that course's conversations because its endpoint
+  // returns only those — the scope boundary is the server's, not the URL's.
+  listEndpoint?: string;
+  newHref?: string;
+  itemHref?: (id: string) => string;
+  onNavigate?: () => void;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const activeId = searchParams.get("c");
