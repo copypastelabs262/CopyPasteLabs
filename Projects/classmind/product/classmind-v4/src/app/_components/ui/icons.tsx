@@ -36,6 +36,44 @@ function Svg({ size = 18, className, children }: IconProps & { children: React.R
   );
 }
 
+export function MenuIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 6h16" />
+      <path d="M4 12h16" />
+      <path d="M4 18h16" />
+    </Svg>
+  );
+}
+
+export function HomeIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 10.5 12 4l8 6.5" />
+      <path d="M6 9.5V19a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V9.5" />
+    </Svg>
+  );
+}
+
+export function UserIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5.5 20a6.5 6.5 0 0 1 13 0" />
+    </Svg>
+  );
+}
+
+export function LogoutIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M14 5.5H6a1.5 1.5 0 0 0-1.5 1.5v10A1.5 1.5 0 0 0 6 18.5h8" />
+      <path d="M17 8.5 20.5 12 17 15.5" />
+      <path d="M20.5 12H10" />
+    </Svg>
+  );
+}
+
 export function UploadIcon(props: IconProps) {
   return (
     <Svg {...props}>
