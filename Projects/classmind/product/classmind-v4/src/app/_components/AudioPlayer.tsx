@@ -114,7 +114,9 @@ const AudioPlayer = forwardRef<AudioPlayerHandle, { src: string | null; label?: 
     }
 
     return (
-      <div className="rounded-2xl border border-line bg-surface-raised/85 px-4 py-3.5 backdrop-blur sm:px-5">
+      {/* Solid raised surface, no blur: the material budget (two
+          backdrop-filters app-wide) belongs to the header and the overlay. */}
+      <div className="rounded-2xl border border-line bg-surface-raised px-4 py-3.5 sm:px-5">
         <audio
           ref={el}
           src={src}
