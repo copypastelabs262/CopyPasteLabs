@@ -49,6 +49,7 @@ export default function AskSidebar({
   listEndpoint = "/api/ask/conversations",
   newHref = "/ask",
   itemHref = (id: string) => `/ask?c=${id}`,
+  scopeLabel,
   onNavigate,
 }: {
   // Scope is expressed by which list + hrefs the sidebar is given, so the SAME
