@@ -166,6 +166,9 @@ export default function AskWorkspace({
       const params = new URLSearchParams(searchParams.toString());
       if (id) params.set("c", id);
       else params.delete("c");
+      // A carried-in question (?q=) is consumed by its one ask; the URL must
+      // not re-ask it on refresh.
+      params.delete("q");
       const qs = params.toString();
       router.replace(qs ? `?${qs}` : "?", { scroll: false });
     },
