@@ -95,7 +95,7 @@ export default function AskSidebar({
       cancelled = true;
       window.removeEventListener("cm:conversations-changed", onChanged);
     };
-  }, []);
+  }, [listEndpoint]);
 
   const groups = groupByRecency(convos);
 
