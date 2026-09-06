@@ -36,6 +36,23 @@ function Svg({ size = 18, className, children }: IconProps & { children: React.R
   );
 }
 
+export function ChatIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5H9l-4 3v-3H5A1.5 1.5 0 0 1 3.5 15V7A1.5 1.5 0 0 1 5 5.5Z" />
+    </Svg>
+  );
+}
+
+export function PenIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M15.5 5.5 18.5 8.5" />
+      <path d="M4 20h4L19 9a2 2 0 0 0 0-3l0 0a2 2 0 0 0-3 0L5 17l-1 3Z" />
+    </Svg>
+  );
+}
+
 export function MenuIcon(props: IconProps) {
   return (
     <Svg {...props}>
