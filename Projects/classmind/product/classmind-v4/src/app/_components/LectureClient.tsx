@@ -588,8 +588,10 @@ export default function LectureClient({
         >
           <div
             className={cx(
+              // Solid surface with a lifted shadow, no blur: the two-filter
+              // material budget belongs to the header and the overlay.
               engaged &&
-                "motion-rise fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/92 px-4 pt-3 backdrop-blur sm:px-6",
+                "motion-rise fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface px-4 pt-3 shadow-lift sm:px-6",
               // Above the home indicator on a phone, and a plain 0.75rem
               // everywhere the inset is zero.
               engaged && "[padding-bottom:max(0.75rem,env(safe-area-inset-bottom))]",
