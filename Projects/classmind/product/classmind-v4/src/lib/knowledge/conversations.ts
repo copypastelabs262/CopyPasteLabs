@@ -49,6 +49,20 @@ const UNAVAILABLE =
   "Conversations are not stored yet -- migration 20260906150000 has not been applied. " +
   "This conversation lives only on this page.";
 
+// Errors go to the SERVER log; the wire gets a safe sentence. A raw Postgres
+// message on the wire once shipped "invalid input syntax for type uuid: ..."
+// to the browser -- diagnostic detail is the operator's, not the caller's.
+function degradeNote(error: { message?: string | null } | null | undefined): string {
+  if (error && isMissingSchemaError(error)) return UNAVAILABLE;
+  console.error("[conversations] store error:", error?.message ?? "unknown");
+  return "Conversations are unavailable right now. This exchange was not saved.";
+}
+
+// A resumed thread is read newest-first under this bound, then re-sorted
+// ascending -- if a thread ever exceeds it, the OLDEST messages fall off the
+// render, never the recent ones a student came back for.
+const MESSAGE_READ_LIMIT = 400;
+
 function rowToConversation(r: Record<string, unknown>): ConversationRow {
   return {
     id: r.id as string,
