@@ -398,6 +398,13 @@ export default function AskWorkspace({
               ...rest,
             ];
           });
+          // Tell any sidebar to refresh its list: a new thread just appeared, or
+          // an existing one moved to the top with a new last-message time. The
+          // sidebar is a separate component, so this decoupled event keeps it in
+          // sync without lifting conversation state out of this pane.
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("cm:conversations-changed"));
+          }
         } else if (convo.note?.includes("20260906150000")) {
           // The store is genuinely gone (migration state): run ephemeral from
           // here and say so. A TRANSIENT write failure does not latch -- the
