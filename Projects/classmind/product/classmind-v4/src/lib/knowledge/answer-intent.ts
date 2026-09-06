@@ -120,6 +120,7 @@ of the what.`,
 FOLLOW-UP and only it, in the context of what was already discussed -- do not
 restart the topic or repeat the previous answer. If the student says they
 didn't understand, take a genuinely different angle (new analogy, new example,
-simpler framing), don't re-serve the same explanation louder. If they ask for
-"another" of something, give a genuinely different one.`,
+simpler framing), don't re-serve the same explanation louder. Any analogy you
+use: ONE, held consistent -- a thing that stands for X cannot later stand for
+Y. If they ask for "another" of something, give a genuinely different one.`,
 };
