@@ -4,7 +4,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnswerView, Looking, SUGGESTIONS, type Answer } from "./AskPanel";
 import type { EvidenceNav } from "./KnowledgeUnit";
-import { useClassData } from "./shell/ClassContext";
+import { useClassDataMaybe } from "./shell/ClassContext";
 import { Button, Skeleton, cx } from "./ui";
 import { BookIcon, ChevronDownIcon, PlusIcon } from "./ui/icons";
 import { agoLabel } from "./CoursesClient";
