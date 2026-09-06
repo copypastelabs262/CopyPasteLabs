@@ -115,7 +115,7 @@ try {
 
   console.log("\n--- Email-confirmation detour: role recorded in user_metadata at sign-up ---");
   const m = await createUser("m", { full_name: "Verify Metadata M", role: "student" });
-  const mFirst = await ensureProfile(m, null);
+  const mFirst = await ensureProfile(admin, m, null);
   check(mFirst.role === "student" && mFirst.created, "metadata role provisions a student profile with no cookie", mFirst);
   const mRow = await profileRow(m.id);
   check(mRow?.full_name === "Verify Metadata M", "full name carried from metadata", mRow);
