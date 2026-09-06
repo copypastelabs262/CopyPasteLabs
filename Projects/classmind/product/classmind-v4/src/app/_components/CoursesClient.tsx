@@ -110,6 +110,20 @@ export interface TodoItem {
   lectureAt: string;
 }
 
+// One of the student's own recent conversations, named academically -- the
+// thread's derived title plus where it lives -- so "pick up where you left
+// off" reads as study, not as a chat log.
+export interface RecentConversation {
+  id: string;
+  title: string;
+  scope: "lecture" | "course" | "global";
+  courseId: string;
+  courseCode: string;
+  lectureId: string | null;
+  lectureTitle: string | null;
+  lastMessageAt: string;
+}
+
 export interface StudentOverview {
   role: "student";
   courses: OverviewCourse[];
@@ -117,6 +131,9 @@ export interface StudentOverview {
   todoTotal: number;
   // A COUNT and never content: how many items the lecturer has not looked at.
   awaitingReview: number;
+  // Absent-by-empty when the conversations migration is not applied; the band
+  // simply does not render.
+  recentConversations: RecentConversation[];
   recentLectures: OverviewLecture[];
   recentLecturesTotal: number;
 }
