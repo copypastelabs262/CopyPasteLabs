@@ -444,8 +444,10 @@ export default function AskWorkspace({
     // to mean something -- the full tab on the course Ask page, a calmer share
     // on the lecture page, where other sections live below.
     <div className={cx("flex flex-col", lectureId ? "min-h-[44vh]" : "min-h-[62vh]")}>
-      {/* --- The conversation bar: where am I, and where else could I be ---- */}
-      {showBar ? (
+      {/* --- The conversation bar: where am I, and where else could I be ----
+          Hidden when a sidebar owns New/Recent (the chat workspace); shown as
+          the self-contained control on the course and lecture Ask surfaces. */}
+      {showBar && !withSidebar ? (
         <div className="mb-6 flex items-center justify-between gap-3 border-b border-line pb-3">
           <p className="chip-mono min-w-0 truncate text-[12px] text-ink-soft" title={conversationTitle ?? undefined}>
             {conversationTitle ?? "New conversation"}
