@@ -397,7 +397,7 @@ export function AnswerView({
               />
             </button>
           ) : (
-            <h3 className={SECTION_HEADING}>From the lecture</h3>
+            <h3 className={SECTION_HEADING}>{sourcesHeading}</h3>
           )}
           {showSources ? (
           <ol className="mt-6 space-y-10">
