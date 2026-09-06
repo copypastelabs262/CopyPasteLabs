@@ -23,7 +23,7 @@ Two paid validation runs are **proposed and awaiting per-run approval** — see 
   baseline) — the chaotic multi-speaker tail of the class defeated ASR, the clear
   lecturing segments came through. No new upload exists after 2026-09-04.
 - **R1 / R2 / audience were still present** (code + data): teaching pass had no dedupe
-  (live duplicate pairs confirmed in `knowledge_items`), `model_raw` was null on all 101
+  (live duplicate pairs confirmed in `knowledge_items`), `model_raw` was null on all 82
   items, no audience field anywhere.
 - **Migrations:** `ask_runs` applied; **`reconstruction_jobs` (20260830140000) NOT
   applied** — harmless today because the extract route doesn't use it, but a background
