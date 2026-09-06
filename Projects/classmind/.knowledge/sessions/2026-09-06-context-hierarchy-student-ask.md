@@ -96,10 +96,11 @@ full-page captures remains a known capture artifact, not a product bug.
 - Offline: **526 checks green** across all nine free suites (ask 79, answer 69,
   conversations 27, auth 25, extraction 76, transcript 33, reconstruction 63,
   knowledge-plan 47, providers 107).
-- Live: **verify:conversations 47/47** — all three boundaries visible in
-  sources, global create/resume/follow-up at $0, scope-borrowing 404s both
-  directions, stranger 404s, GET-405, the un-enrollment withholding probe,
-  meter honesty, cleanup. $0 by construction.
+- Live: **verify:conversations 48/48** (47 at milestone close; +1 hard meter
+  pin once the operator applied `20260906180000`) — all three boundaries
+  visible in sources, global create/resume/follow-up at $0, scope-borrowing
+  404s both directions, stranger 404s, GET-405, the un-enrollment withholding
+  probe, global meter recording, cleanup. $0 by construction.
 - tsc, eslint, production build: clean. Knowledge engine v1.2.0: untouched,
   still CLOSED.
 
