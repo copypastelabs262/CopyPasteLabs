@@ -388,7 +388,11 @@ function TodoCard({ item }: { item: TodoItem }) {
           information, and silence about it reads as "there is no deadline". */}
       {item.unspecified.length ? (
         <p className="mt-4 max-w-2xl text-sm leading-relaxed text-ink-faint">
-          Not stated in the lecture: {item.unspecified.join(", ")}.
+          {/* Items arrive as sentences ("The deadline for the assignment.");
+              strip their final periods so the joined line reads as ONE
+              sentence instead of stuttering ".," at every comma. */}
+          Not stated in the lecture:{" "}
+          {item.unspecified.map((u) => u.replace(/\.+\s*$/, "")).join(", ")}.
         </p>
       ) : null}
 
