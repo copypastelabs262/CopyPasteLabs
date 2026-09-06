@@ -161,26 +161,63 @@ async function handleAsk(courseId: string, input: AskInput) {
     error: result.failure,
   });
 
+  // Only the units actually used, each with its evidence, so every claim in
+  // the prose is checkable. Built once: the wire response and the persisted
+  // assistant message carry the SAME sources, so a resumed conversation
+  // renders exactly what was shown today.
+  const sources = result.usedUnits.map((u, i) => ({
+    ref: i + 1,
+    id: u.id,
+    lectureId: u.lectureId,
+    lectureTitle: u.lectureTitle,
+    category: u.category,
+    kind: u.kind,
+    title: u.title,
+    summary: u.summary,
+    steps: u.steps,
+    unspecified: u.unspecified,
+    status: u.status,
+    evidence: u.evidence,
+  }));
+
+  // ---- Persist the exchange ------------------------------------------------
+  //
+  // AFTER the answer and AFTER the meter: persistence failing must lose only
+  // persistence, never an answered (possibly paid) question. Creation happens
+  // here too, so a page visit never creates a conversation -- only an actual
+  // first question does.
+  let exchangeState: "ok" | "unavailable" | null = null;
+  if (wantsPersistence && !conversationNote) {
+    if (!conversation) {
+      const context = planConversationContext({ courseId, lectureId });
+      if ("error" in context) {
+        conversationNote = context.error;
+      } else {
+        const created = await createConversation(svc, user.id, context);
+        if (created.conversation) conversation = created.conversation;
+        else conversationNote = created.note;
+      }
+    }
+    if (conversation) {
+      const appended = await appendExchange(svc, user.id, conversation, q, {
+        content: result.answer,
+        payload: {
+          route: result.route,
+          degraded: result.degraded,
+          knowledgeUnitsAvailable: units.length,
+          sources,
+        },
+      });
+      exchangeState = appended.state;
+      if (appended.note) conversationNote = appended.note;
+    }
+  }
+
   return NextResponse.json({
     question: result.question,
     answered: result.answered,
     answer: result.answer,
-    // Only the units actually used, each with its evidence, so every claim in
-    // the prose is checkable.
-    sources: result.usedUnits.map((u, i) => ({
-      ref: i + 1,
-      id: u.id,
-      lectureId: u.lectureId,
-      lectureTitle: u.lectureTitle,
-      category: u.category,
-      kind: u.kind,
-      title: u.title,
-      summary: u.summary,
-      steps: u.steps,
-      unspecified: u.unspecified,
-      status: u.status,
-      evidence: u.evidence,
-    })),
+    sources,
     degraded: result.degraded,
     route: result.route,
     // Cost on the wire, so the operator can see what a question spent
@@ -191,6 +228,20 @@ async function handleAsk(courseId: string, input: AskInput) {
     meter: meter.state,
     knowledgeUnitsAvailable: units.length,
     scope: lectureId ? "lecture" : "course",
+    // The stored-conversation outcome: null when the caller never asked for
+    // persistence; otherwise the conversation identity (for the client to
+    // continue with) and an honest state -- "unavailable" carries the note
+    // instead of pretending the thread exists.
+    conversation: wantsPersistence
+      ? {
+          id: conversation?.id ?? null,
+          title: conversation?.title ?? null,
+          scope: conversation?.scope ?? null,
+          lectureId: conversation?.lectureId ?? null,
+          state: conversation && exchangeState === "ok" ? "ok" : "unavailable",
+          note: conversationNote,
+        }
+      : null,
   });
 }
 
