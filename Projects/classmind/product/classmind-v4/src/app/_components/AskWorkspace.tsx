@@ -533,7 +533,13 @@ export default function AskWorkspace({
             ref={inputRef}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder={lectureId ? "Ask anything about this lecture" : "Ask anything about this class"}
+            placeholder={
+              global
+                ? "Ask about anything across your subjects"
+                : lectureId
+                  ? "Ask anything about this lecture"
+                  : "Ask anything about this class"
+            }
             autoComplete="off"
             disabled={asking || storeState === "loading"}
             className={cx(
