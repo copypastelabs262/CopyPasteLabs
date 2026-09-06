@@ -214,3 +214,33 @@ Operator approved the surgical completion step. Executed exactly as scoped:
 one student model-ask 485) ≈ **$0.006**. **Sarvam: 0 calls.** Free tests re-run after:
 ask 70/70, reconstruction 63/63, auth 25/25. No code changed in this step — DB state
 only; working tree clean.
+
+## Addendum 4 (same day): the review decision — edit-on-confirm, and the milestone CLOSED
+
+The operator reviewed the fresh assignment and directed the edit-on-confirm; executed
+with **zero Gemini calls** and no code/prompt changes:
+
+- **Compared** `96749c92` against the preserved confirmed baseline (`d07f214d`, in
+  `2026-09-06-gemini-1.1.0-knowledge-baseline-87a4a143.json`). Confirmed drift: summary
+  lost "write it five times" and "submit it next week"; three steps instead of four.
+- **Restored** the confirmed title, summary, steps (4) and unspecified (3) VERBATIM from
+  the baseline. **Kept** the extracted audience exactly: "Shyam, Shiv aur dusra ye
+  Darshan". Nothing invented, nothing normalized.
+- **Restored evidence**: the two baseline rows supporting the restored details ("Aur
+  five times likhna hai." — requires; "Use hum log arm matrix derive karenge." — step),
+  each checked as baseline-backed AND locatable by the engine's own `locateQuote`
+  against the immutable transcript before insert. Item now carries 7 verified rows.
+- **Confirmed** as the operator's review (reviewed_by = operator, review_note records
+  the edit and why). Exactly one assignment item on the lecture; nothing duplicated.
+- **Student-side proof**: test student asked "Who is the assignment for?" through the
+  real endpoint → **route direct, provider null, tokens null — $0** — answer carries the
+  full confirmed assignment AND "— for: Shyam, Shiv aur dusra ye Darshan", no gap
+  wording. Meter row agrees.
+- Free suites after: ask 70/70, reconstruction 63/63, knowledge-plan 47/47, auth 25/25.
+
+**The knowledge-engine validation milestone is CLOSED.** v1.2.0 contract proven
+end-to-end on both a controlled baseline and a real imperfect recording; verdicts,
+meters, dedupe, raw-output audit and the audience field all observed working live.
+Spend for the entire validation: 42,074 Gemini tokens ≈ $0.006; Sarvam 0 (~90 credits
+intact). **Next product milestone: the chat-first lecture page** (not started, per the
+operator's instruction).
