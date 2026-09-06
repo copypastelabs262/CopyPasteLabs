@@ -188,6 +188,21 @@ console.log("deadlines:");
   const r = routeAsk("When is the assignment due?", both, [ASSIGNMENT, ASSIGNMENT_NO_GAPS]);
   check(r.route === "model", "two candidate assignments: model disambiguates");
 }
+{
+  // The summary itself says WHEN ("next week"): a direct "the lecture didn't
+  // specify a deadline" would be misleading, so the model reads it instead.
+  const DATED = unit({
+    category: "actionable",
+    kind: "assignment",
+    title: "Transformation Assignment",
+    summary: "Derive the transformation matrix, write it five times, and submit it next week.",
+    unspecified: ["Exact submission date and time"],
+    status: "confirmed",
+  });
+  const r = routeAsk("When is it due?", [DATED], [DATED]);
+  check(r.route === "model",
+    "a summary carrying temporal wording sends the deadline question to the model", r.route);
+}
 
 /* ------------------------------------------------------------------------- */
 /* 4. Audience questions: answered from the stored field since v1.2.0, and    */
