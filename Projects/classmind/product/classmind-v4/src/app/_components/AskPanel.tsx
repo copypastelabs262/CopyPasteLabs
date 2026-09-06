@@ -428,7 +428,13 @@ export function AnswerView({
                 ) : null}
 
                 <Steps steps={s.steps} id={s.id} />
-                <EvidenceList evidence={s.evidence} nav={nav} heading="What was said" />
+                {/* Cross-subject sources carry their OWN course, so a global
+                    answer's citations open the right course's lecture. */}
+                <EvidenceList
+                  evidence={s.evidence}
+                  nav={{ ...nav, courseId: s.courseId ?? nav.courseId }}
+                  heading="What was said"
+                />
               </li>
             ))}
           </ol>
