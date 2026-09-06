@@ -1,0 +1,26 @@
+{
+  "baseUrl": "http://localhost:3500",
+  "scheme": "dark",
+  "capturedAt": "2026-09-06T10:37:02.801Z",
+  "shots": [
+    {
+      "target": "ask-student-active",
+      "viewport": "desktop",
+      "file": "ask-student-active--desktop--dark.png",
+      "finalUrl": "http://localhost:3500/courses/5ab749fb-d4fd-42fc-85ba-b9de82fe1dcf/ask"
+    },
+    {
+      "target": "ask-student-active",
+      "viewport": "tablet",
+      "file": "ask-student-active--tablet--dark.png",
+      "finalUrl": "http://localhost:3500/courses/5ab749fb-d4fd-42fc-85ba-b9de82fe1dcf/ask"
+    },
+    {
+      "target": "ask-student-active",
+      "viewport": "mobile",
+      "file": "ask-student-active--mobile--dark.png",
+      "finalUrl": "http://localhost:3500/courses/5ab749fb-d4fd-42fc-85ba-b9de82fe1dcf/ask"
+    }
+  ],
+  "blocked": []
+}

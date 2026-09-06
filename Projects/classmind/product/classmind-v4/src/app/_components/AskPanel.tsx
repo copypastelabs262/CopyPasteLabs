@@ -431,7 +431,12 @@ export function AnswerView({
         </div>
       ) : null}
 
-      {gaps.length ? (
+      {/* Folded with the sources on conversation surfaces: the gaps BELONG to
+          the retrieved evidence, and repeating seven of them under every turn
+          buries the ones that matter. Direct answers about deadlines and
+          audiences state their gap in prose regardless, so nothing honest is
+          hidden -- it is one disclosure away with the evidence it came from. */}
+      {gaps.length && showSources ? (
         <div className="mt-12">
           <h3 className={cx(SECTION_HEADING, "flex items-center gap-1.5 text-warn")}>
             <AlertIcon size={13} />
