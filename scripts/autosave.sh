@@ -74,7 +74,17 @@ fi
 
 git commit -q -m "$MSG" || { echo "[autosave] ERROR: commit failed" >&2; exit 1; }
 
-# ── Push ─────────────────────────────────────────────────────────────────────
+# ── Publish only when explicitly asked ───────────────────────────────────────
+# Default: NO push. The commit above is the checkpoint; the public repo gets
+# updated by a deliberate push (or End-Session), after review. AUTOSAVE_PUSH=1
+# restores the old behaviour for a session that wants it.
+if [ "${AUTOSAVE_PUSH:-0}" != "1" ]; then
+  BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+  AHEAD=$(git rev-list --count "origin/${BRANCH}..HEAD" 2>/dev/null || echo "?")
+  echo "[autosave] committed locally (${AHEAD} unpushed commit(s) on ${BRANCH}). Publishing is deliberate: review, then git push."
+  exit 0
+fi
+
 BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
 if [ -z "$BRANCH" ] || [ "$BRANCH" = "HEAD" ]; then
   echo "[autosave] ERROR: detached HEAD — committed locally, not pushed." >&2
