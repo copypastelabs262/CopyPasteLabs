@@ -28,9 +28,11 @@ membership re-check on resume, and a money-spending GET — both fixed and
 proven live (un-enroll/re-enroll probe; GET is 405), and the home→/ask carried
 question moved off the URL into a consumed-once sessionStorage key so no
 crafted link can spend on page load. Design loop fixed three rendering defects
-across 18 shots. **526 offline + 47 live checks green; build clean; v1.2.0
-engine untouched; nothing pushed.** HUMAN-ONLY: apply `20260906180000` (global
-meter), then re-run `verify:conversations`; OAuth click-throughs still carried.
+across 18 shots. **526 offline + 48 live checks green; build clean; v1.2.0
+engine untouched; nothing pushed.** Migration `20260906180000` applied by the
+operator same-day: the global meter went from honest "unavailable" to a hard
+pin (`meter: "ok"`, null-course rows confirmed in `ask_runs`). HUMAN-ONLY
+still open: the OAuth click-throughs (carried).
 
 ## 2026-09-06 (III, closed) — Persistent Conversations V1 verified end-to-end
 
