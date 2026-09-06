@@ -193,6 +193,28 @@ backend brief.
       full route/provider/token detail, $0 routes included. R1 and R2 closed 2026-09-06
       at v1.2.0 (see audience entry above).
 
+## Hardening backlog from the Context Hierarchy review (2026-09-06)
+
+Recorded by the adversarial scope review; each was judged real but deliberately
+deferred, with the reason written down so deferral stays a decision, not a gap.
+
+- [ ] **Harden `GET /api/courses/[id]/ask` against cross-site GETs.** The new
+      global `/api/ask` is POST-only for exactly this reason (SameSite=Lax
+      cookies ride top-level GET navigations, and an ask can bill the reasoning
+      provider), but the course route's GET is load-bearing — the lecture page
+      (`AskPanel`) and seven test suites call it. Wanted: a `Sec-Fetch-Site`
+      cross-site refusal or a POST migration with the suites updated in the
+      same change.
+- [ ] **Bound `readKnowledge` per-course reads.** It loads every knowledge and
+      evidence row of a course to retain 8 units; a global ask multiplies that
+      by up to 12 courses, and a large-enough id list could exceed PostgREST
+      URL limits (silently dropping evidence). Bounded today by the course cap
+      and real volumes. The reader is closed v1.2.0 engine — bounding it is a
+      deliberate, tested change, not a drive-by.
+- [ ] **Per-user rate limiting.** No route in the product has any; every paid
+      path relies on auth + the meter. Product-wide concern (already noted for
+      conversations), now with a spend-shaped surface on the home page.
+
 ## Ideas
 
 - Faculty-side analytics: which topics drew the most student attention before the exam
