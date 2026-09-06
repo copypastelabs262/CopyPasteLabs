@@ -182,7 +182,12 @@ export async function appendExchange(
   conversation: ConversationRow,
   question: string,
   answer: { content: string; payload: AnswerPayload },
-): Promise<{ state: StoreState; note: string | null }> {
+): Promise<{ state: StoreState; note: string | null; title: string }> {
+  // The title this conversation will carry after the exchange -- derived from
+  // the first question, then stable. Returned so the caller can answer with
+  // the real title without a re-read.
+  const title =
+    conversation.title === DEFAULT_TITLE ? deriveConversationTitle(question) : conversation.title;
   const { error: studentError } = await svc.from("conversation_messages").insert({
     conversation_id: conversation.id,
     owner_id: ownerId,
