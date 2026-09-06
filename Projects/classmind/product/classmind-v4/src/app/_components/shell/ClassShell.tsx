@@ -260,26 +260,32 @@ function ClassError() {
 function ShellFrame({ courseId, children }: { courseId: string; children: React.ReactNode }) {
   const { error } = useClassData();
   return (
-    <div className="lg:grid lg:grid-cols-[13.5rem_minmax(0,1fr)] lg:gap-12">
-      <aside className="hidden lg:block">
-        <div className="sticky top-20">
-          <ClassRail activeId={courseId} />
-        </div>
-      </aside>
+    <div className="min-w-0">
+      {/* One consistent way back, at every screen size. Cross-class navigation
+          lives in the app drawer (My Classes); this is the local escape hatch
+          so "how do I get out of this class" is never a browser-Back question. */}
+      <Link
+        href="/classes"
+        className="inline-flex items-center gap-1.5 text-[13px] font-medium text-ink-soft transition-colors hover:text-ink"
+      >
+        <span aria-hidden="true">&larr;</span> My Classes
+      </Link>
 
-      <div className="min-w-0">
-        {error ? (
+      {error ? (
+        <div className="mt-6">
           <ClassError />
-        ) : (
-          <>
+        </div>
+      ) : (
+        <>
+          <div className="mt-5">
             <ClassHeader />
-            <div className="mt-8">
-              <ClassTabs courseId={courseId} />
-            </div>
-            <div className="mt-10">{children}</div>
-          </>
-        )}
-      </div>
+          </div>
+          <div className="mt-8">
+            <ClassTabs courseId={courseId} />
+          </div>
+          <div className="mt-10">{children}</div>
+        </>
+      )}
     </div>
   );
 }
