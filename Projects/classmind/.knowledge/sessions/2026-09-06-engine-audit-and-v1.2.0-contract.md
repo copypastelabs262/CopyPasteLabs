@@ -136,3 +136,43 @@ and cannot run DDL. The operator applies the one-line `alter table` in the SQL e
 was written (`Auto-save:` stream) — review-before-push wasn't possible under it. Post-hoc
 sweep of everything pushed since `22c9f01`: exactly the 17 authored files, no secrets, no
 env files, no recordings. The intentional commit closing this addendum carries the story.
+
+## Addendum 2 (same day, evening): migration applied, Validations A and B run and healthy
+
+Operator applied `20260906090000` (verified: column present, 82 items + 119 evidence
+rows intact, live reads fine). Both approved validation runs then executed through the
+real `/extract` route via `verify:run`, each preceded by a free knowledge snapshot to
+`.knowledge/baselines/2026-09-06-gemini-1.1.0-*.json` (snapshot-then-run, as on 09-01).
+
+**Validation A — Cloud Computing baseline `dfd7312d`, ledger `84050a79`:**
+20/20 windows, 0 retries, 0 rate-limits, 24,453+4,351 = 28,804 tokens (+3% vs the
+27,979-token v1.1.0 baseline — the audience field's prompt overhead), 118.0 s,
+complete, `forced=false`. 22 new teaching items; both duplicate pairs from the
+inspection report are GONE (2 merges); `model_raw` filled 22/22; audience null
+everywhere (correct — this lecturer named no audience; nothing hallucinated); 28/28
+evidence quotes locatable; both human verdicts survived with evidence intact; 1 item
+dropped unverifiable (the guard, working); old ledger row `77408ea3` untouched.
+
+**Validation B — Robotics `87a4a143`, ledger `886797f6`:**
+7/7 windows, 0 retries, 5,270+1,222 = 6,492 tokens, 38.6 s, complete. 2 fresh teaching
+items (`model_raw` set), 9/9 quotes locatable. The confirmed Transformation Assignment
+survived untouched and the re-proposed assignment was SKIPPED by the verdict guard —
+along with the teaching twin that used to duplicate its span (skippedAlreadyJudged=2),
+which retires the old cross-category duplication for free. Consequence, honest and by
+design: the stored assignment still carries `audience=null`, and "Who is the assignment
+for?" answers direct/$0 with the named gap in the NEW wording. The assignees' names ARE
+in the stored transcript ("Okay, so, Shyam, ye Shiv aur dusra ye Darshan" immediately
+before the assignment sentence), so the capture is one deliberate step away — flip the
+confirmed item to `pending` and run one forced re-extraction (~6.5K tokens): the fresh
+assignment stores WITH audience and re-enters the review queue. That step modifies a
+human verdict and spends money, so it is the operator's call, not a side effect.
+
+**Audience capture itself is therefore NOT YET OBSERVED** — the schema is proven
+(19 actionable windows across A+B, 0 failures) but no actionable item has been stored
+fresh under v1.2.0 yet. The optional Robotics step above is the observation.
+
+**Session spend (final): Gemini 35,296 tokens** (29,723 prompt + 5,573 completion,
+`gemini-3.5-flash-lite`, two runs, ≈ $0.005). **Sarvam: 0 calls**, ~90 credits
+untouched. Two $0 direct-route asks metered as health checks. Engine verdict: READY —
+within the named limits (no semantic segmentation/embeddings, 36-minute request-path
+ceiling, term-overlap retrieval).
