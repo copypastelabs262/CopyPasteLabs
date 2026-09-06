@@ -187,6 +187,28 @@ export default function StudentHome({ eyebrow, data, onJoinCourse }: Props) {
             )}
           </Section>
 
+          {/* --- Pick up where you left off --------------------------------
+              The student's own recent conversations -- the product's memory
+              made visible. Renders ONLY when threads actually exist: an empty
+              promise band would be a dashboard card, and this screen does not
+              do those. */}
+          {data.recentConversations.length ? (
+            <Section
+              title="Pick up where you left off"
+              description="Your conversations are saved. Open one and keep going."
+            >
+              <Card padded={false}>
+                <ul className="divide-y divide-line">
+                  {data.recentConversations.map((thread) => (
+                    <li key={thread.id}>
+                      <ConversationRow thread={thread} />
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            </Section>
+          ) : null}
+
           {data.recentLectures.length ? (
             <Section title="Recently added" description="Lectures you can catch up on.">
               <Card padded={false}>
