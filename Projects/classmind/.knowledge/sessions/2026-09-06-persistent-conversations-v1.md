@@ -77,3 +77,47 @@ version:
 Global conversations route/UI (scope model only), thread renaming and
 UI-deletion, per-user quotas, thread summarisation, streaming — recorded in
 CONVERSATIONS.md so none of it is rediscovered as a surprise.
+
+## Addendum: migration applied — full contract, paid eval, seeded design pass
+
+The operator applied `20260906150000`. Everything gated on it then ran:
+
+- **Full live contract: 27/27** in `verify:conversations` — create-by-first-
+  question, resume, server-held continuation, ordering, listing, multiple
+  threads, scope separation, cross-user 404s on read/continue/delete (the one
+  initial failure was test setup: the "stranger" bounced off the course gate
+  before ever reaching the ownership check; enrolling them made the ownership
+  404 genuinely reachable — and it held), wrong-course 404, wrong-lecture 409,
+  malformed-id 404s, meter honesty, cleanup.
+- **Paid multi-turn eval over STORED threads** (3 scenarios, 8 model calls,
+  **13,060 tokens ≈ ₹0.2** total): teach → "didn't understand the second
+  part" (new angle, stored-history continuity) → example; Transformation →
+  steps → "what did the lecturer ask us to write five times?" (precise,
+  grounded [1]); assignment → "who has to do it?" → "when is it due?" — the
+  audience chain answered **$0 direct with the lecturer's own words via
+  stored-history retrieval augmentation**.
+- **Two real defects caught and fixed** (then re-verified live):
+  1. `retrieve()`'s short-words fallback returned arbitrary first units for
+     "give me a real-world example", which suppressed the history
+     augmentation (`hits.length < 2` was false) — the model then honestly
+     denied knowing the topic. Fix: with a conversation in play, ALWAYS
+     retrieve again with the recent exchange folded in and merge. Retry gave
+     a grounded on-topic worked example.
+  2. The direct deadline composer answered "the lecture didn't specify a
+     deadline" while the summary said "submit it next week" — misleading at
+     $0. Fix: temporal wording in the summary (`SUMMARY_TIME`, deliberately
+     narrow) stands the composer down for the model, which answered: exact
+     date unspecified [1], "submitted next week" [1]. Pinned in test:ask
+     (now 71).
+- **Seeded design pass (3 iterations)**: the resumed 5-answer thread rendered
+  as a 10,349px wall because every answer repeated its full sources block.
+  Fixed: on conversation surfaces, "From the lecture · N" and the gaps list
+  fold into one disclosure per answer (citations auto-expand then travel).
+  Page: 10,349px → ~3,600px; thread reads as a conversation. Student home
+  verified with real threads: academic titles ("Cache scaling",
+  "Transformation", "What assignment did sir give us") deep-linking into
+  their exact threads.
+
+**Final: 511 offline + 27 live checks green; tsc/eslint/build clean. Total
+milestone Gemini spend: 13,060 tokens ≈ ₹0.2. Sarvam: 0.** Remaining
+HUMAN-ONLY: the Google OAuth click-throughs (carried).
