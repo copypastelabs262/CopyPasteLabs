@@ -56,7 +56,7 @@ export function UserMenu({
   const displayName = fullName?.trim() || email || "Account";
   const firstName = displayName.split(" ")[0];
   const initial = displayName.charAt(0).toUpperCase();
-  const roleLabel = role === "faculty" ? "Faculty" : "Student";
+  const roleLabel = role === "faculty" ? "Faculty" : role === "student" ? "Student" : "New account";
 
   // Both listeners live behind `open` so a closed menu costs nothing, and both
   // are torn down together -- a stray pointerdown handler left on the document
