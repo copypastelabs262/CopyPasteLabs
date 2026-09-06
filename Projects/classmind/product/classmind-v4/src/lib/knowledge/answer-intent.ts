@@ -76,11 +76,12 @@ takeaway would repeat a sentence already written, cut it and go straight to
 one short question the student could test themselves with. Use headings or a
 list only if they truly help; this is teaching, not a report.`,
 
-  eli5: `SHAPE: explain it to a smart child. Open with a single everyday analogy
-and carry it through. No jargon -- if a technical word is unavoidable, say what
-it means in the same breath. Keep it short and warm. Then, in one or two
-sentences, connect the analogy back to the real concept and its real name so
-the simplification never becomes a wrong belief.`,
+  eli5: `SHAPE: explain it to a smart child. Open with ONE everyday analogy and
+hold it consistent to the end -- if a part of the analogy stands for something,
+it cannot later stand for something else. No jargon -- if a technical word is
+unavoidable, say what it means in the same breath. Keep it short and warm.
+Then, in one or two sentences, connect the analogy back to the real concept
+and its real name so the simplification never becomes a wrong belief.`,
 
   detail: `SHAPE: a substantially deeper treatment, in layers: the concept, the
 mechanism (how it actually works, part by part), a worked example, then
