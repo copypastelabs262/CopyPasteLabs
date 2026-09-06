@@ -41,12 +41,6 @@ export default function AppNav({
   role: "faculty" | "student" | null;
 }) {
   const [open, setOpen] = useState(false);
-  // The drawer is portalled to <body>: it must NOT render inside the header,
-  // whose backdrop-filter creates a containing block that would clip a
-  // position:fixed overlay to the 56px bar. `mounted` gates the portal so the
-  // server render (no document) and the first client render agree.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
   const pathname = usePathname();
   const panelRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
