@@ -117,7 +117,9 @@ export interface RecentConversation {
   id: string;
   title: string;
   scope: "lecture" | "course" | "global";
-  courseId: string;
+  // Null for a GLOBAL thread -- the whole-student scope belongs to no course.
+  courseId: string | null;
+  // "All subjects" for a global thread; the course code otherwise.
   courseCode: string;
   lectureId: string | null;
   lectureTitle: string | null;
