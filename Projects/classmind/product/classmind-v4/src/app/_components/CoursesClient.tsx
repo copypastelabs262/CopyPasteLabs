@@ -234,7 +234,16 @@ function firstNameOf(user: CoursesUser): string | null {
    The shell
 --------------------------------------------------------------------------- */
 
-export default function CoursesClient({ user }: { user: CoursesUser }) {
+export default function CoursesClient({
+  user,
+  variant = "home",
+}: {
+  user: CoursesUser;
+  // "home" renders the role's home (ask-first for students, the teaching
+  // console for faculty). "classes" renders the My Classes list -- the same
+  // data and the same join/create dialogs, a different surface.
+  variant?: "home" | "classes";
+}) {
   const [overview, setOverview] = useState<Overview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
