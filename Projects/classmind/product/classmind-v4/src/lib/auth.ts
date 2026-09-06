@@ -2,12 +2,18 @@ import "server-only";
 import { headers } from "next/headers";
 import { authClient } from "@/lib/supabase/server";
 import { serviceClient } from "@/lib/supabase/service";
+import { parseRole, type ProfileRole } from "@/lib/profile-role";
 
 export interface SessionUser {
   id: string;
   email: string | null;
   fullName: string | null;
-  role: "faculty" | "student";
+  // Null means NO ROLE HAS EVER BEEN CHOSEN for this account -- there is no
+  // profiles row (or no readable role on it). It is a real state, not an
+  // error: the product routes it to /choose-role. It is never defaulted;
+  // "missing profile means faculty" is how students were silently created as
+  // faculty accounts until 2026-09-06.
+  role: ProfileRole | null;
 }
 
 // Reads the signed-in user and their profile. Returns null when signed out --
