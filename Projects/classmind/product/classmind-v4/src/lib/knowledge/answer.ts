@@ -236,8 +236,11 @@ export async function answerFromKnowledge(
 
   // The free path first. It can answer some questions retrieval alone cannot
   // ("any assignments?" with zero term overlap), so it runs before the
-  // no-hits return below.
-  const routed = routeAsk(question, units, hits);
+  // no-hits return below. The attribution rides along so a cross-subject
+  // listing can group by subject without a model call.
+  const routed = routeAsk(question, units, hits, {
+    courseNames: opts?.context?.scope === "global" ? opts.context.courseNames : undefined,
+  });
   if (routed.route === "direct") {
     return done({
       question, answered: true, answer: routed.direct.answer,
