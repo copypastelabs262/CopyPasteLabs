@@ -428,12 +428,15 @@ export default function LectureClient({
     <Page className={engaged ? "pb-28" : undefined}>
       <PageHeader
         eyebrow={
+          // Just "Lectures": the class shell's own header, directly above,
+          // already names the course -- repeating it here was the recorded
+          // double-header problem.
           <Link
-            href={`/courses/${courseId}`}
+            href={`/courses/${courseId}/lectures`}
             className="inline-flex items-center gap-1 text-ink-soft transition-colors hover:text-ink"
           >
             <ChevronRightIcon size={14} className="rotate-180" />
-            {course ? `${course.code} — ${course.title}` : "Back to course"}
+            Lectures
           </Link>
         }
         title={lecture.title}
