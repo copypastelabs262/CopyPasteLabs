@@ -130,7 +130,8 @@ section("Scope attribution in the grounding");
 }
 {
   const { provider, last } = capture();
-  await answerFromKnowledge(COURSE, "Explain cache scaling.", {
+  const world = [unit({ title: "Cache Scaling", summary: "Cache scaling tiers DRAM and SSD." })];
+  await answerFromKnowledge(world, "Explain cache scaling.", {
     injectedProvider: provider,
     context: { scope: "global", courseNames: new Map([["course-1", "TEST2 · Cloud Computing"]]) },
   });
