@@ -236,7 +236,14 @@ export default function AskWorkspace({
         setStoreState("ok");
         // A carried-in question means the student is STARTING something: no
         // auto-resume — the fresh thread is created by the ask itself.
-        const target = carriedQuestion ? null : (requestedId ?? list[0]?.id);
+        // With the sidebar, opening /ask is a NEW chat (empty) and history is a
+        // click away, so only an explicit ?c= resumes; without it (course /
+        // lecture Ask), the most recent thread resumes for continuity.
+        const target = carriedQuestion
+          ? null
+          : withSidebar
+            ? (requestedId ?? null)
+            : (requestedId ?? list[0]?.id);
         if (target) {
           const loaded = await loadConversation(target);
           if (cancelled) return;
