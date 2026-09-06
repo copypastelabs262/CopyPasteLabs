@@ -98,11 +98,23 @@ async function main() {
   const composer = page.getByPlaceholder("Ask anything about this lecture");
   check((await composer.count()) > 0, "the shared lecture composer is present");
 
-  // Previous / Next lecture navigation
-  const pager = page.locator('nav[aria-label="Lectures in this course"]');
-  const pagerCount = await pager.count();
-  const prevNextLinks = pagerCount ? await pager.getByRole("link").count() : 0;
-  check(pagerCount > 0 && prevNextLinks >= 1, "Previous/Next lecture navigation renders", { pagerCount, prevNextLinks });
+  // Previous / Next lecture navigation. It self-hides when the student sees
+  // ≤1 lecture in this course — which is the case for the Robotics course under
+  // the current seed (its second lecture is failed, so hidden). So the correct
+  // assertion here is: the pager shows iff there are ≥2 sibling lectures the
+  // student can open. (Its RENDER + first/last handling is proven positively in
+  // the offline test:lecture-nav suite and a temp-enrolled 2-lecture render.)
+  const visible = await page.evaluate(async (c) => {
+    const r = await fetch(`/api/courses/${c}`);
+    const b = await r.json();
+    return (b.lectures ?? []).length;
+  }, COURSE);
+  const pagerCount = await page.locator('nav[aria-label="Lectures in this course"]').count();
+  check(
+    (visible >= 2) === (pagerCount > 0),
+    "Previous/Next pager presence matches sibling count (shows iff ≥2 visible)",
+    { visibleLectures: visible, pagerShown: pagerCount > 0 },
+  );
 
   await page.screenshot({ path: join(OUT, "p5-1-lecture-desktop.png"), fullPage: true, animations: "disabled" });
 
