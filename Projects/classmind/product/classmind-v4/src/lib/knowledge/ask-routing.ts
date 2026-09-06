@@ -308,9 +308,10 @@ export function routeAsk(
   question: string,
   units: KnowledgeUnit[],
   hits: KnowledgeUnit[],
+  attribution?: DirectAttribution,
 ): RouteDecision {
   const intent = classifyForDirect(question, hits);
   if (!intent) return { route: "model" };
-  const direct = composeDirectAnswer(intent, units, hits);
+  const direct = composeDirectAnswer(intent, units, hits, attribution);
   return direct ? { route: "direct", direct } : { route: "model" };
 }
