@@ -279,9 +279,15 @@ export async function answerFromKnowledge(
   // A global answer reasons over the student's whole academic world, so the
   // model is told what that world IS -- the subjects in scope -- before the
   // retrieved units. Nothing outside this list exists for the answer.
+  const omitted = opts?.context?.subjectsOmitted ?? 0;
   const subjectsLine =
     opts?.context?.scope === "global" && opts.context.courseNames?.size
-      ? [`THE STUDENT'S SUBJECTS: ${[...opts.context.courseNames.values()].join(" | ")}`]
+      ? [
+          `THE STUDENT'S SUBJECTS: ${[...opts.context.courseNames.values()].join(" | ")}` +
+            (omitted > 0
+              ? ` (and ${omitted} more subject${omitted === 1 ? "" : "s"} NOT searched here — say so if asked about everything)`
+              : ""),
+        ]
       : [];
   const user = [
     ...subjectsLine,
