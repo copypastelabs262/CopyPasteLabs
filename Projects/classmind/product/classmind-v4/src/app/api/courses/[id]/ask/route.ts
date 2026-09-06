@@ -213,6 +213,7 @@ async function handleAsk(courseId: string, input: AskInput) {
   const sources = result.usedUnits.map((u, i) => ({
     ref: i + 1,
     id: u.id,
+    courseId: u.courseId,
     lectureId: u.lectureId,
     lectureTitle: u.lectureTitle,
     category: u.category,
