@@ -22,10 +22,18 @@ import {
 //    stray call changes who an account is; changing a role would be a
 //    deliberate product feature with its own confirmation, and it does not
 //    exist yet.
+//  - Creating a FACULTY profile additionally requires the institution's faculty
+//    code, validated server-side (see @/lib/faculty-code). The client sends the
+//    code the user typed; the secret never leaves the server. Student creation
+//    needs no code. This is the gate that stops anyone self-selecting faculty.
 export async function POST(request: Request) {
   try {
     const user = await requireUser();
-    const body = (await request.json()) as { fullName?: string; role?: unknown };
+    const body = (await request.json()) as {
+      fullName?: string;
+      role?: unknown;
+      facultyCode?: unknown;
+    };
     const requestedRole = parseRole(body.role);
     const fullName =
       typeof body.fullName === "string" && body.fullName.trim() ? body.fullName.trim() : null;
@@ -43,6 +51,32 @@ export async function POST(request: Request) {
           { error: "Choose 'student' or 'faculty' to finish setting up your account." },
           { status: 400 },
         );
+      }
+      // THE FACULTY GATE. A new faculty profile is written only when the caller
+      // proves they hold the institution's code. Everything about the check is
+      // server-side; the response never reveals the code or whether it exists.
+      if (requestedRole === "faculty") {
+        if (!facultyCodeConfigured()) {
+          return NextResponse.json(
+            { error: "Faculty sign-up is not available right now. Please contact your institution." },
+            { status: 403 },
+          );
+        }
+        const now = Date.now();
+        if (facultyAttemptBlocked(user.id, now)) {
+          return NextResponse.json(
+            { error: "Too many attempts. Wait a few minutes and try again." },
+            { status: 429 },
+          );
+        }
+        if (!verifyFacultyCode(body.facultyCode)) {
+          recordFacultyFailure(user.id, now);
+          return NextResponse.json(
+            { error: "That faculty code isn't right. Check it with your institution's ClassMind admin." },
+            { status: 403 },
+          );
+        }
+        clearFacultyAttempts(user.id);
       }
       const { error } = await svc
         .from("profiles")
