@@ -173,5 +173,25 @@
       },
       "answer": "The lecture didn't specify a deadline for [1] Transformation Assignment. Recorded as not specified: Exact submission date and time."
     }
+  ],
+  "retries": [
+    {
+      "label": "A3-retry",
+      "route": "model",
+      "tokens": {
+        "promptTokens": 2307,
+        "completionTokens": 160
+      },
+      "answer": "Take an enterprise database running a heavy transaction workload, like an online banking system processing thousands of customer account updates every second. \n\n**Tier zero** is dynamic RAM handling the active transactions right now [3]. When a customer clicks transfer, that record sits immediately in the dynamic RAM tier for ultra-fast reading and writing.\n\n**Tier one** is an SSD holding the broader set of records needed across the day [3]. \n\nWhen a sudden surge of traffic hits—such as a morning rush of payroll deposits—the system uses cache tiering between that dynamic RAM and the SSD [3]. Instead of crashing or slowing down when the dynamic RAM fills up, the large-capacity secondary cache kicks in to absorb the peak workload without forcing every request down to the slower storage layer [3]."
+    },
+    {
+      "label": "C3-retry",
+      "route": "model",
+      "tokens": {
+        "promptTokens": 1404,
+        "completionTokens": 29
+      },
+      "answer": "The lecture doesn't specify an exact date or time [1]. It only states that the assignment is to be submitted next week [1]."
+    }
   ]
 }
