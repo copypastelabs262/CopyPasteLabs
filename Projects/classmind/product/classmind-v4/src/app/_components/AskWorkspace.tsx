@@ -368,10 +368,20 @@ export default function AskWorkspace({
     }
   }
 
-  const nav: EvidenceNav = navOverride ?? { courseId };
+  const nav: EvidenceNav = navOverride ?? (courseId ? { courseId } : {});
   const scope = lectureId ? "lecture" : "course";
   const chips = suggestions ?? SUGGESTIONS;
   const showBar = storeState === "ok" && (turns.length > 0 || recent.length > 0);
+
+  // The question carried in from the home hero: asked exactly once, after the
+  // store probe settles, as this surface's first turn.
+  useEffect(() => {
+    if (!carriedQuestion || autoAsked.current) return;
+    if (storeState === "loading" || asking || turns.length > 0) return;
+    autoAsked.current = true;
+    void ask(carriedQuestion);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [carriedQuestion, storeState]);
 
   return (
     // The column claims enough viewport for the composer's sticky bottom edge
