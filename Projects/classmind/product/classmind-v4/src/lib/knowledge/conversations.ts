@@ -243,16 +243,13 @@ export async function deleteConversation(
     .eq("id", conversationId)
     .eq("owner_id", ownerId)
     .maybeSingle();
-  if (error) {
-    if (isMissingSchemaError(error)) return { state: "unavailable", note: UNAVAILABLE };
-    return { state: "unavailable", note: error.message };
-  }
+  if (error) return { state: "unavailable", note: degradeNote(error) };
   if (!data) return { state: "not_found", note: null };
   const { error: delError } = await svc
     .from("conversations")
     .delete()
     .eq("id", conversationId)
     .eq("owner_id", ownerId);
-  if (delError) return { state: "unavailable", note: delError.message };
+  if (delError) return { state: "unavailable", note: degradeNote(delError) };
   return { state: "ok", note: null };
 }
