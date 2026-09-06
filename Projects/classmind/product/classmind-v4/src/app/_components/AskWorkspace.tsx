@@ -302,7 +302,10 @@ export default function AskWorkspace({
         return;
       }
       setTurns((t) => t.map((x) => (x.id === id ? { ...x, state: "done", answer: body as Answer } : x)));
-      const convo = body?.conversation;
+      const convo = body?.conversation as
+        | { id: string | null; title: string | null; state: string; note?: string | null }
+        | null
+        | undefined;
       if (persistent && convo) {
         if (convo.state === "ok" && convo.id) {
           if (convo.id !== conversationId) {
@@ -317,10 +320,11 @@ export default function AskWorkspace({
               ...rest,
             ];
           });
-        } else {
-          // Persistence went missing mid-flight (migration state changed, a
-          // write failed). The answer is on screen; from here the surface
-          // runs ephemeral and says so, instead of silently dropping turns.
+        } else if (convo.note?.includes("20260906150000")) {
+          // The store is genuinely gone (migration state): run ephemeral from
+          // here and say so. A TRANSIENT write failure does not latch -- the
+          // answer is on screen, this one exchange wasn't saved, and the next
+          // ask simply tries persistence again.
           setStoreState("unavailable");
         }
       }
