@@ -117,14 +117,14 @@ const convo = ask1.json.conversation;
 check(convo?.state === "ok" && typeof convo?.id === "string", "the exchange was persisted and the conversation identified", convo);
 check(typeof convo?.title === "string" && convo.title !== "New conversation",
   "the title derived from the question, no model call", convo?.title);
-const conversationId: string = convo.id;
+const conversationId: string = convo?.id ?? "";
 
 section("Resume -- the stored thread is whole");
 const got1 = await api(student, `/api/conversations/${conversationId}`);
 check(got1.status === 200 && got1.json.state === "ok", "the conversation loads back");
 const messages = got1.json.messages ?? [];
 check(messages.length === 2 && messages[0].role === "student" && messages[1].role === "classmind",
-  "one exchange = two ordered messages", messages.map((m: any) => m.role));
+  "one exchange = two ordered messages", messages.map((m) => m.role));
 check(messages[0].content === DIRECT_Q, "the student message is verbatim");
 check(messages[1].payload?.route === "direct" && Array.isArray(messages[1].payload?.sources),
   "the assistant message persisted its provenance (route + sources)", messages[1].payload?.route);
@@ -136,7 +136,7 @@ const ask2 = await api(student, `/api/courses/${COURSE}/ask`, {
 check(ask2.status === 200 && ask2.json.conversation?.id === conversationId, "a follow-up lands in the same conversation");
 const got2 = await api(student, `/api/conversations/${conversationId}`);
 check((got2.json.messages ?? []).length === 4, "the thread grew to four messages", (got2.json.messages ?? []).length);
-const seqs = (got2.json.messages ?? []).map((m: any) => m.role);
+const seqs = (got2.json.messages ?? []).map((m) => m.role);
 check(JSON.stringify(seqs) === JSON.stringify(["student", "classmind", "student", "classmind"]),
   "ordering is student/classmind alternating by seq", seqs);
 
@@ -153,7 +153,7 @@ check(list1.json.conversations?.[0]?.id === ask3.json.conversation.id,
 
 section("Scope separation -- lecture threads stay lecture threads");
 const courseList = await api(student, `/api/courses/${COURSE}/conversations`);
-check(!(courseList.json.conversations ?? []).some((c: any) => c.id === conversationId),
+check(!(courseList.json.conversations ?? []).some((c) => c.id === conversationId),
   "the course Ask tab's listing does NOT contain lecture-scoped threads");
 
 section("Ownership -- another signed-in user learns nothing");
