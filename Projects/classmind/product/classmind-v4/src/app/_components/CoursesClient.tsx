@@ -580,6 +580,125 @@ export default function CoursesClient({
 // payload lands. Role-agnostic on purpose: the shell does not know which home
 // it is about to render until the response arrives, and guessing would make the
 // wrong half of the readers watch the layout rearrange itself.
+function plural(n: number, one: string, many: string): string {
+  return `${n} ${n === 1 ? one : many}`;
+}
+
+// MY CLASSES — a list of contexts, not a grid of dashboards. Each class is a
+// door into its own Ask/Lectures/Assignments; the card carries only what a
+// student needs to recognise and choose it, and the tap goes to the class.
+function ClassesView({
+  courses,
+  role,
+  onCreateCourse,
+  onJoinCourse,
+}: {
+  courses: OverviewCourse[];
+  role: "student" | "faculty";
+  onCreateCourse: () => void;
+  onJoinCourse: () => void;
+}) {
+  const owned = courses.filter((c) => c.isOwner);
+  const enrolled = courses.filter((c) => !c.isOwner);
+  const isFaculty = role === "faculty";
+
+  return (
+    <Page>
+      <PageHeader
+        eyebrow="Your context"
+        title="My Classes"
+        subtitle={
+          courses.length
+            ? "Open a class to ask about it, browse its lectures, or see what's due."
+            : undefined
+        }
+        action={
+          <div className="flex flex-wrap gap-2">
+            {isFaculty ? (
+              <Button tone="primary" onClick={onCreateCourse}>
+                <PlusIcon size={16} />
+                New class
+              </Button>
+            ) : null}
+            <Button tone={isFaculty ? "secondary" : "primary"} onClick={onJoinCourse}>
+              <KeyIcon size={16} />
+              Join a class
+            </Button>
+          </div>
+        }
+      />
+
+      {courses.length === 0 ? (
+        <EmptyState
+          icon={<BookIcon size={18} />}
+          title={isFaculty ? "You have no classes yet." : "You are not in any classes yet."}
+          description={
+            isFaculty
+              ? "Create a class, then upload a lecture into it. Students join with the class's code."
+              : "Your teacher hands out one join code per class. Enter it to see everything they publish."
+          }
+          action={
+            isFaculty ? (
+              <Button tone="primary" onClick={onCreateCourse}>
+                <PlusIcon size={16} />
+                Create your first class
+              </Button>
+            ) : (
+              <Button tone="primary" onClick={onJoinCourse}>
+                <KeyIcon size={16} />
+                Enter a join code
+              </Button>
+            )
+          }
+        />
+      ) : (
+        <div className="space-y-10">
+          {owned.length ? (
+            <Section title={isFaculty ? "Teaching" : "Your classes"}>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {owned.map((c) => (
+                  <ClassCard key={c.id} course={c} />
+                ))}
+              </div>
+            </Section>
+          ) : null}
+          {enrolled.length ? (
+            <Section title={owned.length ? "Enrolled" : undefined}>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {enrolled.map((c) => (
+                  <ClassCard key={c.id} course={c} />
+                ))}
+              </div>
+            </Section>
+          ) : null}
+        </div>
+      )}
+    </Page>
+  );
+}
+
+function ClassCard({ course }: { course: OverviewCourse }) {
+  const meta = [termLabel(course.term), plural(course.lectureCount, "lecture", "lectures")]
+    .filter((p): p is string => Boolean(p))
+    .join(" · ");
+  return (
+    <Link
+      href={`/courses/${course.id}`}
+      className={cx(
+        "group flex items-center gap-4 rounded-2xl border border-line bg-surface-raised p-5",
+        "transition-colors hover:border-ink-faint/50",
+      )}
+    >
+      <span className="min-w-0 flex-1">
+        <span className="eyebrow-mono">{course.code}</span>
+        <span className="mt-1 block truncate text-[16px] font-medium text-ink">{course.title}</span>
+        {meta ? <span className="mt-1 block truncate text-[13px] text-ink-faint">{meta}</span> : null}
+      </span>
+      <ChevronRightIcon size={18} className="shrink-0 text-ink-faint transition-colors group-hover:text-ink-soft" />
+    </Link>
+  );
+}
+
 function HomeSkeleton() {
   return (
     <Page>
