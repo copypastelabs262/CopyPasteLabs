@@ -60,6 +60,10 @@ export default function AskSidebar({
   listEndpoint?: string;
   newHref?: string;
   itemHref?: (id: string) => string;
+  // A quiet cue for which academic scope these conversations belong to ("All
+  // classes" globally, or the course name inside a course), so the scope stays
+  // visible even after the page header scrolls away.
+  scopeLabel?: string;
   onNavigate?: () => void;
 }) {
   const router = useRouter();
