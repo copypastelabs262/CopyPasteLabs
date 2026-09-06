@@ -226,7 +226,7 @@ export async function appendExchange(
     .update(patch)
     .eq("id", conversation.id)
     .eq("owner_id", ownerId);
-  if (touchError) return { state: "unavailable", note: touchError.message, title };
+  if (touchError) return { state: "unavailable", note: degradeNote(touchError), title };
   return { state: "ok", note: null, title };
 }
 
