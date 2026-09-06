@@ -195,11 +195,15 @@ export async function answerFromKnowledge(
   let hits = retrieve(units, question);
 
   // A follow-up rarely re-states its topic ("give me another example", "why?").
-  // When the bare question retrieves next to nothing and a conversation
-  // exists, retrieve again with the recent exchange folded in, so the units
-  // in play stay the units under discussion. The bare-question hits keep
+  // Whenever a conversation exists, retrieve AGAIN with the recent exchange
+  // folded in and merge, so the units under discussion stay in play. Always --
+  // not only when the bare question found little: retrieve()'s short-words
+  // fallback returns the FIRST units rather than none, which once made
+  // "give me a real-world example" look well-retrieved while carrying zero
+  // units about the topic being discussed, and the model then (honestly, per
+  // its grounding) denied knowing the topic. The bare-question hits keep
   // their rank; augmentation only ADDS.
-  if (history.length && hits.length < 2) {
+  if (history.length) {
     const recent = history.slice(-4).map((t) => t.text).join(" ");
     const seen = new Set(hits.map((u) => u.id));
     for (const u of retrieve(units, `${recent} ${question}`)) {
