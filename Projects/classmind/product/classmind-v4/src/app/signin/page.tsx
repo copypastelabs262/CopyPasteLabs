@@ -71,17 +71,9 @@ function SignInForm() {
 
   async function signInWithGoogle() {
     setBusy(true); setError(null); setNotice(null);
-    // The selected role travels as a short-lived, single-use cookie -- NOT on
-    // the redirect URL. Supabase glob-matches the whole redirectTo against its
-    // allow-list and a non-matching query string silently falls back to the
-    // Site URL, dropping the param; that drop is how Google signups became
-    // faculty. A cookie on this origin survives the round trip regardless of
-    // allow-list configuration, and the callback deletes it on every pass. No
-    // selection (sign-in mode, or toggle untouched): clear any stale cookie so
-    // a brand-new account is ASKED on /choose-role rather than guessed at.
-    document.cookie = role
-      ? `${PENDING_ROLE_COOKIE}=${role}; path=/; max-age=${PENDING_ROLE_MAX_AGE_SECONDS}; SameSite=Lax`
-      : `${PENDING_ROLE_COOKIE}=; path=/; max-age=0; SameSite=Lax`;
+    // No role rides along: a new Google account has no profile, so the callback
+    // routes it to /choose-role, where the role is chosen and faculty is gated
+    // by the server-validated code. Nothing here can carry an unverified role.
     // Built from the live origin so the same code works on localhost and on any
     // deployed domain -- a hardcoded URL would silently send production users to
     // a dev host.
