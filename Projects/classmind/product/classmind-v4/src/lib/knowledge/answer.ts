@@ -270,3 +270,7 @@ export async function answerFromKnowledge(
     });
   }
 }
+
+// Exposed for scripts/test-answer-intent.mts -- the prompt contract and the
+// pure mechanics this layer's claims rest on, checkable without a model.
+export const __internals = { SYSTEM, render, sanitizeHistory, renderHistory, MAX_TURNS, MAX_TURN_CHARS };
