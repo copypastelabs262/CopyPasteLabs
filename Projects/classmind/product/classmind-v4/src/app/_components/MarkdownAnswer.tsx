@@ -125,9 +125,13 @@ function splitBlocks(text: string): Block[] {
 }
 
 // Inline pass: `code` first (its content is verbatim -- no bold inside code),
-// then **bold**; whatever remains goes to the caller's text renderer, which is
-// where citation tokens become buttons.
-const INLINE = /(`[^`\n]+`|\*\*[^*\n]+\*\*)/g;
+// then **bold**, then *emphasis* -- models write "*My recommendation:*" even
+// when only bold was asked for, and literal asterisks on screen are worse
+// than honouring the intent. Single-asterisk requires non-space at both ends
+// of its content so "5 * 3 * 2" stays arithmetic, not italics. Whatever
+// remains goes to the caller's text renderer, which is where citation tokens
+// become buttons.
+const INLINE = /(`[^`\n]+`|\*\*[^*\n]+\*\*|\*\S(?:[^*\n]*\S)?\*)/g;
 
 function inline(
   text: string,
