@@ -40,18 +40,13 @@ function SignInForm() {
     const supabase = browserClient();
     try {
       if (mode === "signup") {
-        if (!role) {
-          setError("Choose whether you are faculty or a student.");
-          setBusy(false);
-          return;
-        }
-        // The role rides in user_metadata as well as the /api/profile call
-        // below, because with email confirmation ON there is no session yet
-        // and the call never runs -- the metadata copy is what /choose-role
-        // provisions from after the user confirms and signs in.
+        // No role is set here. The name rides in user_metadata so /choose-role
+        // can prefill it; the role (and, for faculty, the code) is chosen there
+        // after the account exists. With email confirmation on there is no
+        // session yet, so there is nothing more to do until the user confirms.
         const { data, error } = await supabase.auth.signUp({
           email, password,
-          options: { data: { full_name: fullName, role } },
+          options: { data: { full_name: fullName } },
         });
         if (error) throw error;
         // A project with email confirmation on returns a user but no session.
@@ -60,11 +55,7 @@ function SignInForm() {
           setNotice("Account created. Check your email to confirm it, then sign in.");
           setMode("signin"); setBusy(false); return;
         }
-        await fetch("/api/profile", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ fullName, role }),
-        });
+        // Session in hand but no profile yet -> /courses bounces to onboarding.
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
