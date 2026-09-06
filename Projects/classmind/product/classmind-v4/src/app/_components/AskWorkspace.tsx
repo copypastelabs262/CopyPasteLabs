@@ -296,12 +296,12 @@ export default function AskWorkspace({
     setDraft("");
     setAsking(true);
     try {
-      const res = await fetch(`/api/courses/${courseId}/ask`, {
+      const res = await fetch(askEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           question: text,
-          ...(lectureId ? { lectureId } : {}),
+          ...(!global && lectureId ? { lectureId } : {}),
           ...(persistent
             ? conversationId
               ? { conversationId }
