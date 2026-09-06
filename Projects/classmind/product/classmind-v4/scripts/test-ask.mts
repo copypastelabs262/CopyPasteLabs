@@ -58,6 +58,7 @@ function unit(over: Partial<KnowledgeUnit>): KnowledgeUnit {
     status: "auto",
     confidence: null,
     evidence: [],
+    audience: null,
     ...over,
   };
 }
@@ -189,7 +190,8 @@ console.log("deadlines:");
 }
 
 /* ------------------------------------------------------------------------- */
-/* 4. Audience questions: the schema cannot answer, so the gap is named at $0 */
+/* 4. Audience questions: answered from the stored field since v1.2.0, and    */
+/*    the gap named honestly at $0 when the field is empty                    */
 /* ------------------------------------------------------------------------- */
 
 console.log("audience:");
@@ -197,9 +199,32 @@ console.log("audience:");
   const r = routeAsk("Who is the assignment for?", COURSE, [ASSIGNMENT]);
   check(r.route === "direct", "audience: direct");
   if (r.route === "direct") {
-    check(/doesn'?t record who/i.test(r.direct.answer), "audience: names the gap");
+    check(/doesn'?t record who/i.test(r.direct.answer), "audience without stored field: names the gap");
     check(r.direct.answer.includes(ASSIGNMENT.title), "audience: still names the assignment");
   }
+}
+{
+  const ASSIGNED = unit({
+    category: "actionable",
+    kind: "assignment",
+    title: "Transformation Assignment",
+    summary: "Derive the transformation matrix step by step and submit it.",
+    status: "confirmed",
+    audience: "Shyam, Shiv aur Darsh",
+  });
+  const r = routeAsk("Who is the assignment for?", [ASSIGNED, ...TEACHING], [ASSIGNED]);
+  check(r.route === "direct", "audience with stored field: still direct, still $0");
+  if (r.route === "direct") {
+    check(r.direct.answer.includes("Shyam, Shiv aur Darsh"),
+      "audience with stored field: answers with the lecturer's own words");
+    check(!/doesn'?t record who/i.test(r.direct.answer),
+      "audience with stored field: no gap language");
+  }
+  const mixed = routeAsk("Who are the assignments for?", [ASSIGNED, ASSIGNMENT, ...TEACHING], [ASSIGNED, ASSIGNMENT]);
+  check(mixed.route === "direct" &&
+    mixed.direct.answer.includes("Shyam, Shiv aur Darsh") &&
+    /doesn'?t record who this one is for/i.test(mixed.direct.answer),
+    "mixed audience: states the known one, names the gap on the other");
 }
 check(routeAsk("Who is the assignment for?", TEACHING, []).route === "model",
   "audience with no actionable knowledge anywhere: falls back to model");

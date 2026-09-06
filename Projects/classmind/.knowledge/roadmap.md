@@ -137,33 +137,48 @@ Sarvam + Gemini, then questions asked through the product. Each item carries the
 observation that created it. None of these is started; they queue behind the two-day
 backend brief.
 
-- [ ] **Ask must not call Gemini for every question.** Today every Ask that finds any
+- [x] **Ask must not call Gemini for every question.** Today every Ask that finds any
       stored knowledge makes one billed Gemini call — even "who is the assignment for?",
       which retrieval alone could have answered as well or better. Wanted: grounded,
       API-free answers for basic/factual questions (retrieval is already local and free;
       the model call is only prose composition), with the model reserved for questions
       that genuinely need composition. Decide the routing rule — heuristic, question
       classifier, or an explicit UI choice — and record it as a Decision when built.
-- [ ] **Ask must say when the stored knowledge does not contain the answer.** Asked "who
+      → Done 2026-09-03 (`de6a74b`, `src/lib/knowledge/ask-routing.ts`): whitelist
+      heuristic, synthesis markers veto direct before intents, failure mode is one
+      unnecessary model call, never a worse answer. Verified live 2026-09-04: two direct
+      $0 answers, one model call. **Decision entry still owed.**
+- [x] **Ask must say when the stored knowledge does not contain the answer.** Asked "who
       is the assignment for?", the product replied with a vague filler sentence instead
       of "the stored knowledge doesn't record who specifically." A grounded system's
       honest failure mode is *naming the gap*, not padding around it. Prompt-level fix
       in `knowledge/answer.ts`.
-- [ ] **Reconstruction misses the audience of an assignment.** The Robotics recording
+      → Done 2026-09-03 (`de6a74b`): answer.ts system prompt rule 2 ("a named gap is a
+      correct answer"), plus audience/deadline gaps named at $0 by the direct route.
+- [x] **Reconstruction misses the audience of an assignment.** The Robotics recording
       names three specific students (Shyam, Shiv, Darsh — verified present in the raw
       transcript); the stored Transformation Assignment item carries no audience at all,
       so no answer engine could ever surface it — Ask sees only stored items, never the
       transcript. The item schema has no "for whom" concept and the prompt never asks.
       Fix belongs in the extraction contract (audience/recipients captured, or explicitly
       listed in `unspecified`), versioned as a method change.
+      → Implemented 2026-09-06 at reconstruction v1.2.0 (with R1 teaching-dedupe and R2
+      model_raw persistence, one method bump): actionable contract gains a required
+      `audience` field, migration `20260906090000` adds the column, Ask answers from it
+      or names the gap. Offline-verified; **live validation run pending approval** —
+      the Robotics lecture is the test, since its transcript names the assignees.
 - [ ] **Lecture page becomes chat-first.** Opening a lecture currently dumps every
       knowledge item onto the page. Wanted: a ChatGPT/Gemini-style layout — conversation
       as the primary surface, question bar fixed to the bottom of the viewport regardless
       of scroll, stored knowledge browsable but not forced on the reader.
-- [ ] **Meter Ask.** Every Ask completion returns token usage and the product throws it
+- [x] **Meter Ask.** Every Ask completion returns token usage and the product throws it
       away — a paid path nothing counts, the exact defect class of 2026-08-30. Log usage
       per question (or a lightweight ask ledger). (R6 of the run-77408ea3 inspection
       report; R1 teaching-dedupe and R2 raw-response capture queue with it.)
+      → Done 2026-09-03 (`de6a74b`, `ask_runs` migration `20260903100000`, applied by the
+      operator). Verified live 2026-09-06: three rows from the operator's 2026-09-04 use,
+      full route/provider/token detail, $0 routes included. R1 and R2 closed 2026-09-06
+      at v1.2.0 (see audience entry above).
 
 ## Ideas
 

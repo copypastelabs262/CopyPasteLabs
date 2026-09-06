@@ -155,22 +155,37 @@ export function composeDirectAnswer(
     }
 
     case "audience": {
-      // The extraction contract has no audience field (roadmap, 2026-09-02),
-      // so no stored unit can say who work is for. The honest answer is that
-      // exact gap, named -- and it costs nothing, because no model call can
-      // improve on it until the contract changes.
+      // Since reconstruction v1.2.0 the extraction contract captures WHO an
+      // obligation applies to, verbatim (roadmap 2026-09-02; migration
+      // 20260906090000). An item with no audience stored -- the lecturer
+      // never said, or the item predates the field -- still gets the honest
+      // named gap, at zero cost, because no model call can improve on it.
       const inHits = hits.filter((u) => u.category === "actionable");
       const candidates = (inHits.length ? inHits : units.filter((u) => u.category === "actionable"))
         .slice(0, LIST_CAP);
       if (!candidates.length) return null;
+      const named = candidates.filter((u) => u.audience);
+      if (named.length) {
+        return {
+          answer: [
+            "Who the recorded work is for, as stated in the lecture:",
+            ...candidates.map((u, i) =>
+              u.audience
+                ? `${line(u, i + 1)} — for: ${u.audience}`
+                : `${line(u, i + 1)} — the stored knowledge doesn't record who this one is for`,
+            ),
+          ].join("\n"),
+          usedUnits: candidates,
+        };
+      }
       const naming =
         candidates.length === 1
           ? `who [1] ${candidates[0].title} is for`
           : "who any of the recorded assignments are for";
       return {
         answer: [
-          `The stored lecture knowledge doesn't record ${naming} — the extraction doesn't ` +
-            "capture an audience yet, so that detail isn't available to answer from. " +
+          `The stored lecture knowledge doesn't record ${naming} — either the lecturer ` +
+            "never said, or the item was extracted before the contract captured an audience. " +
             "What is recorded:",
           ...candidates.map((u, i) => line(u, i + 1)),
         ].join("\n"),

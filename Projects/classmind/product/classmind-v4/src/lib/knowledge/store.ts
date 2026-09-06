@@ -2,6 +2,7 @@ import "server-only";
 import { serviceClient } from "@/lib/supabase/service";
 import type { ReconstructedItem } from "@/lib/reasoning/reconstruct";
 import { spanOf } from "@/lib/reasoning/span";
+import { isMissingSchemaError } from "@/lib/provenance/audio-identity";
 import {
   planKnowledgeWrite,
   type ExistingItem,
@@ -105,24 +106,38 @@ export async function storeKnowledge(
 
   for (const item of plan.insert) {
     const status = initialStatus(item);
-    const { data: row, error } = await svc
-      .from("knowledge_items")
-      .insert({
-        lecture_id: lectureId,
-        course_id: courseId,
-        category: item.category,
-        kind: item.kind,
-        title: item.title,
-        summary: item.summary,
-        steps: item.steps,
-        unspecified: item.unspecified,
-        status,
-        confidence: item.confidence,
-        reconstruction_method: method,
-        reconstruction_version: version,
-      })
-      .select("id")
-      .single();
+    const fullRow: Record<string, unknown> = {
+      lecture_id: lectureId,
+      course_id: courseId,
+      category: item.category,
+      kind: item.kind,
+      title: item.title,
+      summary: item.summary,
+      steps: item.steps,
+      unspecified: item.unspecified,
+      status,
+      confidence: item.confidence,
+      reconstruction_method: method,
+      reconstruction_version: version,
+      // The model's literal item object, so a disputed reconstruction can be
+      // audited without re-running anything. The column has existed since
+      // 20260823090000 and was never written until v1.2.0.
+      model_raw: item.modelRaw ?? null,
+      // v1.2.0 contract field; column arrives in 20260906090000.
+      audience: item.audience ?? null,
+    };
+    let res = await svc.from("knowledge_items").insert(fullRow).select("id").single();
+    if (res.error && isMissingSchemaError(res.error)) {
+      // A deployment whose schema predates the optional columns still stores
+      // knowledge -- the audit fields are lost for this run, not the run
+      // itself. Anything other than "the column is not there" falls through
+      // to the failure count below.
+      const minimalRow = { ...fullRow };
+      delete minimalRow.model_raw;
+      delete minimalRow.audience;
+      res = await svc.from("knowledge_items").insert(minimalRow).select("id").single();
+    }
+    const { data: row, error } = res;
     if (error || !row) { failed += 1; continue; }
 
     // AN ITEM WITHOUT ITS EVIDENCE IS NOT KNOWLEDGE, IT IS A CLAIM.

@@ -26,6 +26,10 @@ export interface KnowledgeUnit {
   status: "auto" | "pending" | "confirmed" | "rejected";
   confidence: number | null;
   evidence: Evidence[];
+  // Who an obligation applies to, verbatim from the lecturer. Null when never
+  // stated, when the item predates reconstruction v1.2.0, or when the column
+  // (migration 20260906090000) is not applied yet.
+  audience: string | null;
 }
 
 // What a STUDENT may see. Teaching enters the base automatically ('auto');
@@ -143,13 +147,27 @@ interface Options { lectureId?: string; courseId?: string; forStudent: boolean }
 
 export async function readKnowledge(opts: Options): Promise<KnowledgeUnit[]> {
   const svc = serviceClient();
-  let q = svc
-    .from("knowledge_items")
-    .select("id, lecture_id, course_id, category, kind, title, summary, steps, unspecified, status, confidence, created_at");
-  if (opts.lectureId) q = q.eq("lecture_id", opts.lectureId);
-  if (opts.courseId) q = q.eq("course_id", opts.courseId);
-  const { data: items } = await q.order("created_at", { ascending: true });
-  if (!items?.length) return [];
+  const fetchItems = (withAudience: boolean) => {
+    let q = svc
+      .from("knowledge_items")
+      .select(
+        withAudience
+          ? "id, lecture_id, course_id, category, kind, title, summary, audience, steps, unspecified, status, confidence, created_at"
+          : "id, lecture_id, course_id, category, kind, title, summary, steps, unspecified, status, confidence, created_at",
+      );
+    if (opts.lectureId) q = q.eq("lecture_id", opts.lectureId);
+    if (opts.courseId) q = q.eq("course_id", opts.courseId);
+    return q.order("created_at", { ascending: true });
+  };
+  const first = await fetchItems(true);
+  let data = first.data;
+  // The audience column arrives in migration 20260906090000. Before it is
+  // applied this select must not fail the whole read -- knowledge without the
+  // field beats no knowledge at all. Reused predicate, same rule as always:
+  // only "the column is not there" downgrades; a real failure stays one.
+  if (first.error && isMissingSchemaError(first.error)) ({ data } = await fetchItems(false));
+  const items = (data ?? []) as unknown as Record<string, unknown>[];
+  if (!items.length) return [];
 
   const ids = items.map((i) => i.id as string);
   const { data: ev } = await svc
@@ -217,6 +235,7 @@ export async function readKnowledge(opts: Options): Promise<KnowledgeUnit[]> {
     status: i.status as KnowledgeUnit["status"],
     confidence: i.confidence === null ? null : Number(i.confidence),
     evidence: byItem.get(i.id as string) ?? [],
+    audience: (i.audience as string | null) ?? null,
   }));
 
   const fromServableLecture = out.filter((u) => servable.has(u.lectureId));

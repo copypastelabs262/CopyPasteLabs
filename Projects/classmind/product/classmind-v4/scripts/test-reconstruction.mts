@@ -666,6 +666,94 @@ check(
 );
 
 // ---------------------------------------------------------------------------
+// 8. The v1.2.0 contract: audience, raw output, teaching dedupe
+// ---------------------------------------------------------------------------
+
+section("v1.2.0 contract");
+
+// The audience field is part of the ACTIONABLE contract only. Strict-mode
+// schemas require every property, so it must appear in `required` there and
+// nowhere in the teaching contract.
+type ItemsSchemaShape = { properties: { items: { items: { required: string[] } } } };
+const actionableRequired = (__internals.ACTIONABLE_SCHEMA as ItemsSchemaShape).properties.items.items.required;
+const teachingRequired = (__internals.TEACHING_SCHEMA as ItemsSchemaShape).properties.items.items.required;
+check(actionableRequired.includes("audience"), "actionable schema requires the audience field");
+check(!teachingRequired.includes("audience"), "teaching schema is unchanged");
+check(__internals.ACTIONABLE_SYSTEM.includes('"audience"'), "the actionable prompt asks for the audience");
+
+// An audience the lecturer stated is kept verbatim; the raw model item rides
+// along for persistence.
+const AUDIENCE = "sirf agla batch wale students";
+const audienceRun = await reconstructLecture(transcript, [], provider((r) => {
+  if (!isActionable(r)) return reply([]);
+  if (!excerptOf(r).includes(OBLIGATION.a)) return reply([]);
+  return reply([{
+    kind: "assignment", title: "Research paper task",
+    summary: "Find and implement a research paper on antibiotic resistance.",
+    audience: AUDIENCE, steps: [], unspecified: [], confidence: 0.9,
+    evidence: [{ role: "introduces", quote: OBLIGATION.a }],
+  }]);
+}));
+const audienceItem = audienceRun.items.find((i) => i.category === "actionable");
+check(audienceItem?.audience === AUDIENCE, "a stated audience is kept in the lecturer's own words",
+  audienceItem?.audience);
+check(
+  (audienceItem?.modelRaw as { title?: string } | undefined)?.title === "Research paper task",
+  "the model's literal item object rides along for persistence",
+);
+
+// The schema's empty-string sentinel ("the lecturer never said") normalizes to
+// null, so storage and Ask see one representation of absence.
+const emptyAudienceRun = await reconstructLecture(transcript, [], provider((r) => {
+  if (!isActionable(r)) return reply([]);
+  if (!excerptOf(r).includes(OBLIGATION.a)) return reply([]);
+  return reply([{
+    kind: "assignment", title: "Research paper task",
+    summary: "Find and implement a research paper on antibiotic resistance.",
+    audience: "  ", steps: [], unspecified: ["who this applies to"], confidence: 0.9,
+    evidence: [{ role: "introduces", quote: OBLIGATION.a }],
+  }]);
+}));
+check(
+  emptyAudienceRun.items.find((i) => i.category === "actionable")?.audience === null,
+  "an empty-string audience normalizes to null",
+);
+
+// THE TEACHING BOUNDARY DUPLICATE. windowFor extends a window to whole segment
+// boundaries, so a segment straddling the 180s stride is fed to BOTH adjacent
+// teaching windows. Before v1.2.0 the teaching pass had no dedupe and stored
+// the same concept twice -- the run-77408ea3 inspection found two live pairs.
+const STRADDLE = "Endospore staining mein malachite green heat ke saath use hota hai.";
+const straddleSegments: { text: string; start: number; end: number }[] = [];
+for (let i = 0; i < 11; i += 1) {
+  straddleSegments.push({ text: `Filler line number ${i} about lab routine.`, start: i * 15, end: i * 15 + 15 });
+}
+straddleSegments.push({ text: STRADDLE, start: 170, end: 190 });
+straddleSegments.push({ text: "Uske baad hum results note karte hain.", start: 190, end: 370 });
+const straddleTranscript = buildTranscript(straddleSegments);
+const straddleRun = await reconstructLecture(straddleTranscript, [], provider((r) => {
+  if (isActionable(r)) return reply([]);
+  if (!excerptOf(r).includes(STRADDLE)) return reply([]);
+  return reply([{
+    kind: "concept", title: "Endospore staining",
+    summary: "Malachite green with heat stains endospores.",
+    steps: [], unspecified: [], confidence: 0.8,
+    evidence: [{ role: "explains", quote: STRADDLE }],
+  }]);
+}));
+const straddleTeaching = straddleRun.items.filter((i) => i.category === "teaching");
+check(
+  straddleTeaching.length === 1,
+  "a teaching item straddling the window boundary is stored once, not twice",
+  `teaching items=${straddleTeaching.length}`,
+);
+check(
+  straddleRun.stats.duplicatesMerged === 1,
+  "and the merge is counted in duplicatesMerged",
+  `duplicatesMerged=${straddleRun.stats.duplicatesMerged}`,
+);
+
+// ---------------------------------------------------------------------------
 
 section("Summary");
 console.log(`${passed} passed, ${failed} failed`);

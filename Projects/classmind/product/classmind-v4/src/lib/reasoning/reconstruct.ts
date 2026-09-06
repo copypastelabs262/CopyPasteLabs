@@ -64,6 +64,14 @@ export interface ReconstructedItem {
   unspecified: string[];
   confidence: number;
   evidence: ReconstructedEvidence[];
+  // WHO the obligation applies to, in the lecturer's own words. Null when the
+  // lecturer never said (the prompt then routes it into `unspecified`). Only
+  // the actionable contract asks for it (v1.2.0); teaching items stay null.
+  audience?: string | null;
+  // The model's literal item object, before verification and normalization.
+  // Persisted to knowledge_items.model_raw so a disputed reconstruction can be
+  // audited without re-running anything.
+  modelRaw?: unknown;
 }
 
 export interface ReconstructionResult {
@@ -126,7 +134,13 @@ export interface ReconstructionResult {
 }
 
 export const RECONSTRUCTION_METHOD = "llm-reconstruct";
-export const RECONSTRUCTION_VERSION = "1.1.0";
+// 1.2.0 (2026-09-06): the actionable contract gains an `audience` field (who
+// the obligation applies to, verbatim -- the Robotics trial lecture named its
+// assignees and the item could not carry them); the teaching pass is deduped
+// by evidence span exactly as the actionable pass always was; and the model's
+// raw item object rides along for persistence into knowledge_items.model_raw.
+// Windows, strides and passes are unchanged.
+export const RECONSTRUCTION_VERSION = "1.2.0";
 
 // Three minutes, not five. The window length is set by the MODEL's budget, not
 // by anything pedagogical: sarvam-105b is a reasoning model, and on a
@@ -457,11 +471,17 @@ An obligation is something the STUDENTS must do. A step the lecturer performs in
 a worked example, a hypothetical, and an aside about exam technique are NOT
 obligations, however imperative they sound.
 
+If the lecturer says WHO the requirement applies to -- a batch, a section, a
+group, named students, "everyone" -- record it in "audience" in the lecturer's
+own words. If the excerpt never says who, leave "audience" as an empty string
+and list it in "unspecified" instead. Never guess an audience.
+
 Output shape:
 {"items":[{
   "kind":"assignment"|"deadline"|"exam_instruction"|"announcement",
   "title":"short name for the task",
   "summary":"one or two sentences stating the complete requirement, with any references resolved",
+  "audience":"who this applies to, exactly as the lecturer stated it; empty string if never stated",
   "steps":["ordered steps, each a complete instruction"],
   "unspecified":["things a student would need that the lecturer did not state"],
   "confidence":0.0-1.0,
@@ -514,7 +534,12 @@ If the excerpt teaches nothing, return {"items":[]}.`;
 //
 // `strict: true` requires every property listed in `required` and
 // `additionalProperties: false` at every level.
-function itemsSchema(kinds: string[], roles: string[]): object {
+//
+// `withAudience` is the v1.2.0 actionable-only addition: a required string
+// (empty when the lecturer never said -- strict mode cannot express optional,
+// and an empty string is a cheaper sentinel than a nullable union that some
+// provider dialects reject). The teaching contract is unchanged.
+function itemsSchema(kinds: string[], roles: string[], withAudience = false): object {
   return {
     type: "object",
     additionalProperties: false,
@@ -525,11 +550,16 @@ function itemsSchema(kinds: string[], roles: string[]): object {
         items: {
           type: "object",
           additionalProperties: false,
-          required: ["kind", "title", "summary", "steps", "unspecified", "confidence", "evidence"],
+          required: [
+            "kind", "title", "summary",
+            ...(withAudience ? ["audience"] : []),
+            "steps", "unspecified", "confidence", "evidence",
+          ],
           properties: {
             kind: { type: "string", enum: kinds },
             title: { type: "string" },
             summary: { type: "string" },
+            ...(withAudience ? { audience: { type: "string" } } : {}),
             steps: { type: "array", items: { type: "string" } },
             unspecified: { type: "array", items: { type: "string" } },
             confidence: { type: "number" },
@@ -560,6 +590,7 @@ function itemsSchema(kinds: string[], roles: string[]): object {
 const ACTIONABLE_SCHEMA = itemsSchema(
   ["assignment", "deadline", "exam_instruction", "announcement"],
   ["introduces", "requires", "step", "deadline", "context"],
+  true,
 );
 
 const TEACHING_SCHEMA = itemsSchema(
@@ -585,7 +616,7 @@ const NO_CUE_HINT =
 // ---------------------------------------------------------------------------
 
 interface RawItem {
-  kind?: string; title?: string; summary?: string;
+  kind?: string; title?: string; summary?: string; audience?: unknown;
   steps?: unknown; unspecified?: unknown; confidence?: unknown;
   evidence?: { role?: string; quote?: string }[];
 }
@@ -688,14 +719,20 @@ export async function reconstructLecture(
       if (!evidence.length) { stats.itemsDroppedUnverifiable += 1; continue; }
 
       const c = Number(raw.confidence);
+      // Empty string is the schema's sentinel for "the lecturer never said";
+      // it becomes null here so storage and Ask see one representation.
+      const audience =
+        typeof raw.audience === "string" && raw.audience.trim() !== "" ? raw.audience.trim() : null;
       out.push({
         category,
         kind: typeof raw.kind === "string" && raw.kind ? raw.kind : (category === "actionable" ? "assignment" : "topic"),
         title, summary,
+        audience,
         steps: asStrings(raw.steps),
         unspecified: asStrings(raw.unspecified),
         confidence: Number.isFinite(c) ? Math.min(1, Math.max(0, c)) : 0.6,
         evidence,
+        modelRaw: raw,
       });
     }
   }
@@ -746,16 +783,26 @@ export async function reconstructLecture(
 
   stats.windows = stats.actionableWindows + stats.teachingWindows;
 
-  // Only the actionable pass overlaps, so only it can double-report. Teaching
-  // windows are laid end to end and are left exactly as the model returned them.
-  const actionableItems = out.filter((i) => i.category === "actionable");
-  const others = out.filter((i) => i.category !== "actionable");
-  const merged = dedupeByEvidence(actionableItems);
-  stats.duplicatesMerged = actionableItems.length - merged.length;
+  // BOTH passes can double-report. The actionable windows overlap by design.
+  // Teaching windows are laid end to end, but windowFor extends a window to
+  // whole segment boundaries, so a segment straddling the 180s stride is fed
+  // to BOTH neighbours -- the run-77408ea3 inspection found two teaching
+  // duplicate pairs produced exactly this way ("Element Manager versus/vs
+  // Unified Manager"). Dedupe therefore runs on every category -- but WITHIN
+  // each category only: an assignment and the teaching item that explains it
+  // legitimately share a span, and both must survive.
+  const byCategory = new Map<ReconstructedItem["category"], ReconstructedItem[]>();
+  for (const item of out) {
+    const group = byCategory.get(item.category);
+    if (group) group.push(item);
+    else byCategory.set(item.category, [item]);
+  }
+  const merged = [...byCategory.values()].flatMap((group) => dedupeByEvidence(group));
+  stats.duplicatesMerged = out.length - merged.length;
 
   // Lecture order, so the review queue and the knowledge panel read the way the
   // lecture was delivered.
-  const items = [...merged, ...others].sort(
+  const items = [...merged].sort(
     (a, b) => (a.evidence[0]?.startMs ?? 0) - (b.evidence[0]?.startMs ?? 0),
   );
 

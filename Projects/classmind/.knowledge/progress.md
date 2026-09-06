@@ -7,6 +7,35 @@ Entries are snapshots of what was true when written and are never rewritten. Whe
 resolves something an earlier one recorded as blocked, the earlier line gets a dated marker
 pointing forward — it does not get edited away.
 
+## 2026-09-06 — Engine verified against the live DB; v1.2.0 closes R1/R2 and the audience gap (validation runs pending approval)
+
+**Done, $0 spent.** Full audit in
+[`sessions/2026-09-06-engine-audit-and-v1.2.0-contract.md`](sessions/2026-09-06-engine-audit-and-v1.2.0-contract.md).
+
+The headlines: the **Ask meter is live** (three real rows from the operator's 2026-09-04
+use — two $0 direct routes, one 952-token model call, routing exactly as designed); the
+**Robotics recording was never pending — it fully processed on 2026-09-01** (ledger
+`6ac53dca`, 7/7 windows, honest sparse transcript on unclear audio, assignment captured
+with verbatim Hinglish evidence); and the Gemini baseline `77408ea3` stands as stored.
+
+R1 (teaching dedupe), R2 (`model_raw` never written) and the audience gap were confirmed
+still live in code and data, then closed as **one batch → reconstruction v1.2.0** with
+migration `20260906090000` (audience column; code degrades gracefully until applied).
+396 offline checks green, tsc/eslint clean.
+
+Also diagnosed (not yet fixed): **the Student→Faculty role bug** — the role toggle only
+renders in signup mode while Google sign-in sits outside it, and every dropped role
+signal in five independent places defaults to `faculty`, silently. All five real Google
+profiles in the DB are faculty. Fix recommended in the session log; it is a separate
+change from the engine batch. Also observed: duplicate lecture uploads bill twice end to
+end (DBVC, two rows, two transcripts, ~31K tokens each) — audio-level dedupe before
+transcription is the missing guard.
+
+**Next:** operator applies `20260906090000`, then two approved validation runs — the
+baseline lecture (~28K tokens, proves v1.2.0 reproduces `77408ea3` minus the duplicates)
+and Robotics (~6K tokens, proves audience capture on the recording whose transcript
+names the assignees). Then the role-bug fix.
+
 ## 2026-09-02 (overnight) — ClassMind v4 exists: the class shell, built and screenshot-judged in one autonomous run
 
 **Done, ~02:00–03:20 IST, zero spend (provider keys stripped from the tree; every capture
