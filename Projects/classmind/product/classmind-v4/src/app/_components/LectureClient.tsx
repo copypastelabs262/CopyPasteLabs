@@ -151,6 +151,10 @@ export default function LectureClient({
   const [version, setVersion] = useState(0);
   const [highlight, setHighlight] = useState<number | null>(null);
   const [transcriptOpen, setTranscriptOpen] = useState(false);
+  // The stored knowledge is browsable, not ambient: collapsed until asked
+  // for, so the conversation keeps the room. The summary line stays visible
+  // either way -- a student can always see how much is here.
+  const [knowledgeOpen, setKnowledgeOpen] = useState(false);
 
   // THE PLAYER FOLLOWS THE READER, BUT ONLY ONCE THEY HAVE ASKED IT TO.
   //
