@@ -27,7 +27,12 @@ function SignInForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [role, setRole] = useState<"faculty" | "student">("faculty");
+  // Starts UNSELECTED. There is no default role: preselecting one is how a
+  // click-through signup silently became a faculty account. Sign-up requires
+  // an explicit choice; sign-in never needs one (the profile row already
+  // knows), and a brand-new Google user who skipped the toggle is asked on
+  // /choose-role instead of being guessed at.
+  const [role, setRole] = useState<ProfileRole | null>(null);
   const [busy, setBusy] = useState(false);
   // /auth/callback reports every OAuth failure by bouncing back with ?error=.
   // Seeded into state rather than read on each render so that the next thing
