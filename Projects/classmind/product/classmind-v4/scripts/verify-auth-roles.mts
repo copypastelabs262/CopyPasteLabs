@@ -102,7 +102,7 @@ try {
   check(aRow?.role === "student", "database row says student", aRow);
 
   console.log("\n--- C + no-overwrite: the same account signs in again, hostile signals ignored ---");
-  const aAgain = await ensureProfile(a, "faculty");
+  const aAgain = await ensureProfile(admin, a, "faculty");
   check(aAgain.role === "student" && !aAgain.created, "a later sign-in with a stray faculty signal does NOT change the role", aAgain);
   check((await profileRow(a.id))?.role === "student", "database row still says student");
 
