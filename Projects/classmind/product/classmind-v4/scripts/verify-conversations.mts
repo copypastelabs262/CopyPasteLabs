@@ -230,7 +230,8 @@ check(!gAnswer.includes("CC101"),
   "…and staying silent about the subject with nothing recorded");
 const gSourceCourses = new Set((g1.json.sources ?? []).map((s) => s.courseId));
 check(gSourceCourses.size >= 2, "global sources genuinely span subjects", [...gSourceCourses]);
-console.log(`  global meter state: ${g1.json.meter} (stays "unavailable" until 20260906180000 is applied)`);
+check(g1.json.meter === "ok",
+  "the global ask is metered (course_id null -- migration 20260906180000)", g1.json.meter);
 const gId: string = g1.json.conversation?.id ?? "";
 check(gId !== "" && g1.json.conversation?.state === "ok", "the global thread persisted");
 
