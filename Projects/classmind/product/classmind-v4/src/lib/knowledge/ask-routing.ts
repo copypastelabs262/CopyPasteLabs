@@ -184,9 +184,11 @@ export function composeDirectAnswer(
           : "who any of the recorded assignments are for";
       return {
         answer: [
-          `The stored lecture knowledge doesn't record ${naming} — either the lecturer ` +
-            "never said, or the item was extracted before the contract captured an audience. " +
-            "What is recorded:",
+          // Student-facing words, not system vocabulary: "the contract" means
+          // nothing to a student and reads as a bug. The honest fact is simply
+          // that nothing recorded from the lecture names an audience.
+          `The stored lecture knowledge doesn't record ${naming} — nothing recorded ` +
+            "from the lecture names who it applies to. What is recorded:",
           ...candidates.map((u, i) => line(u, i + 1)),
         ].join("\n"),
         usedUnits: candidates,
