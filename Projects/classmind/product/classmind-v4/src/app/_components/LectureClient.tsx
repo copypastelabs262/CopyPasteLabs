@@ -49,7 +49,6 @@ interface Lecture {
   errorMessage: string | null; createdAt: string; completedAt: string | null;
   recordedOn: string | null;
 }
-interface CourseHead { id: string; code: string; title: string }
 
 // A bare `YYYY-MM-DD` is parsed as UTC midnight by the Date constructor, which
 // renders as the previous day for anyone west of Greenwich. A date with no time
