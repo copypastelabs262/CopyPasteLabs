@@ -13,6 +13,8 @@
     "setup:db": "node --env-file=.env.local scripts/setup-storage.mts",
     "test:ask": "node --conditions=react-server scripts/test-ask.mts",
     "test:answer": "node --conditions=react-server scripts/test-answer-intent.mts",
+    "test:conversations": "node scripts/test-conversation-model.mts",
+    "verify:conversations": "node --env-file=.env.local scripts/verify-conversations.mts",
     "test:auth": "node scripts/test-auth-roles.mts",
     "verify:auth": "node --conditions=react-server --env-file=.env.local scripts/verify-auth-roles.mts",
     "test:extraction": "node scripts/test-extraction.mts",
