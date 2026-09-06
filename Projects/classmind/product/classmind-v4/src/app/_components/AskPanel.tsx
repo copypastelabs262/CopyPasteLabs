@@ -390,7 +390,7 @@ export function AnswerView({
                 "inline-flex items-center gap-1.5 transition-colors hover:text-ink-soft",
               )}
             >
-              From the lecture · {answer.sources.length}
+              {sourcesHeading} · {answer.sources.length}
               <ChevronDownIcon
                 size={13}
                 className={cx("transition-transform", sourcesOpen && "rotate-180")}
