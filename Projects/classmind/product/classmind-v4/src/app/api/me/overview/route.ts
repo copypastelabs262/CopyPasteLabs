@@ -103,7 +103,10 @@ export async function GET() {
     const courseById = new Map(courses.map((entry) => [entry.course.id, entry]));
     const courseIds = courses.map((entry) => entry.course.id);
 
-    const isStudent = user.role === "student";
+    // The payload is role-shaped, so a role is REQUIRED here. An account that
+    // never chose one gets a 403 naming /choose-role -- not the faculty shape,
+    // which is what a silent default would hand it.
+    const isStudent = requireRole(user) === "student";
     const ownedIdList = [...ownedIds];
 
     // Two queries that both depend only on the course ids, so they go together.
