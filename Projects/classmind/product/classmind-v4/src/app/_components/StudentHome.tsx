@@ -14,7 +14,13 @@ import {
 } from "@/app/_components/ui";
 import { AssignmentIcon, BookIcon, ChevronRightIcon, KeyIcon, SearchIcon } from "@/app/_components/ui/icons";
 import { kindLabel } from "./KnowledgeUnit";
-import { agoLabel, type OverviewCourse, type StudentOverview, type TodoItem } from "./CoursesClient";
+import {
+  agoLabel,
+  type OverviewCourse,
+  type RecentConversation,
+  type StudentOverview,
+  type TodoItem,
+} from "./CoursesClient";
 
 // The student's home.
 //
