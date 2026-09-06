@@ -371,12 +371,12 @@ export default function LectureClient({
   if (!lecture) return null;
 
   const durationMs = segments.length ? segments[segments.length - 1].endMs : 0;
-  // Date, duration, course. Quiet, factual, and in the lecturer's units -- no
-  // byte counts, no language codes, no status column.
+  // Date and duration. Quiet, factual, and in the lecturer's units -- no byte
+  // counts, no language codes, no status column. The course is NOT repeated
+  // here: the class shell's header, directly above, already says it.
   const meta = [
     formatDate(lecture.recordedOn ?? lecture.createdAt),
     formatDuration(durationMs),
-    course ? `${course.code} · ${course.title}` : null,
   ].filter(Boolean).join("  ·  ");
 
   const isProblem = lecture.status === "quarantined" || lecture.status === "failed";
