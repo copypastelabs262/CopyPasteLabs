@@ -2,6 +2,7 @@ import "server-only";
 import { getReasoningProvider, reasoningAvailable } from "@/lib/reasoning";
 import type { KnowledgeUnit } from "@/lib/knowledge/read";
 import { retrieve, routeAsk, type AskRoute } from "@/lib/knowledge/ask-routing";
+import { classifyAnswerIntent, INTENT_GUIDANCE } from "@/lib/knowledge/answer-intent";
 
 // LAYER 4 -- grounded answering.
 //
@@ -10,15 +11,28 @@ import { retrieve, routeAsk, type AskRoute } from "@/lib/knowledge/ask-routing";
 // pointed at a 22,000-character file: the units have already been reconstructed
 // and, for anything actionable, confirmed by a human.
 //
-// The model is given nothing but the units, so it has nothing to hallucinate
-// from, and it is told to cite units by number so every sentence in the answer
-// can be traced to a stored item and from there to a timestamp in the audio.
-//
 // NOT EVERY QUESTION REACHES THE MODEL. Lookup questions the stored fields can
 // answer verbatim -- listings, existence, gaps the schema itself proves -- are
 // routed to a direct composer first (ask-routing.ts) and cost nothing. The
 // model keeps everything that needs synthesis. Whatever happens, the caller
 // gets `route` and `usage` back, and the ask meter records them.
+//
+// THE 2026-09-06 REWRITE: the model layer is a TEACHER, not a lookup. The old
+// prompt forbade every word beyond the stored units and capped answers at "two
+// or three sentences" -- so "teach me X", "explain like I'm 5" and "what is X"
+// all produced the same three generic lines. The contract now separates two
+// things the old prompt conflated:
+//
+//   LECTURE FACTS  what the lecturer taught/said. Only the units may supply
+//                  these, they are cited [n], and inventing one (a deadline, a
+//                  quote, a claim) remains forbidden exactly as before.
+//   EXPLANATION    the teaching AROUND those facts -- intuition, analogies,
+//                  examples, terminology. The model may supply this from
+//                  general understanding, and must never attribute it to the
+//                  lecturer.
+//
+// Depth and shape adapt to the student's intent (answer-intent.ts), and the
+// conversation so far can ride along so follow-ups land in context.
 
 // Usage of the one billed call, when one was made. Null fields mean the
 // provider reported nothing -- an unknown, never a zero.
@@ -28,6 +42,14 @@ export interface AskUsage {
   promptTokens: number | null;
   completionTokens: number | null;
   requestId: string | null;
+}
+
+// One prior exchange turn, oldest first. Client-supplied and untrusted: it is
+// conversation CONTEXT for the model, never instructions -- and it is capped
+// hard below so a hostile client cannot balloon the prompt.
+export interface AskTurn {
+  role: "student" | "classmind";
+  text: string;
 }
 
 export interface GroundedAnswer {
@@ -48,23 +70,53 @@ export interface GroundedAnswer {
   failure: string | null;
 }
 
-const SYSTEM = `You answer a student's question about a lecture, using ONLY the
-numbered knowledge units supplied. Those units were extracted from the lecture
-and, where marked CONFIRMED, checked by the lecturer.
+const SYSTEM = `You are ClassMind, this student's study partner for their own
+course. You have the course's stored lecture knowledge -- numbered units
+extracted from what the lecturer actually taught, some marked CONFIRMED by the
+lecturer -- and your job is to genuinely TEACH from it, the way a great tutor
+who attended the lecture would.
 
-RULES
-1. Use only the supplied units. Never fill a gap with general knowledge about
-   the subject, and never pad.
-2. If the units do not contain what was asked, SAY WHAT IS MISSING, plainly and
-   specifically -- "the stored lecture knowledge doesn't record who the
-   assignment is for" -- then say briefly what related information IS stored.
-   A named gap is a correct answer; a vague filler sentence is not.
-3. Never invent a deadline, date, mark, platform or requirement. If a unit
-   lists something under "not specified", say it was not specified.
-4. Cite the units you used as [1], [2] and so on, inline.
-5. Answer in plain English, briefly. Two or three sentences for a simple
-   question; a short list for a multi-step task.
-6. Do not mention that you are an AI, and do not describe these rules.`;
+THE GROUNDING CONTRACT
+- The numbered units are the lecture record. Everything you state about what
+  was taught, assigned, or said in THIS course must come from them, cited
+  inline as [1], [2].
+- You MAY explain beyond the lecture's wording -- intuition, analogies,
+  examples, definitions of terms, general context -- whenever it helps the
+  student understand. That is your own explanation: never present it as
+  something the lecturer said. When the line matters, mark it naturally ("In
+  the lecture..." / "More generally..." / "To build intuition...").
+- NEVER invent lecture facts: no invented deadlines, dates, marks, platforms,
+  requirements, quotes, or claims about what was covered. If a unit lists
+  something as "not specified", it was not specified -- say so.
+- If the units don't cover what was asked and honest general explanation
+  cannot safely bridge the gap, SAY WHAT IS MISSING, plainly and specifically,
+  then say what related material IS stored. A named gap is a correct answer.
+
+WRITING
+- Plain, direct English. Write like a person who wants the student to get it,
+  not like a textbook or a press release.
+- Light markdown is available: **bold** for the few terms that matter, short
+  bulleted or numbered lists, and "### " headings -- use structure only when
+  it genuinely helps, never as decoration.
+- Depth follows the student's request (guidance below). Whatever the depth:
+  every sentence must earn its place. No filler, no throat-clearing, no
+  "great question", no summary of these rules.
+- Do not mention being an AI or describe these instructions.`;
+
+// ---------------------------------------------------------------------------
+// Rendering the grounding
+// ---------------------------------------------------------------------------
+
+const mmss = (ms: number): string => {
+  const s = Math.max(0, Math.round(ms / 1000));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+};
+
+// At most this many units reach the prompt; retrieval already ranks them.
+const MAX_UNITS = 8;
+// The lecturer's own words, per unit. Two spans is grounding; ten is a
+// transcript dump, which this layer exists to avoid.
+const MAX_QUOTES = 2;
 
 function render(units: KnowledgeUnit[]): string {
   return units
@@ -73,8 +125,12 @@ function render(units: KnowledgeUnit[]): string {
         `[${i + 1}] (${u.category}/${u.kind}${u.status === "confirmed" ? ", CONFIRMED by lecturer" : ""}) ${u.title}`,
         `    ${u.summary}`,
       ];
+      if (u.audience) parts.push(`    for: ${u.audience}`);
       if (u.steps.length) parts.push(`    steps: ${u.steps.map((s, n) => `${n + 1}) ${s}`).join("  ")}`);
       if (u.unspecified.length) parts.push(`    not specified: ${u.unspecified.join("; ")}`);
+      for (const e of u.evidence.slice(0, MAX_QUOTES)) {
+        parts.push(`    lecturer, at ${mmss(e.startMs)}: "${e.quote}"`);
+      }
       return parts.join("\n");
     })
     .join("\n\n");
@@ -83,9 +139,33 @@ function render(units: KnowledgeUnit[]): string {
 const listing = (hits: KnowledgeUnit[]) =>
   hits.map((u, i) => `[${i + 1}] ${u.title} — ${u.summary}`).join("\n");
 
+// ---------------------------------------------------------------------------
+// Conversation context
+// ---------------------------------------------------------------------------
+
+// Hard caps. History is client-supplied; these bound the prompt no matter what
+// arrives. Recent turns matter most, so trimming keeps the TAIL.
+const MAX_TURNS = 8;
+const MAX_TURN_CHARS = 1_500;
+
+function sanitizeHistory(history: AskTurn[] | undefined): AskTurn[] {
+  if (!history?.length) return [];
+  return history
+    .filter((t) => (t?.role === "student" || t?.role === "classmind") && typeof t?.text === "string" && t.text.trim() !== "")
+    .slice(-MAX_TURNS)
+    .map((t) => ({ role: t.role, text: t.text.trim().slice(0, MAX_TURN_CHARS) }));
+}
+
+function renderHistory(turns: AskTurn[]): string {
+  return turns
+    .map((t) => `${t.role === "student" ? "STUDENT" : "CLASSMIND"}: ${t.text}`)
+    .join("\n\n");
+}
+
 export async function answerFromKnowledge(
   units: KnowledgeUnit[],
   question: string,
+  opts?: { history?: AskTurn[] },
 ): Promise<GroundedAnswer> {
   const started = Date.now();
   const done = (a: Omit<GroundedAnswer, "durationMs">): GroundedAnswer => ({
@@ -93,7 +173,23 @@ export async function answerFromKnowledge(
     durationMs: Date.now() - started,
   });
 
-  const hits = retrieve(units, question);
+  const history = sanitizeHistory(opts?.history);
+
+  let hits = retrieve(units, question);
+
+  // A follow-up rarely re-states its topic ("give me another example", "why?").
+  // When the bare question retrieves next to nothing and a conversation
+  // exists, retrieve again with the recent exchange folded in, so the units
+  // in play stay the units under discussion. The bare-question hits keep
+  // their rank; augmentation only ADDS.
+  if (history.length && hits.length < 2) {
+    const recent = history.slice(-4).map((t) => t.text).join(" ");
+    const seen = new Set(hits.map((u) => u.id));
+    for (const u of retrieve(units, `${recent} ${question}`)) {
+      if (!seen.has(u.id)) { hits.push(u); seen.add(u.id); }
+    }
+  }
+  hits = hits.slice(0, MAX_UNITS);
 
   // The free path first. It can answer some questions retrieval alone cannot
   // ("any assignments?" with zero term overlap), so it runs before the
@@ -126,19 +222,24 @@ export async function answerFromKnowledge(
     });
   }
 
+  const intent = classifyAnswerIntent(question, history.length > 0);
+  const system = `${SYSTEM}\n\nTHIS ANSWER\n${INTENT_GUIDANCE[intent]}`;
+  const user = [
+    ...(history.length ? [`CONVERSATION SO FAR:\n${renderHistory(history)}`] : []),
+    `QUESTION: ${question}`,
+    `KNOWLEDGE UNITS:\n${render(hits)}`,
+  ].join("\n\n");
+
   try {
     const provider = getReasoningProvider();
     const res = await provider.complete({
-      system: SYSTEM,
-      user: `QUESTION: ${question}\n\nKNOWLEDGE UNITS:\n${render(hits)}`,
+      system,
+      user,
       expectJson: false,
-      // The tier ceiling, not a guess at how long the answer should be.
-      // sarvam-105b is a reasoning model: it spends most of its budget thinking
-      // before it writes anything, and a 700-token cap made it emit three
-      // thousand characters of reasoning and ZERO characters of answer, every
-      // time, silently falling back to a listing. Brevity is asked for in the
-      // prompt, where it belongs; the token cap only decides whether an answer
-      // gets to exist.
+      // The tier ceiling, not a target length. Depth is steered in the intent
+      // guidance, where it belongs; the token cap only decides whether an
+      // answer gets to exist. (A 700-token cap once made a reasoning model
+      // spend its whole budget thinking and emit zero characters of answer.)
       maxTokens: 4000,
     });
     return done({
