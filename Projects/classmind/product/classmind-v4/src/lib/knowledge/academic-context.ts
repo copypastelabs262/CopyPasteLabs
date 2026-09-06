@@ -127,5 +127,10 @@ export async function loadAcademicContext(
     memberships.map((c) => readKnowledge({ courseId: c.id, forStudent: !c.isOwner })),
   );
 
-  return { scope: "global", units: perCourse.flat(), courseNames };
+  return {
+    scope: "global",
+    units: perCourse.flat(),
+    courseNames,
+    subjectsOmitted: all.length - memberships.length,
+  };
 }
