@@ -9,6 +9,7 @@ import DeleteLecture from "./DeleteLecture";
 import LectureConversation from "./LectureConversation";
 import AudioPlayer, { type AudioPlayerHandle } from "./AudioPlayer";
 import { useClassDataMaybe } from "./shell/ClassContext";
+import { lectureNeighbours } from "@/lib/lecture-nav";
 import LectureTranscript, { type TranscriptSegment } from "./LectureTranscript";
 import { LectureKnowledge, StillWorking } from "./KnowledgePanel";
 import type { EvidenceNav, KnowledgeUnit } from "./KnowledgeUnit";
