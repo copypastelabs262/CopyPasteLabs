@@ -63,11 +63,26 @@ export default function AskWorkspace() {
     const text = question.trim();
     if (!text || asking) return;
     const id = nextId.current++;
+    // The conversation so far, oldest first, built from the turns on screen --
+    // the same exchange the student can see is exactly what the model is shown,
+    // nothing more. The server caps length; sending the last few exchanges
+    // keeps follow-ups ("give me another example", "why?") landing in context.
+    const history = turns
+      .filter((t) => t.state === "done" && t.answer)
+      .slice(-4)
+      .flatMap((t) => [
+        { role: "student" as const, text: t.question },
+        { role: "classmind" as const, text: t.answer!.answer },
+      ]);
     setTurns((t) => [...t, { id, question: text, state: "asking" }]);
     setDraft("");
     setAsking(true);
     try {
-      const res = await fetch(`/api/courses/${courseId}/ask?q=${encodeURIComponent(text)}`);
+      const res = await fetch(`/api/courses/${courseId}/ask`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: text, history }),
+      });
       const body = (await res.json().catch(() => null)) as (Partial<Answer> & { error?: string }) | null;
       if (!res.ok) {
         const message =
