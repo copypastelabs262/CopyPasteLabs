@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
 import { currentUser } from "@/lib/auth";
 import { UserMenu } from "./_components/SignOutButton";
+import AppNav from "./_components/AppNav";
 import "./globals.css";
 
 export const metadata: Metadata = {
