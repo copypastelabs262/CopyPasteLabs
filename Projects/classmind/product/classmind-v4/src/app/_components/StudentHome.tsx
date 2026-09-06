@@ -29,12 +29,13 @@ import {
 // The student's home.
 //
 // A student's real question does not fit inside one course. It is "what do I
-// owe, and what did I miss" — so the work comes first, whole, before any
-// mention of courses. And the screen's one luminous surface is the product's
-// promise itself: ask your lectures anything. That panel is a DOOR, not a
-// form — asking happens inside a course, where answers can cite their
-// evidence (and where the cost of asking is a deliberate act, not a home-page
-// keystroke).
+// owe, and what did I miss" — so the screen's one luminous surface is the
+// product's promise made usable: a real composer that asks ACROSS every
+// subject the student is in. Typing here carries the question into the global
+// Ask flow (/ask → /api/ask, scope 'global') — the same retrieval brain as
+// lecture and subject ask, widened, never a second system. The cost guard is
+// intact: nothing is asked on visit or refresh, only on an explicit submit
+// (the question rides a consumed-once sessionStorage key, not the URL).
 //
 // NOTHING teacher-facing may appear on this screen. No status notes, no
 // unreviewed content, no review affordances. The single thing a student is
