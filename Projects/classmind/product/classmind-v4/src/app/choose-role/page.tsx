@@ -30,7 +30,7 @@ export default async function ChooseRolePage({
 
   // Replays user_metadata.role when present; insert-only, so an existing
   // profile is never touched. A role on record means nothing to ask.
-  const ensured = await ensureProfile(data.user, null);
+  const ensured = await ensureProfile(serviceClient(), data.user, null);
   if (ensured.role) redirect(dest);
 
   return <ChooseRoleForm next={dest} />;
