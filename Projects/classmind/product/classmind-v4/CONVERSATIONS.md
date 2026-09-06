@@ -107,8 +107,10 @@ ephemeral contract and its footnote says answers aren't being saved.
 
 ## HUMAN-ONLY
 
-1. Apply `supabase/migrations/20260906150000_conversations.sql` (SQL editor),
-   then run `npm run verify:conversations` for the full live contract.
-2. Google OAuth click-throughs (carried from the auth milestone): add
-   `http://localhost:3500/**` to Supabase Auth redirect URLs; sign up via
-   Google once as Student, once as Faculty; confirm the roles.
+1. ~~Apply `supabase/migrations/20260906150000_conversations.sql`~~ — **applied
+   by the operator 2026-09-06**; `npm run verify:conversations` passes the full
+   live contract (48/48). Nothing to do here.
+2. Google OAuth click-throughs (carried from the auth milestone, still open):
+   add `http://localhost:3500/**` (and the production domain) to the Supabase
+   Auth redirect allowlist; sign up via Google once as Student, once as Faculty
+   (faculty needs the institution code); confirm the roles.
