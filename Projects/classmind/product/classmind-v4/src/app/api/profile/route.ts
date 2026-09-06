@@ -90,7 +90,13 @@ export async function POST(request: Request) {
           .select("role")
           .eq("id", user.id)
           .maybeSingle();
-        if (!raced) return NextResponse.json({ error: error.message }, { status: 500 });
+        if (!raced) {
+          // Never hand the raw driver message to the client -- it is machine
+          // exhaust and, in the worst case, leaks schema detail. Log it server
+          // side for support; tell the caller something they can act on.
+          console.error("[profile] insert failed:", error.message);
+          return NextResponse.json({ error: "Could not set up your account. Please try again." }, { status: 500 });
+        }
         if (raced.role !== requestedRole) {
           return NextResponse.json(
             { error: `This account is already set up as ${raced.role}.` },
@@ -114,7 +120,10 @@ export async function POST(request: Request) {
         .from("profiles")
         .update({ full_name: fullName })
         .eq("id", user.id);
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) {
+        console.error("[profile] name update failed:", error.message);
+        return NextResponse.json({ error: "Could not save your name. Please try again." }, { status: 500 });
+      }
     }
     return NextResponse.json({ ok: true, role: existing.role });
   } catch (err) {

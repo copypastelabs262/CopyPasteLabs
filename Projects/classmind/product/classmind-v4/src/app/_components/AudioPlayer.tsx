@@ -51,8 +51,11 @@ function SkipBackGlyph({ size = 18 }: { size?: number }) {
   );
 }
 
-const AudioPlayer = forwardRef<AudioPlayerHandle, { src: string | null; label?: string }>(
-  function AudioPlayer({ src, label }, ref) {
+const AudioPlayer = forwardRef<
+  AudioPlayerHandle,
+  { src: string | null; label?: string; hasTranscript?: boolean }
+>(
+  function AudioPlayer({ src, label, hasTranscript = false }, ref) {
     const el = useRef<HTMLAudioElement>(null);
     const [playing, setPlaying] = useState(false);
     const [currentMs, setCurrentMs] = useState(0);
@@ -106,8 +109,9 @@ const AudioPlayer = forwardRef<AudioPlayerHandle, { src: string | null; label?: 
         <div className="flex items-center gap-3 rounded-2xl border border-dashed border-line px-5 py-4">
           <AudioIcon size={18} className="shrink-0 text-ink-faint" />
           <p className="text-sm text-ink-soft">
-            The recording is not available right now. The transcript below is complete, and every
-            timestamp still jumps to the right line.
+            {hasTranscript
+              ? "The recording is not available right now. The transcript below is complete, and every timestamp still jumps to the right line."
+              : "The recording is not available right now."}
           </p>
         </div>
       );

@@ -364,6 +364,15 @@ export async function GET() {
       )
       .map(decorate);
 
+    // THE TEACHING FEED IS OWNED COURSES ONLY. `lectures` spans every course in
+    // scope, which for a teacher who is ALSO enrolled as a student elsewhere
+    // includes lectures they do not own -- and a recent-lectures card that links
+    // into one of those is a 403 dressed as an invitation ("every course you
+    // teach" is the contract). A course they merely joined as a student belongs
+    // to their student surface, not their teaching console. Scope the feed and
+    // its counts to owned courses so the UI matches the authorization boundary.
+    const ownedLectures = lectures.filter((l) => ownedIds.has(l.course_id));
+
     return NextResponse.json({
       role: "faculty",
       courses: courseSummaries,
@@ -372,15 +381,15 @@ export async function GET() {
       reviewItemsTotal: reviewQueue.reduce((sum, entry) => sum + entry.pendingCount, 0),
       blocked: blocked.slice(0, ATTENTION_LIMIT),
       blockedTotal: blocked.length,
-      processingCount: lectures.filter((l) => PROCESSING.has(l.status)).length,
+      processingCount: ownedLectures.filter((l) => PROCESSING.has(l.status)).length,
       // The pending count rides along so a recent row can say what is actually
       // outstanding on that lecture rather than repeating the generic status
       // sentence for every published one.
-      recentLectures: lectures.slice(0, RECENT_LECTURE_LIMIT).map((lecture) => ({
+      recentLectures: ownedLectures.slice(0, RECENT_LECTURE_LIMIT).map((lecture) => ({
         ...decorate(lecture),
         pendingCount: queueByLecture.get(lecture.id)?.count ?? 0,
       })),
-      recentLecturesTotal: lectures.length,
+      recentLecturesTotal: ownedLectures.length,
     });
   } catch (err) {
     const { body, status } = errorResponse(err);

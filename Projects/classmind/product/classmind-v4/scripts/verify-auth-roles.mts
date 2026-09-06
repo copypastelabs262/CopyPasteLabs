@@ -111,12 +111,19 @@ try {
   check(aAgain.role === "student" && !aAgain.created, "a later sign-in with a stray faculty signal does NOT change the role", aAgain);
   check((await profileRow(a.id))?.role === "student", "database row still says student");
 
-  console.log("\n--- B + D: Google sign-up as Faculty, then a plain re-sign-in ---");
+  console.log("\n--- B (Phase 1 gate): a FACULTY signal never auto-provisions ---");
+  // Before Phase 1 a pending/ metadata faculty signal created a faculty profile
+  // outright. It no longer can: faculty requires the institution code, entered
+  // explicitly and validated server-side, so a mere signal routes to /choose-role
+  // (action "choose") and writes nothing. Faculty CREATION with the code is
+  // verified end-to-end by verify:faculty-gate.
   const b = await createUser("b", { full_name: "Verify Faculty B" });
   const bFirst = await ensureProfile(admin, b, "faculty");
-  check(bFirst.role === "faculty" && bFirst.created, "first sign-in with pending faculty creates a faculty profile", bFirst);
-  const bAgain = await ensureProfile(admin, b, null);
-  check(bAgain.role === "faculty" && !bAgain.created, "re-sign-in with no signal keeps faculty", bAgain);
+  check(bFirst.role === null && !bFirst.created, "a pending-faculty signal does NOT create a faculty profile -- it routes to choose", bFirst);
+  check((await profileRow(b.id)) === null, "no faculty row was invented from a cookie/metadata signal");
+  const bMeta = await createUser("bm", { full_name: "Verify Faculty Meta", role: "faculty" });
+  const bMetaFirst = await ensureProfile(admin, bMeta, null);
+  check(bMetaFirst.role === null && !bMetaFirst.created, "a metadata-faculty signal also routes to choose, never a silent faculty account", bMetaFirst);
 
   console.log("\n--- Email-confirmation detour: role recorded in user_metadata at sign-up ---");
   const m = await createUser("m", { full_name: "Verify Metadata M", role: "student" });

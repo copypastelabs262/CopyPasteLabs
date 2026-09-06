@@ -54,35 +54,39 @@ for (const pendingRole of ["student", "faculty", null] as const) {
   }
 }
 
-console.log("\n--- planProfileProvision: explicit selections create ---");
-// Scenario A: Google sign-up with Student selected (the cookie).
+console.log("\n--- planProfileProvision: only STUDENT is created directly ---");
+// A student signal carries no privilege, so it provisions without further gating.
 {
   const plan = planProfileProvision({ hasProfile: false, pendingRole: "student", metadataRole: null });
   check(plan.action === "create" && plan.role === "student" && plan.source === "pending",
-    "pending student -> create student (Google sign-up, scenario A)", plan);
+    "pending student -> create student (Google sign-up)", plan);
 }
-// Scenario B: Google sign-up with Faculty selected.
-{
-  const plan = planProfileProvision({ hasProfile: false, pendingRole: "faculty", metadataRole: null });
-  check(plan.action === "create" && plan.role === "faculty" && plan.source === "pending",
-    "pending faculty -> create faculty (Google sign-up, scenario B)", plan);
-}
-// The email-confirmation detour: role chosen at sign-up, recorded in metadata,
-// profile created only after the user confirms and comes back.
+// The email-confirmation detour: student chosen at sign-up, in metadata.
 {
   const plan = planProfileProvision({ hasProfile: false, pendingRole: null, metadataRole: "student" });
   check(plan.action === "create" && plan.role === "student" && plan.source === "metadata",
     "metadata student -> create student (email-confirmation flow)", plan);
 }
-// Precedence: the cookie is the more recent explicit choice.
+
+console.log("\n--- planProfileProvision: FACULTY is NEVER auto-provisioned ---");
+// Phase 1 gate: a faculty signal is only a claim, not proof of the code. It
+// routes to /choose-role, where the code is entered and verified server-side.
 {
+  const plan = planProfileProvision({ hasProfile: false, pendingRole: "faculty", metadataRole: null });
+  check(plan.action === "choose", "pending faculty -> choose (faculty needs the server-validated code)", plan);
+}
+{
+  const plan = planProfileProvision({ hasProfile: false, pendingRole: null, metadataRole: "faculty" });
+  check(plan.action === "choose", "metadata faculty -> choose (never a silent faculty account)", plan);
+}
+{
+  // A faculty signal must not silently downgrade to student either -- it routes
+  // to the gated chooser so the person can enter the code they intended to.
   const plan = planProfileProvision({ hasProfile: false, pendingRole: "faculty", metadataRole: "student" });
-  check(plan.action === "create" && plan.role === "faculty" && plan.source === "pending",
-    "pending outranks metadata -- the most recent explicit choice wins", plan);
+  check(plan.action === "choose", "faculty signal present -> choose, never a silent student downgrade", plan);
 }
 
-console.log("\n--- planProfileProvision: no signal NEVER becomes faculty ---");
-// Scenario E, the bug itself: a missing/invalid signal must produce a QUESTION.
+console.log("\n--- planProfileProvision: no signal is a QUESTION, never a guess ---");
 {
   const plan = planProfileProvision({ hasProfile: false, pendingRole: null, metadataRole: null });
   check(plan.action === "choose", "no profile + no signal -> choose, not faculty", plan);
@@ -93,7 +97,7 @@ console.log("\n--- planProfileProvision: no signal NEVER becomes faculty ---");
     pendingRole: parseRole("definitely-not-a-role"),
     metadataRole: parseRole("FACULTY"),
   });
-  check(plan.action === "choose", "invalid signals parse to null -> choose, not faculty", plan);
+  check(plan.action === "choose", "invalid signals parse to null -> choose", plan);
 }
 
 console.log("\n--- the cookie contract ---");

@@ -14,7 +14,7 @@ import type { EvidenceNav, KnowledgeUnit } from "./KnowledgeUnit";
 import { formatBytes } from "./Input";
 import {
   Button, Card, Page, PageHeader, Section, Skeleton, Spinner, StatusPill, cx,
-  lectureStatusLabel, lectureStatusTone,
+  lectureStatusLabel, lectureStatusTone, friendlyLectureError,
 } from "./ui";
 import { AlertIcon, ChevronDownIcon, ChevronRightIcon, UploadIcon } from "./ui/icons";
 
@@ -104,7 +104,7 @@ function TechnicalDetails({ children }: { children: ReactNode }) {
 const WAITING_COPY: Record<string, { title: string; note: string }> = {
   pending_upload: {
     title: "This lecture has no recording yet",
-    note: "The upload never finished, so there is nothing to process. Upload the recording again from the course page.",
+    note: "The upload never finished, so there is nothing to process. Upload the recording again from the Lectures tab.",
   },
   uploaded: {
     title: "This lecture is waiting to be processed",
@@ -377,6 +377,15 @@ export default function LectureClient({
   // already says what actually happened.
   const noAudioYet = lecture.status === "pending_upload" || lecture.status === "uploaded";
 
+  // TRUTHFUL STATE, DERIVED FROM WHAT ACTUALLY EXISTS -- not from the status
+  // string alone, and never contradicting it. These three decide what the page
+  // may claim: whether there is a recording to play, a transcript to read, and
+  // whether the pipeline is genuinely MOVING (as opposed to waiting on an
+  // upload that never came, which is a stalled state, not a busy one).
+  const hasRecording = Boolean(audioUrl);
+  const hasTranscript = segments.length > 0 || Boolean(rawFallback);
+  const activelyProcessing = ["transcribing", "transcribed", "extracting"].includes(lecture.status);
+
   const technical = (
     <TechnicalDetails>
       <Detail label="Lecture id" value={lecture.id} />
@@ -454,7 +463,15 @@ export default function LectureClient({
       {isWorking && isOwner ? (
         <Card>
           <div className="flex items-start gap-3.5">
-            <Spinner size={18} className="mt-0.5 shrink-0 text-accent" />
+            {/* Motion means motion. A spinner rides only the states where the
+                pipeline is genuinely moving; a lecture waiting on an upload
+                that never arrived is stalled, not busy, and gets a static
+                attention icon so it never looks perpetually loading. */}
+            {activelyProcessing ? (
+              <Spinner size={18} className="mt-0.5 shrink-0 text-accent" />
+            ) : (
+              <AlertIcon size={18} className="mt-0.5 shrink-0 text-warn" />
+            )}
             <div className="min-w-0">
               <p className="font-medium text-ink">
                 {WAITING_COPY[lecture.status]?.title ?? "This lecture is still being processed"}
@@ -548,10 +565,20 @@ export default function LectureClient({
 
       {/* --- Full lecture ----------------------------------------------------
           Evidence, not content. The player stays mounted whether or not the
-          transcript is open, because a citation has to be able to seek it. */}
+          transcript is open, because a citation has to be able to seek it.
+          Shown only when a recording OR a transcript actually exists: a lecture
+          still awaiting its upload has neither, and a section promising "the
+          recording and the transcript it produced" over nothing was the
+          recorded false-completion state. The description tells the truth about
+          which of the two is actually here. */}
+      {hasRecording || hasTranscript ? (
       <Section
         title="Full lecture"
-        description="The recording and the transcript it produced."
+        description={
+          hasTranscript
+            ? "The recording and the transcript it produced."
+            : "The recording. Its transcript isn't ready yet."
+        }
         action={
           segments.length || rawFallback ? (
             <Button
@@ -594,6 +621,7 @@ export default function LectureClient({
                 ref={audioRef}
                 src={audioUrl}
                 label={engaged ? lecture.title : undefined}
+                hasTranscript={hasTranscript}
               />
             </div>
           </div>
@@ -613,6 +641,7 @@ export default function LectureClient({
 
         {isOwner ? technical : null}
       </Section>
+      ) : null}
 
       {/* --- Removing a mistake --------------------------------------------- */}
       {isOwner ? (
@@ -643,6 +672,15 @@ function ProblemState({
   lecture: Lecture; courseId: string; isOwner: boolean; technical: ReactNode;
 }) {
   const quarantined = lecture.status === "quarantined";
+  // ONE source of truth for the failure sentence. A `failed` lecture is
+  // described by the SAME classifier the home card and course page use
+  // (friendlyLectureError over the stored error), so the two surfaces can never
+  // disagree about the cause -- the recorded contradiction was a home card
+  // saying "out of credits" beside a detail page saying "check it's audible".
+  // A quarantined lecture is a different, self-contained story (it WAS
+  // transcribed; the transcript just didn't read as a lecture), so it keeps its
+  // own copy and its own audio-quality guidance.
+  const friendly = quarantined ? null : friendlyLectureError(lecture.errorMessage);
   return (
     <Card className={quarantined ? "border-warn/40" : "border-danger/40"}>
       <div className="flex items-start gap-3.5">
@@ -654,13 +692,13 @@ function ProblemState({
           <h2 className="text-lg font-semibold tracking-[-0.012em] text-ink">
             {quarantined
               ? "Something went wrong with this recording's transcription"
-              : "This recording could not be processed"}
+              : "This lecture could not be processed"}
           </h2>
 
           <p className="mt-2.5 max-w-2xl text-[15px] leading-relaxed text-ink-soft">
             {quarantined
               ? "The audio was transcribed, but the text that came back does not read as a lecture in English or Hindi. That usually means the recording was very quiet, very short, or that the transcription service returned the wrong audio."
-              : "The recording never got as far as a transcript, so there is nothing to read from it."}
+              : friendly!.message}
           </p>
 
           <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-ink-soft">
@@ -668,18 +706,25 @@ function ProblemState({
             It was held back automatically, and no course knowledge was built from it.
           </p>
 
-          <div className="mt-5">
-            <p className="text-sm font-medium text-ink">What to do</p>
-            <ul className="mt-2 max-w-2xl list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-ink-soft">
-              <li>Play the recording below and check the lecture is audible.</li>
-              <li>Upload it again from the course page — a clearer copy usually processes fine.</li>
-              <li>If the course is taught in another language, change the course language first.</li>
-            </ul>
-          </div>
+          {/* The "what to do" is audio-quality troubleshooting, which is right
+              ONLY for quarantine (a bad-audio verdict). For a plain failure the
+              cause sentence above already carries the right next step (retry,
+              wait for credits, re-run), so telling them to "check it's audible"
+              would contradict it. */}
+          {quarantined ? (
+            <div className="mt-5">
+              <p className="text-sm font-medium text-ink">What to do</p>
+              <ul className="mt-2 max-w-2xl list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-ink-soft">
+                <li>Play the recording below and check the lecture is audible.</li>
+                <li>Upload it again from the Lectures tab — a clearer copy usually processes fine.</li>
+                <li>If the course is taught in another language, change the course language first.</li>
+              </ul>
+            </div>
+          ) : null}
 
           {isOwner ? (
             <Link
-              href={`/courses/${courseId}`}
+              href={`/courses/${courseId}/lectures`}
               className="mt-6 inline-flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-medium text-accent-ink shadow-soft transition-colors hover:bg-accent-strong"
             >
               <UploadIcon size={16} />

@@ -191,10 +191,11 @@ const LANGUAGE_OPTIONS = [
   { value: "unknown", label: "Auto-detect (not recommended)" },
 ] as const;
 
-// Not a nicety. Auto-detect once romanized an English lecture into Arabic, and
-// the person who picked it had no way to know that was a possible outcome.
+// Not a nicety. Auto-detect once transcribed an English lecture as Arabic, and
+// the person who picked it had no way to know that was a possible outcome. So
+// the guidance is plain: name the language you teach in.
 const LANGUAGE_HINT =
-  "Auto-detect once romanized an English lecture into Arabic. Pick what you teach in.";
+  "Pick the language you actually teach in. Auto-detect can guess wrong and mis-transcribe the whole lecture, so it is not recommended.";
 
 // What the server renders, and therefore what the first client render has to
 // render too. The server has no timezone to guess with, so it cannot say more
@@ -363,7 +364,7 @@ export default function CoursesClient({ user }: { user: CoursesUser }) {
   function uploadAction() {
     if (owned.length === 1) {
       return (
-        <ButtonLink tone="primary" size="lg" href={`/courses/${owned[0].id}`}>
+        <ButtonLink tone="primary" size="lg" href={`/courses/${owned[0].id}/lectures`}>
           <UploadIcon size={18} />
           Upload lecture
         </ButtonLink>
@@ -535,7 +536,7 @@ export default function CoursesClient({ user }: { user: CoursesUser }) {
           {owned.map((course) => (
             <li key={course.id}>
               <Link
-                href={`/courses/${course.id}`}
+                href={`/courses/${course.id}/lectures`}
                 onClick={() => setPickOpen(false)}
                 className="-mx-2 flex items-center gap-3 rounded-xl px-2 py-3 transition-colors hover:bg-surface-sunken"
               >
