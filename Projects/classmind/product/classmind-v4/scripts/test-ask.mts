@@ -247,6 +247,50 @@ check(routeAsk("Who discovered cloud computing?", COURSE, TEACHING).route === "m
   "a who-question with no work in play is not an audience lookup");
 
 /* ------------------------------------------------------------------------- */
+/* 4b. Global attribution: cross-subject listings group by subject, still $0  */
+/* ------------------------------------------------------------------------- */
+
+console.log("global attribution:");
+{
+  const roboticsWork = unit({
+    category: "actionable", kind: "assignment", title: "Transformation Assignment",
+    summary: "Derive the matrix and submit it.", status: "confirmed",
+    courseId: "course-robotics", lectureId: "lec-r1", lectureTitle: "Robotics trial",
+  });
+  const cloudWork = unit({
+    category: "actionable", kind: "assignment", title: "Research Paper",
+    summary: "Find and implement a paper.", status: "confirmed",
+    courseId: "course-cloud", lectureId: "lec-c1", lectureTitle: "Control layer",
+  });
+  const courseNames = new Map([
+    ["course-robotics", "TEST1 · Robotics & Automation"],
+    ["course-cloud", "TEST2 · Cloud Computing"],
+  ]);
+  const r = routeAsk("What assignments do I have?", [roboticsWork, cloudWork, ...TEACHING], [], { courseNames });
+  check(r.route === "direct", "cross-subject assignment listing stays $0", r.route);
+  if (r.route === "direct") {
+    check(r.direct.answer.includes("### TEST1 · Robotics & Automation") &&
+      r.direct.answer.includes("### TEST2 · Cloud Computing"),
+      "the listing groups by subject with headings", r.direct.answer);
+    check(r.direct.answer.indexOf("Transformation Assignment") > r.direct.answer.indexOf("### TEST1"),
+      "each assignment sits under its own subject");
+  }
+  // The same question WITHOUT attribution (a course surface) keeps the flat shape.
+  const flat = routeAsk("What assignments do I have?", [roboticsWork, cloudWork], []);
+  check(flat.route === "direct" && !flat.direct.answer.includes("###"),
+    "a course-scoped listing stays ungrouped -- attribution is global-only");
+
+  const t = routeAsk("What topics were covered?", [
+    unit({ title: "Cache Scaling", courseId: "course-cloud", lectureTitle: "Control layer" }),
+    unit({ title: "Transformation matrix", courseId: "course-robotics", lectureTitle: "Robotics trial" }),
+  ], [], { courseNames });
+  check(t.route === "direct" &&
+    t.direct.answer.includes("TEST2 · Cloud Computing — Control layer") &&
+    t.direct.answer.includes("TEST1 · Robotics & Automation — Robotics trial"),
+    "topics name subject AND lecture on a global ask", t.route === "direct" ? t.direct.answer : t.route);
+}
+
+/* ------------------------------------------------------------------------- */
 /* 5. Topic listings                                                          */
 /* ------------------------------------------------------------------------- */
 
