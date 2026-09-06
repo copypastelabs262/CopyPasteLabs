@@ -10,6 +10,7 @@ import {
 } from "./KnowledgeUnit";
 import { Button, EmptyState, Section, Skeleton, cx } from "./ui";
 import { AlertIcon, BookIcon } from "./ui/icons";
+import MarkdownAnswer from "./MarkdownAnswer";
 
 // LAYER 4 -- a student asks the course's memory a question.
 //
