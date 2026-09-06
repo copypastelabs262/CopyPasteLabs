@@ -107,50 +107,54 @@ export default function StudentHome({ eyebrow, data, onJoinCourse }: Props) {
     askGlobal(draft);
   }
 
-  // STUDENT ASK -- the whole-student scope, as the page's one focal surface.
-  // The composer is real: typing here carries the question to /ask, where the
-  // global conversation is created by that first question. With no courses
-  // there is nothing recorded to answer from, so the door stays "join first".
+  // STUDENT / GLOBAL ASK -- the home page's focal surface. A real search-shaped
+  // composer: a leading magnifier so it reads as "ask/search", an always-solid
+  // primary Ask affordance (never greyed into invisibility), and a scope cue
+  // that says out loud this reaches every subject. Submitting carries the
+  // question into the existing global Ask flow. With no courses there is
+  // nothing recorded to answer from, so the surface offers "join first".
   const askHero = (
     <div className="glass-hero rounded-2xl p-6 sm:p-7">
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center gap-2">
           <p className="eyebrow-mono">ask classmind</p>
-          <h2 className="font-display mt-1.5 text-[1.55rem] leading-snug font-medium tracking-[-0.01em] text-ink">
-            Your academic context, in one place.
-          </h2>
-          <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-soft">
-            Ask across every subject you&rsquo;re in &mdash; every answer is grounded in what was
-            actually recorded, and says which subject it came from.
-          </p>
+          <span className="rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[11px] font-medium tracking-wide text-accent">
+            All subjects
+          </span>
         </div>
-        {!firstCourse ? (
-          <div className="shrink-0">
-            <Button tone="primary" size="lg" onClick={onJoinCourse}>
-              <KeyIcon size={17} />
-              Join a course
-            </Button>
-          </div>
-        ) : null}
+        <h2 className="font-display text-[1.55rem] leading-snug font-medium tracking-[-0.01em] text-ink">
+          Ask across all your classes.
+        </h2>
+        <p className="max-w-xl text-sm leading-relaxed text-ink-soft">
+          One place for every subject you&rsquo;re in &mdash; assignments, deadlines, what a
+          lecture covered. Every answer is grounded in what was actually recorded, and says
+          which subject it came from.
+        </p>
       </div>
 
       {firstCourse ? (
         <>
-          <form onSubmit={onAskSubmit} className="mt-5 flex items-center gap-3">
-            <label htmlFor="student-ask" className="sr-only">Ask about your academics</label>
-            <input
-              id="student-ask"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder="Ask about anything across your subjects"
-              autoComplete="off"
-              className={cx(
-                "min-w-0 flex-1 rounded-xl border border-line bg-surface-sunken/70 px-4 py-3",
-                "text-[15px] leading-normal text-ink transition-colors",
-                "placeholder:text-ink-faint hover:border-ink-faint/60 focus:border-accent focus:outline-none",
-              )}
-            />
-            <Button type="submit" tone={draft.trim() ? "primary" : "secondary"} size="lg">
+          <form onSubmit={onAskSubmit} className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <label htmlFor="student-ask" className="sr-only">Ask across all your subjects</label>
+            <div className="relative min-w-0 flex-1">
+              <SearchIcon
+                size={18}
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-faint"
+              />
+              <input
+                id="student-ask"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                placeholder="Ask anything across your subjects…"
+                autoComplete="off"
+                className={cx(
+                  "w-full rounded-xl border border-line bg-surface-sunken/80 py-3.5 pl-11 pr-4",
+                  "text-[15px] leading-normal text-ink transition-colors",
+                  "placeholder:text-ink-faint hover:border-ink-faint/60 focus:border-accent focus:outline-none",
+                )}
+              />
+            </div>
+            <Button type="submit" tone="primary" size="lg" className="w-full shrink-0 sm:w-auto">
               <SearchIcon size={16} />
               Ask
             </Button>
@@ -171,7 +175,14 @@ export default function StudentHome({ eyebrow, data, onJoinCourse }: Props) {
             ))}
           </div>
         </>
-      ) : null}
+      ) : (
+        <div className="mt-5">
+          <Button tone="primary" size="lg" onClick={onJoinCourse}>
+            <KeyIcon size={17} />
+            Join a course to start asking
+          </Button>
+        </div>
+      )}
     </div>
   );
 
