@@ -419,6 +419,13 @@ export default function CoursesClient({
             </div>
           </div>
         </Page>
+      ) : variant === "classes" && overview ? (
+        <ClassesView
+          courses={overview.courses}
+          role={overview.role}
+          onCreateCourse={openCreate}
+          onJoinCourse={openJoin}
+        />
       ) : overview?.role === "student" ? (
         <StudentHome eyebrow={eyebrow} data={overview} onJoinCourse={openJoin} />
       ) : overview ? (
