@@ -166,12 +166,23 @@ async function handleAsk(courseId: string, input: AskInput) {
   // that appear only in the replayed transcript, which is the case
   // scripts/test-replay-gate.mts asserts. Filtering the SOURCES afterwards
   // would be the wrong shape: the model would already have read the unit.
-  const units = await readKnowledge({ courseId, lectureId, forStudent: !isOwner });
+  // The scope is the AUTHORITATIVE retrieval boundary: one lecture, or the
+  // whole subject -- decided here by which surface asked, never widened by
+  // anything in the conversation. Same assembler as the global route; a
+  // narrower scope is the same architecture reading less.
+  const academic = await loadAcademicContext(
+    svc,
+    lectureId
+      ? { scope: "lecture", courseId, lectureId, isOwner }
+      : { scope: "course", courseId, isOwner },
+  );
+  const units = academic.units;
   // Stored history is the truth when a conversation is in play; client history
   // is only the ephemeral fallback shape. Both are conversational CONTEXT --
   // retrieval above is the academic grounding, and neither replaces the other.
   const result = await answerFromKnowledge(units, q, {
     history: storedHistory ?? input.history,
+    context: { scope: academic.scope },
   });
 
   // Metered before it is returned, $0 routes included -- "which questions
