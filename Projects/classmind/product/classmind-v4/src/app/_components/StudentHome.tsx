@@ -78,7 +78,7 @@ export default function StudentHome({ eyebrow, data, onJoinCourse }: Props) {
               <div className="relative">
                 <SearchIcon
                   size={20}
-                  className="pointer-events-none absolute left-4.5 top-1/2 -translate-y-1/2 text-ink-faint"
+                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-faint"
                 />
                 <label htmlFor="home-ask" className="sr-only">
                   Ask ClassMind anything
@@ -90,7 +90,7 @@ export default function StudentHome({ eyebrow, data, onJoinCourse }: Props) {
                   placeholder="Ask ClassMind anything…"
                   autoComplete="off"
                   className={cx(
-                    "w-full rounded-2xl border border-line bg-surface-raised py-4 pl-13 pr-28",
+                    "w-full rounded-2xl border border-line bg-surface-raised py-4 pl-12 pr-24",
                     "text-[16px] leading-normal text-ink shadow-soft transition-colors",
                     "placeholder:text-ink-faint hover:border-ink-faint/60 focus:border-accent focus:outline-none",
                   )}
