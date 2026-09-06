@@ -245,10 +245,12 @@ export function composeDirectAnswer(
       const cited = taught.slice(0, LIST_CAP);
       const rest = taught.length - cited.length;
       // Grouped by lecture so a course-wide question reads as a syllabus, not
-      // a heap.
+      // a heap. On a GLOBAL ask the lecture key gains its subject, because
+      // "Lecture 1" from two different subjects is two different facts.
       const byLecture = new Map<string, string[]>();
       cited.forEach((u, i) => {
-        const key = u.lectureTitle;
+        const subject = courseNames?.get(u.courseId);
+        const key = subject ? `${subject} — ${u.lectureTitle}` : u.lectureTitle;
         if (!byLecture.has(key)) byLecture.set(key, []);
         byLecture.get(key)!.push(`[${i + 1}] ${u.title}`);
       });
