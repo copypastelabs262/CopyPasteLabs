@@ -2,16 +2,27 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # CopyPasteLabs — auto-save hook
 #
-# Runs after every Write/Edit in Claude Code. Commits and pushes so the GitHub
-# repo is always current for Shiv and Darsh, who read it but never write to it.
+# Runs after every Write/Edit in Claude Code. COMMITS LOCALLY, and only that.
+#
+# PUBLISHING IS DELIBERATE (operator decision, 2026-09-06). This repo is
+# public, and the old behaviour pushed every in-progress edit to master the
+# moment it was written — mid-refactor states, unreviewed work, all of it —
+# with no chance to review before it was on the internet. Checkpointing and
+# publishing are different acts now:
+#
+#   autosave    → local commit after every edit (this hook; crash-safe history)
+#   publishing  → an intentional `git push`, or End-Session's Phase 9 push,
+#                 after the diff has actually been reviewed
+#
+# To restore the old push-every-edit behaviour for one session, set
+# AUTOSAVE_PUSH=1 in the environment. Nothing does this by default.
 #
 # Design notes (read before changing):
 #   • This is a SAFETY NET, not the main way history gets written. Real commits
 #     with real messages should still be made at meaningful points. This hook
 #     only catches whatever was left uncommitted.
 #   • Failures are LOUD. The first version of this hook piped errors to
-#     /dev/null, so a failed push looked identical to a successful one — you'd
-#     keep working while your co-founders read a stale repo. Never silence it.
+#     /dev/null, so a failure looked identical to success. Never silence it.
 #   • It refuses to run if it sees anything that looks like a credential.
 # ─────────────────────────────────────────────────────────────────────────────
 

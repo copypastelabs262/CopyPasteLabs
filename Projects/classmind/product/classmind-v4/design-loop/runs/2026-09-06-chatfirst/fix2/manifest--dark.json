@@ -1,0 +1,26 @@
+{
+  "baseUrl": "http://localhost:3500",
+  "scheme": "dark",
+  "capturedAt": "2026-09-06T09:41:48.301Z",
+  "shots": [
+    {
+      "target": "lecture-chat-student",
+      "viewport": "desktop",
+      "file": "lecture-chat-student--desktop--dark.png",
+      "finalUrl": "http://localhost:3500/courses/6a8484f7-be19-4044-b725-8d66efdfaa4a/lectures/87a4a143-2f88-40fd-9bc2-8e1bd71c0ce8"
+    },
+    {
+      "target": "lecture-chat-student",
+      "viewport": "tablet",
+      "file": "lecture-chat-student--tablet--dark.png",
+      "finalUrl": "http://localhost:3500/courses/6a8484f7-be19-4044-b725-8d66efdfaa4a/lectures/87a4a143-2f88-40fd-9bc2-8e1bd71c0ce8"
+    },
+    {
+      "target": "lecture-chat-student",
+      "viewport": "mobile",
+      "file": "lecture-chat-student--mobile--dark.png",
+      "finalUrl": "http://localhost:3500/courses/6a8484f7-be19-4044-b725-8d66efdfaa4a/lectures/87a4a143-2f88-40fd-9bc2-8e1bd71c0ce8"
+    }
+  ],
+  "blocked": []
+}
