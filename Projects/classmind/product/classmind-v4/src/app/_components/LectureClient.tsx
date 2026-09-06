@@ -671,11 +671,7 @@ export default function LectureClient({
 function LecturePager({ courseId, lectureId }: { courseId: string; lectureId: string }) {
   const cls = useClassDataMaybe();
   if (!cls || cls.loading) return null;
-  const chrono = [...cls.lectures].reverse();
-  const idx = chrono.findIndex((l) => l.id === lectureId);
-  if (idx === -1) return null;
-  const prev = idx > 0 ? chrono[idx - 1] : null;
-  const next = idx < chrono.length - 1 ? chrono[idx + 1] : null;
+  const { prev, next } = lectureNeighbours(cls.lectures, lectureId);
   if (!prev && !next) return null;
 
   const side =
