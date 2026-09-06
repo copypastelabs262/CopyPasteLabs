@@ -51,9 +51,12 @@ Two consequences that shape how sessions must be run:
 - **The repo is the team's only communication channel.** `progress.md`, session logs, and
   commit messages are not documentation *about* the work — for two of the three founders,
   they *are* the work. Write them for someone who wasn't in the room.
-- **Stale beats absent, but current beats both.** `scripts/autosave.sh` commits and pushes
-  after every edit. If it reports a failure, stop and fix it — a silent push failure means
-  two co-founders are designing against a version that no longer exists.
+- **Checkpoint automatically; publish deliberately** (changed 2026-09-06). The repo is
+  public, so `scripts/autosave.sh` now only COMMITS LOCALLY after every edit — it never
+  pushes. Publishing to GitHub is an intentional act: review the diff, then `git push`
+  (End-Session's final phase also pushes). Push at least at every session end — Shiv and
+  Darsh read the remote, and unpushed work is invisible to them. If autosave reports a
+  failure, stop and fix it.
 
 Full rationale and the conditions for revisiting this in `TEAM.md` §0.
 
