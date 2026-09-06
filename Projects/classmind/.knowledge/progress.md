@@ -7,6 +7,33 @@ Entries are snapshots of what was true when written and are never rewritten. Whe
 resolves something an earlier one recorded as blocked, the earlier line gets a dated marker
 pointing forward — it does not get edited away.
 
+## 2026-09-06 (later) — Answers that teach, the chat-first lecture page, and deliberate publishing
+
+**Done, ~32K Gemini tokens (~₹0.5), 0 Sarvam.** Full record in
+[`sessions/2026-09-06-student-answers-and-chat-first.md`](sessions/2026-09-06-student-answers-and-chat-first.md).
+
+The one-line version: the biggest product weakness — Gemini's short, generic student
+answers — traced to a lookup-shaped prompt ("two or three sentences", no explanation
+allowed, no intent, no conversation), and the answer layer is now a TEACHER: an
+intent classifier shapes depth (explain/teach/eli5/detail/example/compare/why/
+step-by-step/follow-up), the grounding contract separates lecture facts (cited, never
+invented) from the model's own explanation (never attributed to the lecturer), and
+the conversation travels with each ask. Evaluated live on a 12-question set, three
+deliberate passes with two critic agents; one iteration fixed the four real findings
+(a citation on invented numbers, a manufactured comparison dimension, an ASR-artifact
+leak, a self-contradicting analogy). Direct $0 routes untouched throughout.
+
+The lecture page is now CONVERSATION FIRST — composer pinned at the bottom, citations
+seek the recording, knowledge browsable behind one disclosure, double header gone,
+Observatory held with the backdrop budget back to exactly two. Design Master Loop ran
+three screenshot iterations at all viewports.
+
+Also: **autosave no longer pushes** — it checkpoints locally and publishing is a
+deliberate reviewed push (charter updated; verified live with origin left behind);
+the verify-auth-roles password is now generated per run. 483 offline checks, tsc,
+eslint, build all green. Remaining human step: the Supabase redirect allow-list entry
+plus one Google click-through per role.
+
 ## 2026-09-06 — Engine verified against the live DB; v1.2.0 closes R1/R2 and the audience gap (validation runs pending approval)
 
 **Done, $0 spent.** Full audit in
