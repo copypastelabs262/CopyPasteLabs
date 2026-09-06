@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireUser, requireRole, errorResponse } from "@/lib/auth";
+import { listRecentConversations } from "@/lib/knowledge/conversations";
 import { serviceClient } from "@/lib/supabase/service";
 import { readKnowledge, fetchLectureGateRows, lectureVisibleToStudents } from "@/lib/knowledge/read";
 
