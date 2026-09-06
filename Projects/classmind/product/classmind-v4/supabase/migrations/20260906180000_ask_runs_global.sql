@@ -1,6 +1,8 @@
 -- GLOBAL ASKS IN THE METER.
 --
--- WRITTEN 2026-09-06. NOT APPLIED. Apply deliberately.
+-- WRITTEN 2026-09-06. APPLIED by the operator 2026-09-06 (verified live: 15+
+-- ask_runs rows carry course_id NULL, which the pre-migration NOT NULL forbade).
+-- The note below documents the fail-safe the code keeps on an unmigrated db.
 -- Until it is applied the code degrades: a global ask still prints its meter
 -- line to the server log, and the API response reports `meter: "unavailable"`
 -- for global asks only -- course and lecture asks keep recording as before.
