@@ -86,7 +86,18 @@ export default function StudentHome({ eyebrow, data, onJoinCourse }: Props) {
 
   function askGlobal(question: string) {
     const q = question.trim();
-    router.push(q ? `/ask?q=${encodeURIComponent(q)}` : "/ask");
+    // The question rides sessionStorage, not the URL: /ask consumes the key
+    // once on mount, so no crafted link can make the page ask (= spend) on
+    // load, and a refresh over there never re-asks. If storage is refused the
+    // page still opens and the student re-types — annoying, never costly.
+    if (q) {
+      try {
+        sessionStorage.setItem(CARRIED_QUESTION_KEY, q);
+      } catch {
+        /* open /ask empty */
+      }
+    }
+    router.push("/ask");
   }
 
   function onAskSubmit(event: FormEvent<HTMLFormElement>) {
