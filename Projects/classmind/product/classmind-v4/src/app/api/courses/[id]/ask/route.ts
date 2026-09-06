@@ -31,14 +31,28 @@ import {
 // prose so a student can jump to the second it was spoken.
 //
 // TWO VERBS, ONE HANDLER. GET (?q=...) is the original single-turn shape and
-// every existing script's contract. POST adds `history` -- the conversation so
-// far, client-held, so follow-ups land in context. Same auth, same gates, same
-// meter; history changes what the model is shown, never what may be read.
+// every existing script's contract. POST adds the conversation: either
+// `history` (the ephemeral, client-held shape -- kept working) or
+// `conversationId`/`persist` (the stored shape, 2026-09-06). Same auth, same
+// gates, same meter; the conversation changes what the model is SHOWN as
+// context, never what may be read -- retrieval still runs per question over
+// the same gated knowledge.
+//
+// THE STORED CONVERSATION IS THE SOURCE OF CONTINUITY. When a conversationId
+// arrives, the server loads the recent stored exchange as history and IGNORES
+// any client history: the thread on disk is the truth, and a client cannot
+// inject a conversation that never happened into a stored one.
 
 interface AskInput {
   q: string;
   lectureId?: string;
   history?: AskTurn[];
+  // Continue this stored conversation (must be the caller's own, in this
+  // course). Mutually authoritative with lectureId: the stored scope wins.
+  conversationId?: string;
+  // Start persisting: create a conversation from this ask's context and store
+  // the exchange. Ignored when conversationId is present.
+  persist?: boolean;
 }
 
 async function handleAsk(courseId: string, input: AskInput) {
