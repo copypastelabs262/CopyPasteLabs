@@ -241,13 +241,14 @@ export default function AskWorkspace({
         setStoreState("ok");
         // A carried-in question means the student is STARTING something: no
         // auto-resume — the fresh thread is created by the ask itself.
-        // With the sidebar, opening /ask is a NEW chat (empty) and history is a
-        // click away, so only an explicit ?c= resumes; without it (course /
-        // lecture Ask), the most recent thread resumes for continuity.
+        // Otherwise ?c= always wins; failing that, a `resumeLatest` sidebar (the
+        // lecture) and the legacy embedded surfaces resume the most recent
+        // thread, while a plain sidebar (/ask, the course tab) opens empty and
+        // leaves history one click away.
         const target = carriedQuestion
           ? null
           : withSidebar
-            ? (requestedId ?? null)
+            ? (resumeLatest ? (requestedId ?? list[0]?.id) : (requestedId ?? null))
             : (requestedId ?? list[0]?.id);
         if (target) {
           const loaded = await loadConversation(target);
@@ -255,6 +256,13 @@ export default function AskWorkspace({
           if (!loaded && requestedId) {
             setResumeError("That conversation could not be opened. Starting fresh.");
             syncUrl(null);
+          } else if (loaded && withSidebar && !requestedId) {
+            // A latest-resume with no explicit ?c=: write it into the URL so the
+            // sidebar highlights the open thread and "New chat" (which clears
+            // ?c=) has a value to clear against. Preserves any other params
+            // (the lecture's ?t= deep link). The sidebar-sync effect below skips
+            // its first run, so this does not re-trigger a load.
+            syncUrl(target);
           }
         }
       } catch {
