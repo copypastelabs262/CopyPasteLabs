@@ -178,6 +178,12 @@ backend brief.
       facts vs explanation, citation discipline) — evaluated live before/after with
       critic review, 12-question set, session log 2026-09-06-student-answers-and-
       chat-first.md. Persistent server-side conversations remain the next step.
+      → Persistent Conversations V1 landed 2026-09-06 (see
+      `product/classmind-v4/CONVERSATIONS.md`): stored, owned, resumable threads
+      on both Ask surfaces, scope model ('lecture'/'course'/'global') as the
+      Global Ask foundation, student home "pick up where you left off" band.
+      Migration `20260906150000` written, NOT applied — HUMAN-ONLY, then
+      `npm run verify:conversations` completes the live contract.
 - [x] **Meter Ask.** Every Ask completion returns token usage and the product throws it
       away — a paid path nothing counts, the exact defect class of 2026-08-30. Log usage
       per question (or a lightweight ask ledger). (R6 of the run-77408ea3 inspection
