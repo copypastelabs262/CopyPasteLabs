@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { authClient } from "@/lib/supabase/server";
-import { serviceClient } from "@/lib/supabase/service";
+import { ensureProfile } from "@/lib/profile";
+import { parseRole, PENDING_ROLE_COOKIE } from "@/lib/profile-role";
+import { safeNext } from "@/lib/safe-next";
 
 // Where Supabase sends the browser back after Google consent. Everything this
 // route does has to happen on a redirect response, because the user is mid-
