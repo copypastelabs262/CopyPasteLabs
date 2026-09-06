@@ -62,7 +62,7 @@ interface Config {
 /* ------------------------------------------------------------------------- */
 
 const BLOCKED_API =
-  /\/api\/(lectures\/[^/]+\/(extract|transcribe|poll)|courses\/[^/]+\/ask)(\/|\?|$)/;
+  /\/api\/(lectures\/[^/]+\/(extract|transcribe|poll)|courses\/[^/]+\/ask|ask(?!\/conversations))(\/|\?|$)/;
 
 const BLOCKED_HOSTS = [
   "api.sarvam.ai",
