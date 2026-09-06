@@ -96,7 +96,7 @@ try {
 
   console.log("--- A: Google sign-up as Student (pending-role cookie, simulated at ensureProfile) ---");
   const a = await createUser("a", { full_name: "Verify Student A" });
-  const aFirst = await ensureProfile(a, "student");
+  const aFirst = await ensureProfile(admin, a, "student");
   check(aFirst.role === "student" && aFirst.created, "first sign-in with pending student creates a student profile", aFirst);
   const aRow = await profileRow(a.id);
   check(aRow?.role === "student", "database row says student", aRow);
