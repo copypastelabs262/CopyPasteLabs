@@ -19,6 +19,9 @@
  * context aborts, at the network layer, any request to:
  *   - /api/lectures/:id/extract | transcribe | poll   (reasoning / ASR paths)
  *   - /api/courses/:id/ask                            (reasoning path)
+ *   - /api/ask                                        (global reasoning path;
+ *     /api/ask/conversations stays allowed — it is a free listing read, and
+ *     the seeded /ask capture needs it to render)
  *   - any external AI-provider host
  * Blocked attempts are recorded in the manifest so a screen that tries to
  * spend money is itself a design finding, never a bill.
