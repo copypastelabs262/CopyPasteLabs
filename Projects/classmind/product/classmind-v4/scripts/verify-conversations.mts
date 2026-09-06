@@ -196,6 +196,72 @@ check(ask1.json.usage === null && ask2.json.usage === null && ask3.json.usage ==
   "every question here rode the direct route -- zero model usage recorded");
 check(ask1.json.meter === "ok" && ask2.json.meter === "ok", "ask_runs recorded each ask exactly once");
 
+section("Scope boundaries are visible in the sources");
+check((ask1.json.sources ?? []).every((s) => s.lectureId === LECTURE),
+  "a LECTURE ask cites only its own lecture", ask1.json.sources?.map((s) => s.lectureId));
+const subjectAsk = await api(student, `/api/courses/${COURSE}/ask`, {
+  body: { question: "What topics were covered?" },
+});
+check(subjectAsk.json.route === "direct" &&
+  (subjectAsk.json.sources ?? []).length > 0 &&
+  (subjectAsk.json.sources ?? []).every((s) => s.courseId === COURSE),
+  "a SUBJECT ask cites only its own subject", subjectAsk.json.sources?.map((s) => s.courseId));
+
+/* ---------------------------------------------------------------------------
+   GLOBAL scope -- the whole-student boundary
+--------------------------------------------------------------------------- */
+
+section("GLOBAL -- cross-subject listing at $0");
+const gList0 = await api(student, "/api/ask/conversations");
+check(gList0.status === 200 && gList0.json.state === "ok", "the global conversation listing answers");
+const g1 = await api(student, "/api/ask", {
+  body: { question: "What assignments do I have?", persist: true },
+});
+check(g1.status === 200 && g1.json.route === "direct",
+  "the cross-subject assignment listing rides the direct route ($0)", { status: g1.status, route: g1.json.route });
+const gAnswer = g1.json.answer ?? "";
+check(gAnswer.includes("Test1") && gAnswer.includes("Test2"),
+  "…naming both subjects that HAVE recorded work", gAnswer.slice(0, 240));
+check(!gAnswer.includes("CC101"),
+  "…and staying silent about the subject with nothing recorded");
+const gSourceCourses = new Set((g1.json.sources ?? []).map((s) => s.courseId));
+check(gSourceCourses.size >= 2, "global sources genuinely span subjects", [...gSourceCourses]);
+console.log(`  global meter state: ${g1.json.meter} (stays "unavailable" until 20260906180000 is applied)`);
+const gId: string = g1.json.conversation?.id ?? "";
+check(gId !== "" && g1.json.conversation?.state === "ok", "the global thread persisted");
+
+section("GLOBAL -- resume and follow-up continuity");
+const gGot = await api(student, `/api/conversations/${gId}`);
+check(gGot.status === 200 && (gGot.json.messages ?? []).length === 2, "the global thread loads back whole");
+const g2 = await api(student, "/api/ask", {
+  body: { question: "Who has to do it?", conversationId: gId },
+});
+check(g2.json.route === "direct" && (g2.json.answer ?? "").includes("Shyam, Shiv aur dusra ye Darshan"),
+  "a follow-up answers from the stored thread at $0, in the lecturer's own words",
+  { route: g2.json.route, answer: g2.json.answer?.slice(0, 160) });
+
+section("GLOBAL -- scope is authoritative, never widened or borrowed");
+const gViaCourse = await api(student, `/api/courses/${COURSE}/ask`, {
+  body: { question: DIRECT_Q, conversationId: gId },
+});
+check(gViaCourse.status === 404, "a global thread cannot be continued from a course surface", gViaCourse.status);
+const lectureViaGlobal = await api(student, "/api/ask", {
+  body: { question: DIRECT_Q, conversationId },
+});
+check(lectureViaGlobal.status === 404, "a lecture thread cannot be continued from the global surface", lectureViaGlobal.status);
+const gListAfter = await api(student, "/api/ask/conversations");
+check((gListAfter.json.conversations ?? []).some((c) => c.id === gId), "the global listing shows the global thread");
+check(!(gListAfter.json.conversations ?? []).some((c) => c.id === conversationId),
+  "…and never the lecture threads");
+const strangerGlobal = await api(stranger, `/api/conversations/${gId}`);
+check(strangerGlobal.status === 404, "another user's read of the global thread is a plain 404", strangerGlobal.status);
+
+section("GLOBAL -- cleanup");
+{
+  const del = await api(student, `/api/conversations/${gId}`, { method: "DELETE" });
+  check(del.status === 200, "global thread deleted");
+}
+
 section("Cleanup -- the throwaway threads");
 for (const id of [conversationId, secondId].filter(Boolean)) {
   const del = await api(student, `/api/conversations/${id}`, { method: "DELETE" });
