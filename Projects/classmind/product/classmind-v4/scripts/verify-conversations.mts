@@ -193,7 +193,7 @@ check(ask1.json.usage === null && ask2.json.usage === null && ask3.json.usage ==
 check(ask1.json.meter === "ok" && ask2.json.meter === "ok", "ask_runs recorded each ask exactly once");
 
 section("Cleanup -- the throwaway threads");
-for (const id of [conversationId, ask3.json.conversation.id]) {
+for (const id of [conversationId, secondId].filter(Boolean)) {
   const del = await api(student, `/api/conversations/${id}`, { method: "DELETE" });
   check(del.status === 200, `deleted ${id.slice(0, 8)}…`);
 }
