@@ -156,7 +156,7 @@ export default function AskWorkspace({
   );
 
   const loadConversation = useCallback(async (id: string): Promise<boolean> => {
-    const res = await fetch(`/api/conversations/${id}`);
+    const res = await fetch(`/api/conversations/${encodeURIComponent(id)}`);
     if (!res.ok) return false;
     const body = (await res.json()) as {
       state: string;
