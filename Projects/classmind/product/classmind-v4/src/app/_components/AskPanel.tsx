@@ -29,9 +29,14 @@ import MarkdownAnswer from "./MarkdownAnswer";
 // in that mode the prose is a plain listing of the matching lecture knowledge,
 // which is a worse answer -- not a less trustworthy one.
 
-// A cited unit: the stored shape minus the two fields the route does not send,
-// plus the citation number the prose refers back to.
-export type Source = Omit<KnowledgeUnit, "courseId" | "confidence"> & { ref: number };
+// A cited unit: the stored shape minus confidence, plus the citation number
+// the prose refers back to. `courseId` is optional because payloads persisted
+// before 2026-09-06 did not carry it -- when absent, citations fall back to
+// the surface's own course.
+export type Source = Omit<KnowledgeUnit, "courseId" | "confidence"> & {
+  ref: number;
+  courseId?: string;
+};
 
 export interface Answer {
   question: string;
