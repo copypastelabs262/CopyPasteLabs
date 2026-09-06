@@ -14,6 +14,7 @@
     "test:ask": "node --conditions=react-server scripts/test-ask.mts",
     "test:answer": "node --conditions=react-server scripts/test-answer-intent.mts",
     "test:conversations": "node scripts/test-conversation-model.mts",
+    "test:lecture-nav": "node scripts/test-lecture-nav.mts",
     "verify:conversations": "node --env-file=.env.local scripts/verify-conversations.mts",
     "test:auth": "node scripts/test-auth-roles.mts",
     "test:faculty": "node --conditions=react-server scripts/test-faculty-code.mts",
