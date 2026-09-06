@@ -41,6 +41,13 @@ export function useClassData(): ClassData {
   return value;
 }
 
+// For the ONE surface that legitimately renders both inside and outside the
+// shell: the conversation workspace, whose global scope lives on /ask with no
+// class around it. Everything class-bound keeps the throwing accessor above.
+export function useClassDataMaybe(): ClassData | null {
+  return useContext(ClassDataContext);
+}
+
 export function ClassDataProvider({
   courseId, children,
 }: { courseId: string; children: React.ReactNode }) {
