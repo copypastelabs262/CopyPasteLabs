@@ -49,14 +49,24 @@ export async function currentUser(): Promise<SessionUser | null> {
     .eq("id", userId)
     .maybeSingle();
 
-  // A profile is created at sign-up, but a user created another way (dashboard,
-  // admin API) may not have one. Default rather than 500.
+  // A profile is created by an explicit role selection. A user created any
+  // other way (dashboard, admin API, a lost signal) has none -- and that is
+  // reported as role: null for the caller to route, never papered over with a
+  // default.
   return {
     id: userId,
     email,
     fullName: (profile?.full_name as string | null) ?? null,
-    role: ((profile?.role as string | null) ?? "faculty") as "faculty" | "student",
+    role: parseRole(profile?.role),
   };
+}
+
+// For code that BRANCHES on the role. An account that never completed role
+// selection cannot be assumed into either branch -- least of all the
+// privileged one -- so it is refused with the way forward named.
+export function requireRole(user: SessionUser): ProfileRole {
+  if (!user.role) throw new HttpError(403, "Choose your role at /choose-role to continue.");
+  return user.role;
 }
 
 export class HttpError extends Error {
