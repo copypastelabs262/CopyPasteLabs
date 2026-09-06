@@ -12,6 +12,8 @@
     "lint": "eslint",
     "setup:db": "node --env-file=.env.local scripts/setup-storage.mts",
     "test:ask": "node --conditions=react-server scripts/test-ask.mts",
+    "test:auth": "node scripts/test-auth-roles.mts",
+    "verify:auth": "node --conditions=react-server --env-file=.env.local scripts/verify-auth-roles.mts",
     "test:extraction": "node scripts/test-extraction.mts",
     "test:reconstruction": "node --conditions=react-server scripts/test-reconstruction.mts",
     "test:knowledge-plan": "node --conditions=react-server scripts/test-knowledge-plan.mts",
