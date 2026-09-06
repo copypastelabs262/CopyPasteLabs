@@ -208,10 +208,7 @@ export async function appendExchange(
     role: "student",
     content: question,
   });
-  if (studentError) {
-    if (isMissingSchemaError(studentError)) return { state: "unavailable", note: UNAVAILABLE, title };
-    return { state: "unavailable", note: studentError.message, title };
-  }
+  if (studentError) return { state: "unavailable", note: degradeNote(studentError), title };
 
   const { error: answerError } = await svc.from("conversation_messages").insert({
     conversation_id: conversation.id,
