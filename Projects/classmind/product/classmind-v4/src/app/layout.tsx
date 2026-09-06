@@ -65,28 +65,24 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           }}
         >
           <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-4 px-6 sm:px-8">
-            {/* Signed in, the wordmark is the way back to your courses; signed
-                out it is the way back to the landing page. */}
-            <Link
-              href={user ? "/courses" : "/"}
-              className="flex items-baseline gap-2 rounded-lg text-[15px] font-semibold tracking-tight text-ink"
-            >
-              ClassMind
-              <span className="eyebrow-mono hidden sm:inline" aria-hidden="true">
-                every answer traced
-              </span>
-            </Link>
+            <div className="flex items-center gap-1.5">
+              {/* The one navigation control, top-left, on every signed-in
+                  screen. Signed out there is nowhere to navigate but in. */}
+              {user ? <AppNav fullName={user.fullName} role={user.role} /> : null}
+              {/* The wordmark is home when signed in, the landing when out. */}
+              <Link
+                href={user ? "/courses" : "/"}
+                className="flex items-baseline gap-2 rounded-lg text-[15px] font-semibold tracking-tight text-ink"
+              >
+                ClassMind
+                <span className="eyebrow-mono hidden sm:inline" aria-hidden="true">
+                  every answer traced
+                </span>
+              </Link>
+            </div>
 
             {user ? (
-              <nav aria-label="Main" className="flex items-center gap-1 sm:gap-2">
-                <Link
-                  href="/courses"
-                  className="rounded-lg px-2.5 py-1.5 text-sm text-ink-soft transition-colors hover:text-ink"
-                >
-                  Courses
-                </Link>
-                <UserMenu email={user.email} fullName={user.fullName} role={user.role} />
-              </nav>
+              <UserMenu email={user.email} fullName={user.fullName} role={user.role} />
             ) : (
               <Link
                 href="/signin"
