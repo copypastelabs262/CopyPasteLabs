@@ -269,7 +269,7 @@ function Intro({
   suggestions: string[];
 }) {
   return (
-    <div className="mx-auto flex max-w-xl flex-col items-start pt-6 sm:pt-14">
+    <div className="mx-auto flex w-full max-w-xl flex-col items-start py-6">
       <p className="eyebrow-mono">Ask</p>
       <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
         {intro?.title ?? "Ask this class anything"}
