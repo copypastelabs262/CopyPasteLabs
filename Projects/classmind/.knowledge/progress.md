@@ -36,6 +36,16 @@ baseline lecture (~28K tokens, proves v1.2.0 reproduces `77408ea3` minus the dup
 and Robotics (~6K tokens, proves audience capture on the recording whose transcript
 names the assignees). Then the role-bug fix.
 
+**Later the same day — the role bug is fixed and verified.** The profiles row is now the
+single source of truth, written only by explicit role-selection events; the pre-OAuth
+selection rides a single-use cookie instead of the allow-list-fragile query param; an
+account with no recorded selection lands on /choose-role instead of silently becoming
+faculty; `/api/profile` refuses invalid roles (400) and role changes (409); provisioning
+is one insert-only function. Verified at $0: 25 offline + 21 live checks (real Supabase,
+real server, all five scenarios), 421-check free suite, build clean. The Google consent
+browser leg itself remains human-verifiable only (needs `localhost:3500/**` on the
+Supabase redirect allow-list). Details in the session log addendum.
+
 ## 2026-09-02 (overnight) — ClassMind v4 exists: the class shell, built and screenshot-judged in one autonomous run
 
 **Done, ~02:00–03:20 IST, zero spend (provider keys stripped from the tree; every capture
