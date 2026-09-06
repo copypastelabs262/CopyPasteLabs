@@ -322,12 +322,20 @@ export function AnswerView({
 
   return (
     <div className="motion-rise">
-      {/* `prose-reading` is the one type scale in this product meant for reading
-          rather than scanning; `whitespace-pre-wrap` because the answer can come
-          back as one line per item, and collapsing that turns a list into a
-          paragraph. */}
-      <div className="prose-reading whitespace-pre-wrap">
-        <Cited text={answer.answer} sources={answer.sources} onGo={goToSource} />
+      {/* `prose-reading` is the one type scale in this product meant for
+          reading rather than scanning. The answer is light markdown now --
+          headings, lists, bold -- rendered by MarkdownAnswer into the elements
+          prose-reading has styled since day one; a plain-text answer renders
+          exactly as before (paragraphs, line breaks kept). Citation tokens
+          keep working inside any block because every inline text segment
+          routes back through Cited. */}
+      <div className="prose-reading">
+        <MarkdownAnswer
+          text={answer.answer}
+          renderText={(segment, key) => (
+            <Cited key={key} text={segment} sources={answer.sources} onGo={goToSource} />
+          )}
+        />
       </div>
 
       {answer.sources.length ? (
