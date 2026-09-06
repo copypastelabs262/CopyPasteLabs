@@ -272,12 +272,35 @@ export async function GET() {
     const visibleById = new Map(gateRows.map((r) => [r.id, lectureVisibleToStudents(r)]));
     const visiblePublished = published.filter((l) => visibleById.get(l.id as string) === true);
 
+    // "Pick up where you left off": the student's own recent conversations,
+    // named by course (and lecture, when lecture-scoped) so each row reads as
+    // an academic thread, not a chat log. Only conversations in courses the
+    // student can still open are shown -- a thread from a course they left
+    // would be a link into a 403.
+    const lectureTitleById = new Map(lectures.map((l) => [l.id, l.title]));
+    const recentConversations = recentConvos.conversations
+      .filter((c) => c.courseId !== null && courseById.has(c.courseId))
+      .map((c) => {
+        const entry = courseById.get(c.courseId!)!;
+        return {
+          id: c.id,
+          title: c.title,
+          scope: c.scope,
+          courseId: c.courseId!,
+          courseCode: entry.course.code,
+          lectureId: c.lectureId,
+          lectureTitle: c.lectureId ? (lectureTitleById.get(c.lectureId) ?? null) : null,
+          lastMessageAt: c.lastMessageAt,
+        };
+      });
+
     return NextResponse.json({
         role: "student",
         courses: courseSummaries,
         todo: todo.slice(0, TODO_LIMIT),
         todoTotal: todo.length,
         awaitingReview: awaitingResult.count ?? 0,
+        recentConversations,
         recentLectures: visiblePublished.slice(0, RECENT_LECTURE_LIMIT).map(decorate),
         recentLecturesTotal: published.length,
       });
