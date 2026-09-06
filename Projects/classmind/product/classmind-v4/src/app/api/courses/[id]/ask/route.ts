@@ -63,16 +63,52 @@ async function handleAsk(courseId: string, input: AskInput) {
   const q = input.q.trim();
   if (!q) return NextResponse.json({ error: "Ask a question." }, { status: 400 });
 
+  // ---- The stored conversation, when one is named --------------------------
+  //
+  // Ownership and context are both checked against the STORED row: the id is a
+  // client-supplied parameter. Absent, someone else's, and wrong-course all
+  // get the same 404, so a guesser learns nothing. When the conversation
+  // tables are not there yet (migration unapplied) the ask still answers --
+  // ephemeral, with the state reported -- because persistence going missing
+  // must never take Ask down.
+  let conversation: ConversationRow | null = null;
+  let storedHistory: AskTurn[] | null = null;
+  let conversationNote: string | null = null;
+  const conversationId = input.conversationId?.trim() || undefined;
+  const wantsPersistence = Boolean(conversationId || input.persist);
+
+  if (conversationId) {
+    const got = await getConversation(svc, user.id, conversationId);
+    if (got.state === "not_found") {
+      return NextResponse.json({ error: "That conversation was not found." }, { status: 404 });
+    }
+    if (got.state === "unavailable") {
+      conversationNote = got.note;
+    } else {
+      if (got.conversation.courseId !== courseId) {
+        return NextResponse.json({ error: "That conversation was not found." }, { status: 404 });
+      }
+      conversation = got.conversation;
+      storedHistory = messagesToHistory(got.messages);
+    }
+  }
+
   // Optional lecture scope. "What did I miss today?" is a question about ONE
   // lecture, and answering it from the whole course pulls in material the
   // student did not ask about and dilutes retrieval. Course scope stays the
   // default so "what is due this term" still works.
   //
+  // A stored conversation's OWN scope is authoritative: continuing it always
+  // retrieves within the boundary it was created in, whatever the request
+  // says. That is the lecture-scoped/global separation made structural.
+  //
   // The lecture is checked to belong to this course before it is used. Without
   // that, the id is a parameter a student controls, and passing another
   // course's lecture id would read knowledge they are not enrolled in.
-  const lectureId = input.lectureId?.trim() || undefined;
-  if (lectureId) {
+  const lectureId = conversation
+    ? (conversation.lectureId ?? undefined)
+    : input.lectureId?.trim() || undefined;
+  if (!conversation && lectureId) {
     const { data: owned } = await svc
       .from("lectures")
       .select("id")
