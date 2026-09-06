@@ -114,13 +114,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         role: m.role,
         content: m.content,
         payload: m.payload
-          ? {
-              ...m.payload,
-              sources: m.payload.sources.filter((s) => {
-                const lid = (s as { lectureId?: unknown }).lectureId;
-                return typeof lid === "string" && servable.has(lid);
-              }),
-            }
+          ? { ...m.payload, sources: m.payload.sources.filter(sourceServable) }
           : null,
         createdAt: m.createdAt,
       })),
