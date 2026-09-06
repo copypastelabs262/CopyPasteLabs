@@ -144,11 +144,12 @@ section("Listing and multiple conversations");
 const ask3 = await api(student, `/api/courses/${COURSE}/ask`, {
   body: { question: "What was taught? List the topics covered.", lectureId: LECTURE, persist: true },
 });
-check(ask3.json.conversation?.id && ask3.json.conversation.id !== conversationId,
-  "a fresh persist starts a SECOND conversation", ask3.json.conversation?.id);
+const secondId: string = ask3.json.conversation?.id ?? "";
+check(secondId !== "" && secondId !== conversationId,
+  "a fresh persist starts a SECOND conversation", secondId);
 const list1 = await api(student, `/api/courses/${COURSE}/conversations?lectureId=${LECTURE}`);
 check((list1.json.conversations ?? []).length >= before + 2, "both conversations list for the lecture");
-check(list1.json.conversations?.[0]?.id === ask3.json.conversation.id,
+check(list1.json.conversations?.[0]?.id === secondId,
   "newest activity first", list1.json.conversations?.[0]?.id);
 
 section("Scope separation -- lecture threads stay lecture threads");
