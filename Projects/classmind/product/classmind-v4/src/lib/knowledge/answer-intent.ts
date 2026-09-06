@@ -88,7 +88,7 @@ mechanism (how it actually works, part by part), a worked example, then
 trade-offs, limits or failure modes -- but ONLY where the units or sound
 general reasoning support them. Structure with short headings or a list where
 it helps scanning. Depth means more mechanism and more connections, never
-restating the same idea in more words. Do not pad.`,
+restating the same idea in more words -- state each fact once. Do not pad.`,
 
   example: `SHAPE: one concrete, worked example -- specific systems, numbers or
 situations, not abstract placeholders. Walk through what happens and point at
