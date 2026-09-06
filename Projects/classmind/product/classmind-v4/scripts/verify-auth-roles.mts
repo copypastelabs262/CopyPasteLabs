@@ -24,6 +24,7 @@
 // Every account this script creates is a throwaway (cm-verify-*@classmind.local)
 // and is deleted at the end, profiles cascading with it.
 
+import { randomBytes } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { ensureProfile } from "../src/lib/profile.ts";
 
