@@ -18,17 +18,22 @@ import {
 } from "./ui";
 import { AlertIcon, ChevronDownIcon, ChevronRightIcon, UploadIcon } from "./ui/icons";
 
-// ONE LECTURE, IN THE ORDER A LECTURER READS IT.
+// ONE LECTURE, CONVERSATION FIRST (2026-09-06).
 //
-//   title · date · duration · course     who and when, quietly
-//   Key content                          what the lecture actually contained
-//   Needs your attention                 the two or three things only they can settle
-//   Ask ClassMind                        the question box
-//   Full lecture                         the recording and the transcript, as evidence
+//   title · date · duration             who and when, quietly
+//   Needs your attention                owner only: the things only they settle
+//   The conversation                    THE surface -- multi-turn, composer
+//                                       fixed at the bottom, citations seek
+//                                       the on-page player
+//   What was taught                     the stored knowledge, browsable behind
+//                                       one disclosure rather than dumped
+//   Full lecture                        the recording and transcript, evidence
 //
-// The recording sits at the BOTTOM. Putting it at the top said "this product
-// gives you a transcript" -- it does not; it gives you what the lecture meant,
-// and the transcript is how you check that.
+// The old order put a knowledge dump first and a one-shot question box fourth
+// -- a reading page with a search widget. A student's actual first move is a
+// question, so the conversation IS the page now; the knowledge stays one
+// click away, and the recording stays at the bottom because it is evidence,
+// not content.
 //
 // Nothing here prints a provider status, a job id, a model name or a raw API
 // response in the normal flow. All of it is real and all of it is kept: it
