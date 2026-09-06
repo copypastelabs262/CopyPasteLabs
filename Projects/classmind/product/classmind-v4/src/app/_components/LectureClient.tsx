@@ -503,26 +503,20 @@ export default function LectureClient({
       ) : null}
 
       {/* --- The conversation ------------------------------------------------
-          THE surface. Multi-turn, scoped to this lecture, composer pinned to
-          the bottom; every citation in an answer seeks the on-page player
-          through `nav` instead of navigating away. When the player is engaged
-          it pins under the composer, so the composer lifts by its height. */}
+          THE surface. The SAME chat as Global and Course Ask, scoped to this
+          lecture: multi-turn, persistent, its history + New chat a tap away in
+          a drawer (a rail would crowd the lecture's own material). The composer
+          pins to the bottom; every citation in an answer seeks the on-page
+          player through `nav` instead of navigating away. When the player is
+          engaged it pins under the composer, so the composer lifts by its
+          height. */}
       {!isProblem && !noAudioYet ? (
-        <AskWorkspace
+        <LectureConversation
+          courseId={courseId}
           lectureId={lectureId}
+          title={lecture.title}
           nav={nav}
           bottomInset={engaged ? (slotHeight ?? 76) + 26 : 0}
-          intro={{
-            title: "Learn this lecture",
-            description:
-              "Ask for an explanation, an example, or the whole thing step by step. Every answer is grounded in what the lecturer actually said — cited down to the second, so you can hear it for yourself.",
-          }}
-          suggestions={[
-            "What was taught in this lecture?",
-            "Explain the main concept simply",
-            "What assignment was given?",
-            "Give me an example",
-          ]}
         />
       ) : null}
 
