@@ -167,10 +167,17 @@ backend brief.
       `audience` field, migration `20260906090000` adds the column, Ask answers from it
       or names the gap. Offline-verified; **live validation run pending approval** —
       the Robotics lecture is the test, since its transcript names the assignees.
-- [ ] **Lecture page becomes chat-first.** Opening a lecture currently dumps every
+- [x] **Lecture page becomes chat-first.** Opening a lecture currently dumps every
       knowledge item onto the page. Wanted: a ChatGPT/Gemini-style layout — conversation
       as the primary surface, question bar fixed to the bottom of the viewport regardless
       of scroll, stored knowledge browsable but not forced on the reader.
+      → Done 2026-09-06: AskWorkspace generalized to both scopes (multi-turn POST with
+      history, citations seek the on-page player), knowledge behind one Browse
+      disclosure, double header fixed at the root, blur budget back to exactly two.
+      Alongside it, the answer layer became a TEACHER (intent-adaptive depth, lecture
+      facts vs explanation, citation discipline) — evaluated live before/after with
+      critic review, 12-question set, session log 2026-09-06-student-answers-and-
+      chat-first.md. Persistent server-side conversations remain the next step.
 - [x] **Meter Ask.** Every Ask completion returns token usage and the product throws it
       away — a paid path nothing counts, the exact defect class of 2026-08-30. Log usage
       per question (or a lightweight ask ledger). (R6 of the run-77408ea3 inspection
