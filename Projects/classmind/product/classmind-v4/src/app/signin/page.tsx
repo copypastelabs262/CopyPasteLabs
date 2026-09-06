@@ -3,11 +3,6 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { browserClient } from "@/lib/supabase/browser";
-import {
-  PENDING_ROLE_COOKIE,
-  PENDING_ROLE_MAX_AGE_SECONDS,
-  type ProfileRole,
-} from "@/lib/profile-role";
 
 // SignInForm reads ?error= through useSearchParams, which pushes everything up
 // to the nearest Suspense boundary into client-side rendering. Without one that
