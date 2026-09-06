@@ -137,6 +137,22 @@ section("Scope attribution in the grounding");
   });
   check(last().user.includes("THE STUDENT'S SUBJECTS: TEST2 · Cloud Computing"),
     "a global answer is told the student's subject world first", last().user.slice(0, 120));
+  check(!last().user.includes("NOT searched"),
+    "an untruncated world carries no truncation caveat");
+}
+{
+  const { provider, last } = capture();
+  const world = [unit({ title: "Cache Scaling", summary: "Cache scaling tiers DRAM and SSD." })];
+  await answerFromKnowledge(world, "Explain cache scaling.", {
+    injectedProvider: provider,
+    context: {
+      scope: "global",
+      courseNames: new Map([["course-1", "TEST2 · Cloud Computing"]]),
+      subjectsOmitted: 3,
+    },
+  });
+  check(last().user.includes("and 3 more subjects NOT searched"),
+    "a capped global world admits the subjects it did not search", last().user.slice(0, 200));
 }
 
 section("Unit rendering");
