@@ -345,6 +345,21 @@ export function AnswerView({
 
   const gaps = aggregateGaps(answer.sources);
 
+  // The evidence heading tells the truth about where the evidence is FROM.
+  // One lecture: the original wording. A course answer citing several
+  // lectures, or a global answer citing several subjects, must not claim
+  // "the lecture" -- derived from the sources themselves, no prop needed.
+  const citedCourses = new Set(
+    answer.sources.map((s) => s.courseId).filter((c): c is string => typeof c === "string"),
+  );
+  const citedLectures = new Set(answer.sources.map((s) => s.lectureId));
+  const sourcesHeading =
+    citedCourses.size > 1
+      ? "From your subjects"
+      : citedLectures.size > 1
+        ? "From the lectures"
+        : "From the lecture";
+
   return (
     <div className="motion-rise">
       {/* `prose-reading` is the one type scale in this product meant for
