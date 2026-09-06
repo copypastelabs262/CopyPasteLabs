@@ -1,6 +1,8 @@
 -- WHO an obligation applies to, exactly as the lecturer stated it.
 --
--- WRITTEN 2026-09-06. NOT APPLIED. Apply deliberately.
+-- WRITTEN 2026-09-06. APPLIED by the operator 2026-09-06 (verified live:
+-- knowledge_items.audience exists). The note below documents the fail-safe the
+-- code keeps if ever run against an unmigrated database.
 -- Until it is applied the code degrades rather than breaks: storeKnowledge
 -- retries the insert without the optional columns and readKnowledge serves
 -- audience as null, so Ask keeps naming the gap honestly.
