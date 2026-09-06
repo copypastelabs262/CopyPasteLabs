@@ -94,11 +94,13 @@ A conversation is still created only by its first question, never by a visit.
 ## Metering
 
 Every global ask records one `ask_runs` row with `course_id null` (= global)
-and logs `[ask-meter] ... course=global`. This needs migration
-`20260906180000_ask_runs_global.sql` (drop NOT NULL on `ask_runs.course_id`) —
-**HUMAN-ONLY, not applied yet**; until then global rows degrade to
-`meter: "unavailable"` naming that migration, and course/lecture metering is
-unaffected.
+and logs `[ask-meter] ... course=global`. Migration
+`20260906180000_ask_runs_global.sql` (drop NOT NULL on `ask_runs.course_id`)
+was **applied by the operator on 2026-09-06** and the meter verified live the
+same day (`meter: "ok"`, null-course rows present in `ask_runs`, $0 direct
+routes). On a database without it, global rows degrade honestly to
+`meter: "unavailable"` naming the migration; course/lecture metering is never
+affected either way.
 
 ## Known limits (deliberate, recorded)
 
