@@ -112,6 +112,32 @@ function unit(over: Partial<KnowledgeUnit>): KnowledgeUnit {
   };
 }
 
+section("Scope attribution in the grounding");
+{
+  const cloudUnit = unit({ title: "Cache Scaling", summary: "Tiers DRAM and SSD.", lectureTitle: "Control layer", courseId: "course-cloud" });
+  const lectureScoped = __internals.render([cloudUnit], { scope: "lecture" });
+  check(!lectureScoped.includes("lecture:") && !lectureScoped.includes("from:"),
+    "lecture scope carries no location labels -- everything IS this lecture");
+  const courseScoped = __internals.render([cloudUnit], { scope: "course" });
+  check(courseScoped.includes("lecture: Control layer"),
+    "subject scope names the lecture each fact came from", courseScoped);
+  const globalScoped = __internals.render([cloudUnit], {
+    scope: "global",
+    courseNames: new Map([["course-cloud", "TEST2 · Cloud Computing"]]),
+  });
+  check(globalScoped.includes("from: TEST2 · Cloud Computing — Control layer"),
+    "global scope names subject AND lecture", globalScoped);
+}
+{
+  const { provider, last } = capture();
+  await answerFromKnowledge(COURSE, "Explain cache scaling.", {
+    injectedProvider: provider,
+    context: { scope: "global", courseNames: new Map([["course-1", "TEST2 · Cloud Computing"]]) },
+  });
+  check(last().user.includes("THE STUDENT'S SUBJECTS: TEST2 · Cloud Computing"),
+    "a global answer is told the student's subject world first", last().user.slice(0, 120));
+}
+
 section("Unit rendering");
 const rich = unit({
   category: "actionable", kind: "assignment", title: "Transformation Assignment",
