@@ -26,7 +26,10 @@
 import type { AskRoute } from "./ask-routing.ts";
 
 export interface AskRunRecord {
-  courseId: string;
+  // Null = a global (whole-student) ask -- scoped wider than any course.
+  // Requires migration 20260906180000; until it is applied a global row
+  // degrades to "unavailable" while course/lecture rows keep recording.
+  courseId: string | null;
   lectureId: string | null;
   userId: string;
   question: string;
