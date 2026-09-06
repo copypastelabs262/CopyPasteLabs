@@ -260,6 +260,58 @@ check(!(gListAfter.json.conversations ?? []).some((c) => c.id === conversationId
 const strangerGlobal = await api(stranger, `/api/conversations/${gId}`);
 check(strangerGlobal.status === 404, "another user's read of the global thread is a plain 404", strangerGlobal.status);
 
+section("GLOBAL -- an old thread never outlives access (re-checked on read)");
+// The stored global thread cites Robotics. Lift the student's Robotics
+// enrollment for a moment: the thread must keep opening (the prose is the
+// student's own conversation) while its Robotics sources are withheld, and
+// serve them again once the enrollment is restored. Service-role surgery on
+// ONE enrollment row, restored in a finally.
+{
+  const svc = createClient(URL_, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+    auth: { persistSession: false },
+  });
+  const studentId = JSON.parse(
+    Buffer.from(student.split(".")[1], "base64").toString(),
+  ).sub as string;
+  const enr = await svc
+    .from("enrollments")
+    .select("*")
+    .eq("course_id", COURSE)
+    .eq("user_id", studentId)
+    .maybeSingle();
+  if (!enr.data) {
+    check(false, "found the student's Robotics enrollment row to lift", enr.error?.message);
+  } else {
+    try {
+      await svc.from("enrollments").delete().eq("course_id", COURSE).eq("user_id", studentId);
+      const gGone = await api(student, `/api/conversations/${gId}`);
+      const goneSources = (gGone.json.messages ?? []).flatMap(
+        (m) => (m.payload?.sources ?? []) as { courseId?: string }[],
+      );
+      check(gGone.status === 200, "the thread itself still opens while un-enrolled", gGone.status);
+      check(
+        goneSources.length > 0 && goneSources.every((s) => s.courseId !== COURSE),
+        "…its Robotics sources are withheld, other subjects' sources stay",
+        goneSources.map((s) => s.courseId),
+      );
+    } finally {
+      const restored = await svc.from("enrollments").insert(enr.data);
+      if (restored.error) {
+        console.error(`RESTORE FAILED -- re-insert this enrollment by hand: ${JSON.stringify(enr.data)}`);
+      }
+    }
+    const gBack = await api(student, `/api/conversations/${gId}`);
+    const backSources = (gBack.json.messages ?? []).flatMap(
+      (m) => (m.payload?.sources ?? []) as { courseId?: string }[],
+    );
+    check(
+      backSources.some((s) => s.courseId === COURSE),
+      "re-enrolled: the same thread serves its Robotics sources again",
+      backSources.map((s) => s.courseId),
+    );
+  }
+}
+
 section("GLOBAL -- cleanup");
 {
   const del = await api(student, `/api/conversations/${gId}`, { method: "DELETE" });
