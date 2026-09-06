@@ -132,8 +132,8 @@ export interface StudentOverview {
   // A COUNT and never content: how many items the lecturer has not looked at.
   awaitingReview: number;
   // Absent-by-empty when the conversations migration is not applied; the band
-  // simply does not render.
-  recentConversations: RecentConversation[];
+  // simply does not render. Optional so an older server shape still renders.
+  recentConversations?: RecentConversation[];
   recentLectures: OverviewLecture[];
   recentLecturesTotal: number;
 }
