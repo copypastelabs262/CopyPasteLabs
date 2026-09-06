@@ -68,7 +68,7 @@ section("Guidance blocks");
 for (const intent of Object.keys(INTENT_GUIDANCE) as AnswerIntent[]) {
   check(INTENT_GUIDANCE[intent].includes("SHAPE"), `${intent}: guidance describes a SHAPE`);
 }
-check(INTENT_GUIDANCE.followup.includes("do not restart"), "followup guidance forbids restarting the topic");
+check(/do not\s+restart/i.test(INTENT_GUIDANCE.followup), "followup guidance forbids restarting the topic");
 check(INTENT_GUIDANCE.eli5.toLowerCase().includes("analogy"), "eli5 guidance is analogy-first");
 
 /* ---------------------------------------------------------------------------
