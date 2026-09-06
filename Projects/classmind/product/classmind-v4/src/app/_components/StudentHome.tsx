@@ -340,6 +340,28 @@ function TodoCard({ item }: { item: TodoItem }) {
   );
 }
 
+// One saved conversation, linking straight back into its own surface with the
+// thread pre-opened (?c=): a lecture thread reopens on that lecture's page, a
+// course thread on the course's Ask tab.
+function ConversationRow({ thread }: { thread: RecentConversation }) {
+  const href =
+    thread.scope === "lecture" && thread.lectureId
+      ? `/courses/${thread.courseId}/lectures/${thread.lectureId}?c=${thread.id}`
+      : `/courses/${thread.courseId}/ask?c=${thread.id}`;
+  const where = [thread.courseCode, thread.lectureTitle].filter(Boolean).join(" · ");
+  return (
+    <Link href={href} className="row-hover flex items-center gap-4 p-4 sm:p-5">
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[15px] font-medium text-ink">{thread.title}</span>
+        <span className="mt-1 block truncate text-[13px] text-ink-faint">
+          {where} &middot; {agoLabel(thread.lastMessageAt)}
+        </span>
+      </span>
+      <ChevronRightIcon size={18} className="shrink-0 text-ink-faint" />
+    </Link>
+  );
+}
+
 function StudentCourseRow({ course }: { course: OverviewCourse }) {
   const meta = [termLabel(course.term), plural(course.lectureCount, "lecture", "lectures")]
     .filter((part): part is string => Boolean(part))
