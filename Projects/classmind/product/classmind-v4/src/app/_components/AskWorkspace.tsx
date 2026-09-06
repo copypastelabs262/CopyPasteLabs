@@ -559,9 +559,13 @@ export default function AskWorkspace({
           </Button>
         </form>
         <p className="mt-2 text-[11px] text-ink-faint">
-          {storeState === "unavailable"
-            ? "Answers come only from what was said in this class's lectures. This conversation isn't being saved right now."
-            : "Answers come only from what was said in this class's lectures. Your conversations are saved — pick up any of them where you left off."}
+          {global
+            ? storeState === "unavailable"
+              ? "Answers come only from what was recorded in your subjects' lectures. This conversation isn't being saved right now."
+              : "Answers come only from what was recorded in your subjects' lectures. Your conversations are saved — pick up any of them where you left off."
+            : storeState === "unavailable"
+              ? "Answers come only from what was said in this class's lectures. This conversation isn't being saved right now."
+              : "Answers come only from what was said in this class's lectures. Your conversations are saved — pick up any of them where you left off."}
         </p>
       </div>
     </div>
