@@ -123,4 +123,4 @@ unaffected.
   scope-borrowing 404s both directions, stranger 404s, GET-405,
   un-enrollment source withholding, meter honesty, cleanup.
 - Paid eval (`.eval/scope-eval.json`) — one deliberate pass + one retry after
-  fixes; 8 model calls, 15,485 tokens total for the milestone.
+  fixes; 5 model calls, 8,510 tokens total for the milestone.
