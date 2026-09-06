@@ -157,6 +157,18 @@ const wrongCourse = await api(student, `/api/courses/5ab749fb-d4fd-42fc-85ba-b9d
 });
 check(wrongCourse.status === 404, "a conversation cannot be continued from a different course", wrongCourse.status);
 
+section("Wrong-lecture continuation refused");
+// The failed .aac upload's row -- a different lecture in the SAME course.
+const wrongLecture = await api(student, `/api/courses/${COURSE}/ask`, {
+  body: { question: DIRECT_Q, conversationId, lectureId: "5384de32-3444-4012-b056-bd3c537a4205" },
+});
+check(wrongLecture.status === 409, "naming a different lecture refuses instead of silently moving the thread", wrongLecture.status);
+
+section("Malformed ids are 404s, never database errors");
+const badId = await api(student, `/api/conversations/not-a-uuid`);
+check(badId.status === 404 && !JSON.stringify(badId.json).includes("syntax"),
+  "a malformed conversation id yields a plain 404", badId);
+
 section("Meter stayed honest");
 check(ask1.json.usage === null && ask2.json.usage === null && ask3.json.usage === null,
   "every question here rode the direct route -- zero model usage recorded");
