@@ -36,6 +36,14 @@ baseline lecture (~28K tokens, proves v1.2.0 reproduces `77408ea3` minus the dup
 and Robotics (~6K tokens, proves audience capture on the recording whose transcript
 names the assignees). Then the role-bug fix.
 
+**Close — edit-on-confirm applied; knowledge-engine validation milestone CLOSED.** The
+operator's review restored the confirmed wording (deadline "next week", "write it five
+times", all four steps) from the baseline snapshot onto the fresh assignment, kept the
+extracted audience verbatim, re-confirmed with a recorded review note, and the two
+restored evidence quotes were locator-verified before insert. Student-side proof: "Who
+is the assignment for?" → direct, $0, answer carries the audience in the lecturer's
+words. 205 free checks green after. Next milestone: chat-first lecture page.
+
 **Night — audience verified end-to-end; the extraction-engine proof is complete.** One
 operator-approved surgical step: the confirmed Robotics assignment re-opened to pending,
 one forced 7-window re-run (ledger `748c39af`, 6,293 tokens), and the full chain
