@@ -197,8 +197,7 @@ export default function AskWorkspace({
     let cancelled = false;
     void (async () => {
       try {
-        const qs = lectureId ? `?lectureId=${encodeURIComponent(lectureId)}` : "";
-        const res = await fetch(`/api/courses/${courseId}/conversations${qs}`);
+        const res = await fetch(listEndpoint);
         const body = (await res.json().catch(() => null)) as {
           state?: string;
           conversations?: ConversationSummary[];
@@ -211,7 +210,9 @@ export default function AskWorkspace({
         const list = body.conversations ?? [];
         setRecent(list);
         setStoreState("ok");
-        const target = requestedId ?? list[0]?.id;
+        // A carried-in question means the student is STARTING something: no
+        // auto-resume — the fresh thread is created by the ask itself.
+        const target = carriedQuestion ? null : (requestedId ?? list[0]?.id);
         if (target) {
           const loaded = await loadConversation(target);
           if (cancelled) return;
@@ -228,9 +229,10 @@ export default function AskWorkspace({
       cancelled = true;
     };
     // Deliberately mount-only per scope: resuming re-runs when the surface
-    // (course/lecture) changes, not when the ?c= we ourselves write changes.
+    // (course/lecture/global) changes, not when the ?c= we ourselves write
+    // changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courseId, lectureId]);
+  }, [courseId, lectureId, global]);
 
   // The Recent popover closes on outside pointerdown and Escape, same manners
   // as the user menu.
