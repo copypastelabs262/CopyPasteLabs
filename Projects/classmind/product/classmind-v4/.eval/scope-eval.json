@@ -62,5 +62,68 @@
         "5ab749fb-d4fd-42fc-85ba-b9de82fe1dcf"
       ]
     }
-  ]
+  ],
+  "retries": [
+    {
+      "label": "G1r",
+      "question": "What do I need to work on?",
+      "route": "model",
+      "usage": {
+        "promptTokens": 1779,
+        "completionTokens": 275
+      },
+      "conversation": "9606523d-a666-4041-95a9-47cec5ad959b",
+      "answer": "You have two confirmed assignments to work on across your courses [1], [2]. \n\n### 1. Robotics & Automation: Transformation Assignment\nYou need to complete the step-by-step derivation for two coordinate transformation matrices and write the entire assignment out five times by next week [1]. \n* **The steps:** Write out initial parameter definitions (including joint and link parameters), derive the individual matrices, multiply them to get the final full complementation for the arm matrix, and repeat the whole process five times [1]. \n* *My recommendation:* Start with this derivation first to get the repetitive writing out of the way, but keep in mind that the exact submission platform and time were not specified in the lecture [1].\n\n### 2. Cloud Computing: Research Paper and Project Implementation\nYou need to find a current research paper topic, implement it, and deploy the finished project to the cloud [2]. \n* **The steps:** Start by writing down and searching for scenario-based questions, find a current research paper to implement, and then push your implementation to a cloud environment [2]. \n* *My recommendation:* Tackle this after sorting out your robotics writing. The lecturer did not specify a deadline, a specific topic, or which cloud platform to use, so you have the freedom to choose your direction here [2].",
+      "sourceCourses": [
+        "6a8484f7-be19-4044-b725-8d66efdfaa4a",
+        "5ab749fb-d4fd-42fc-85ba-b9de82fe1dcf"
+      ]
+    },
+    {
+      "label": "G2r",
+      "question": "Which one is due first?",
+      "route": "model",
+      "usage": {
+        "promptTokens": 2382,
+        "completionTokens": 26
+      },
+      "conversation": "9606523d-a666-4041-95a9-47cec5ad959b",
+      "answer": "The transformation assignment is due next week [1]. The cloud computing research project has no specified deadline in the lecture record [3].",
+      "sourceCourses": [
+        "6a8484f7-be19-4044-b725-8d66efdfaa4a",
+        "5ab749fb-d4fd-42fc-85ba-b9de82fe1dcf"
+      ]
+    },
+    {
+      "label": "G3r",
+      "question": "Which lecture covered G.711?",
+      "route": "model",
+      "usage": {
+        "promptTokens": 1228,
+        "completionTokens": 60
+      },
+      "answer": "The stored lecture records for this course do not cover G.711. \n\nThe stored material currently covers the functions of a software-defined controller [1], data movement techniques including cache tiering and dynamic VM load balancing [2], and lower bound and upper bound resource guarantees [3].",
+      "sourceCourses": [
+        "5ab749fb-d4fd-42fc-85ba-b9de82fe1dcf"
+      ]
+    },
+    {
+      "label": "S1r",
+      "question": "Which lecture covered cache scaling?",
+      "route": "model",
+      "usage": {
+        "promptTokens": 1179,
+        "completionTokens": 46
+      },
+      "answer": "Cache scaling was covered in the lecture titled WhatsApp [1]. Specifically, the lecturer introduced it at 20:35 as one of two data movement techniques under intra and inter array, alongside dynamic VM load balancing [1].",
+      "sourceCourses": [
+        "5ab749fb-d4fd-42fc-85ba-b9de82fe1dcf"
+      ]
+    }
+  ],
+  "retryTotals": {
+    "calls": 4,
+    "prompt": 6568,
+    "completion": 407
+  }
 }

@@ -62,6 +62,11 @@
       "name": "ask-student-active",
       "path": "/courses/5ab749fb-d4fd-42fc-85ba-b9de82fe1dcf/ask",
       "role": "student"
+    },
+    {
+      "name": "ask-global-student",
+      "path": "/ask",
+      "role": "student"
     }
   ]
 }
