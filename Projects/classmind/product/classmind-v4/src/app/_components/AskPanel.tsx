@@ -359,8 +359,27 @@ export function AnswerView({
       </div>
 
       {answer.sources.length ? (
-        <div className="mt-12">
-          <h3 className={SECTION_HEADING}>From the lecture</h3>
+        <div className={showSources ? "mt-12" : "mt-8"}>
+          {collapsibleSources ? (
+            <button
+              type="button"
+              onClick={() => setSourcesOpen((o) => !o)}
+              aria-expanded={sourcesOpen}
+              className={cx(
+                SECTION_HEADING,
+                "inline-flex items-center gap-1.5 transition-colors hover:text-ink-soft",
+              )}
+            >
+              From the lecture · {answer.sources.length}
+              <ChevronDownIcon
+                size={13}
+                className={cx("transition-transform", sourcesOpen && "rotate-180")}
+              />
+            </button>
+          ) : (
+            <h3 className={SECTION_HEADING}>From the lecture</h3>
+          )}
+          {showSources ? (
           <ol className="mt-6 space-y-10">
             {answer.sources.map((s) => (
               <li
