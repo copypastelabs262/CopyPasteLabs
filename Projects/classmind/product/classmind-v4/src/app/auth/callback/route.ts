@@ -20,16 +20,6 @@ function requestOrigin(request: NextRequest): string {
   return `${request.headers.get("x-forwarded-proto") ?? "https"}://${forwardedHost}`;
 }
 
-// `next` arrives from the query string, so it is attacker-controlled. A bare
-// startsWith("/") test is not enough: "//evil.com" and "/\evil.com" both begin
-// with a slash and both leave the site, which is a textbook open redirect on
-// exactly this kind of endpoint. Accept a single leading slash and nothing else.
-function safeNext(raw: string | null): string {
-  if (!raw || !raw.startsWith("/")) return "/courses";
-  if (raw.startsWith("//") || raw.startsWith("/\\")) return "/courses";
-  return raw;
-}
-
 function bounceToSignIn(origin: string, message: string): NextResponse {
   const signIn = new URL("/signin", origin);
   signIn.searchParams.set("error", message);
