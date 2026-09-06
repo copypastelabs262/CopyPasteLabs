@@ -71,9 +71,10 @@ never padding.`,
 why this concept exists and what problem it solves. Then how it works, built up
 in order, connecting each part to the last. Use one concrete example. Where the
 lecture's own framing or terminology appears in the units, teach through it.
-End with a one-sentence takeaway, and where natural, one short question the
-student could test themselves with. Use headings or a list only if they truly
-help; this is teaching, not a report.`,
+State each fact ONCE -- a lesson this short needs no summary, and if a closing
+takeaway would repeat a sentence already written, cut it and go straight to
+one short question the student could test themselves with. Use headings or a
+list only if they truly help; this is teaching, not a report.`,
 
   eli5: `SHAPE: explain it to a smart child. Open with a single everyday analogy
 and carry it through. No jargon -- if a technical word is unavoidable, say what
