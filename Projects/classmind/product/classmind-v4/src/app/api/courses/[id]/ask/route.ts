@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireUser, requireCourseAccess, errorResponse } from "@/lib/auth";
-import { readKnowledge } from "@/lib/knowledge/read";
+import { loadAcademicContext } from "@/lib/knowledge/academic-context";
 import { serviceClient } from "@/lib/supabase/service";
 import { answerFromKnowledge, type AskTurn } from "@/lib/knowledge/answer";
 import { recordAskRun } from "@/lib/knowledge/ask-meter";
