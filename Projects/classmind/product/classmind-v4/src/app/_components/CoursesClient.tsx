@@ -126,7 +126,9 @@ export type Overview = TeacherOverview | StudentOverview;
 export interface CoursesUser {
   fullName: string | null;
   email: string | null;
-  role: "faculty" | "student";
+  // Null never reaches this screen in practice -- /courses redirects role-less
+  // accounts to /choose-role -- but the type matches what the session carries.
+  role: "faculty" | "student" | null;
 }
 
 /* ---------------------------------------------------------------------------
