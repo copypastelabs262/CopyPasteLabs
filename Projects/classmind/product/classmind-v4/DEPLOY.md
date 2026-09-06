@@ -144,10 +144,13 @@ watch the function logs.
   for v1, `http://localhost:3300/**` if v2 was added). When v3 gets its own deployment, add
   `https://<v3-domain>/**` too.
 
-  **The wildcard is not optional.** Supabase glob-matches the *entire* `redirectTo` URL including
-  its query string, and the sign-in page appends `?role=faculty` so the callback knows which kind
-  of account to create. A bare `https://<domain>/auth/callback` entry will not match that and the
-  sign-in silently falls back to the Site URL.
+  **Keep the wildcard anyway.** Supabase glob-matches the *entire* `redirectTo` URL including
+  its query string, and a non-matching entry silently falls back to the Site URL. As of
+  2026-09-06 the sign-in page no longer appends `?role=` (the selected role travels as a
+  short-lived cookie precisely because this fallback was silently dropping it — see
+  `src/lib/profile-role.ts`), so a bare `/auth/callback` entry would currently match — but the
+  wildcard costs nothing and protects any future query param (`next`, for one) from the same
+  silent fallback. For v4 local development the list needs `http://localhost:3500/**`.
 
   **Host spelling matters too.** `http://localhost:3400/**` does not match a browser open on
   `http://127.0.0.1:3400`. Develop on `localhost`, or add both entries.
