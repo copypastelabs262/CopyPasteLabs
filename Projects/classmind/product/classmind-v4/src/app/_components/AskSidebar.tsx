@@ -145,7 +145,7 @@ export default function AskSidebar({
                     return (
                       <li key={c.id}>
                         <Link
-                          href={`/ask?c=${c.id}`}
+                          href={itemHref(c.id)}
                           onClick={() => onNavigate?.()}
                           aria-current={active ? "page" : undefined}
                           title={c.title}
