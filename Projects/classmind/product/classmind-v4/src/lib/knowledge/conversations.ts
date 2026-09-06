@@ -180,9 +180,7 @@ export async function createConversation(
     .select("id, scope, course_id, lecture_id, title, created_at, last_message_at")
     .single();
   if (error || !data) {
-    const message = error?.message ?? "insert returned nothing";
-    if (error && isMissingSchemaError(error)) return { state: "unavailable", note: UNAVAILABLE, conversation: null };
-    return { state: "unavailable", note: message, conversation: null };
+    return { state: "unavailable", note: degradeNote(error), conversation: null };
   }
   return { state: "ok", note: null, conversation: rowToConversation(data) };
 }
