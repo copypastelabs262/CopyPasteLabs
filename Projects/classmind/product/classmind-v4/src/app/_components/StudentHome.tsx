@@ -345,9 +345,11 @@ function TodoCard({ item }: { item: TodoItem }) {
 // course thread on the course's Ask tab.
 function ConversationRow({ thread }: { thread: RecentConversation }) {
   const href =
-    thread.scope === "lecture" && thread.lectureId
-      ? `/courses/${thread.courseId}/lectures/${thread.lectureId}?c=${thread.id}`
-      : `/courses/${thread.courseId}/ask?c=${thread.id}`;
+    thread.scope === "global" || thread.courseId === null
+      ? `/ask?c=${thread.id}`
+      : thread.scope === "lecture" && thread.lectureId
+        ? `/courses/${thread.courseId}/lectures/${thread.lectureId}?c=${thread.id}`
+        : `/courses/${thread.courseId}/ask?c=${thread.id}`;
   const where = [thread.courseCode, thread.lectureTitle].filter(Boolean).join(" · ");
   return (
     <Link href={href} className="row-hover flex items-center gap-4 p-4 sm:p-5">
