@@ -220,7 +220,11 @@ export async function GET() {
       // The count of items awaiting the lecturer goes in the same wait: it is a
       // COUNT, never content (see the note at the top of this file), and it
       // depends on nothing the knowledge reads produce.
-      const [perCourse, awaitingResult] = await Promise.all([
+      // Recent conversations ride the same wait. Graceful by construction:
+      // before the conversations migration is applied the store answers
+      // "unavailable" and the band simply does not render -- the home never
+      // breaks over a missing table.
+      const [perCourse, awaitingResult, recentConvos] = await Promise.all([
         Promise.all(mayContribute.map((courseId) => readKnowledge({ courseId, forStudent: true }))),
         publishedIds.length
           ? svc
@@ -229,6 +233,7 @@ export async function GET() {
               .in("lecture_id", publishedIds)
               .eq("status", "pending")
           : Promise.resolve({ count: 0 }),
+        listRecentConversations(svc, user.id, 6),
       ]);
 
       const todo = perCourse
