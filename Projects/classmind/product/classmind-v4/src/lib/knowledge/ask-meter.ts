@@ -77,7 +77,7 @@ export function meterLine(r: AskRunRecord): string {
   const paid = r.route === "model" ? `${r.provider}/${r.model} tokens=${tok(r.promptTokens)}+${tok(r.completionTokens)}` : "tokens=0 (no call)";
   return (
     `[ask-meter] route=${r.route} ${paid} units=${r.unitsCited}/${r.unitsAvailable} ` +
-    `${r.durationMs}ms course=${r.courseId}${r.lectureId ? ` lecture=${r.lectureId}` : ""}` +
+    `${r.durationMs}ms course=${r.courseId ?? "global"}${r.lectureId ? ` lecture=${r.lectureId}` : ""}` +
     `${r.error ? ` error=${JSON.stringify(r.error.slice(0, 120))}` : ""}`
   );
 }
