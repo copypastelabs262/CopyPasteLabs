@@ -97,13 +97,17 @@ export async function listConversations(
     .eq("owner_id", ownerId)
     .order("last_message_at", { ascending: false })
     .limit(where.limit ?? 20);
-  if (where.lectureId) q = q.eq("lecture_id", where.lectureId);
-  else if (where.courseId) q = q.eq("course_id", where.courseId).eq("scope", "course");
-  const { data, error } = await q;
-  if (error) {
-    if (isMissingSchemaError(error)) return { state: "unavailable", note: UNAVAILABLE, conversations: [] };
-    return { state: "unavailable", note: error.message, conversations: [] };
+  if (where.lectureId) {
+    // Course AND lecture: the URL's course is the surface the caller was
+    // authorised for, and a lecture id from another course must find nothing
+    // here rather than list threads the surface cannot continue.
+    q = q.eq("lecture_id", where.lectureId);
+    if (where.courseId) q = q.eq("course_id", where.courseId);
+  } else if (where.courseId) {
+    q = q.eq("course_id", where.courseId).eq("scope", "course");
   }
+  const { data, error } = await q;
+  if (error) return { state: "unavailable", note: degradeNote(error), conversations: [] };
   return { state: "ok", note: null, conversations: (data ?? []).map(rowToConversation) };
 }
 
