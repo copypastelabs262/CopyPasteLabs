@@ -60,7 +60,17 @@ function awaitingSentence(count: number, hasWork: boolean): string | null {
     : `${items} waiting for your lecturer to confirm. They will appear here once confirmed.`;
 }
 
+// What the home hero suggests. Concise, real questions the global scope can
+// actually answer -- not marketing copy.
+const GLOBAL_PROMPTS = [
+  "Do I have anything to do?",
+  "What is due next?",
+  "What should I work on?",
+];
+
 export default function StudentHome({ eyebrow, data, onJoinCourse }: Props) {
+  const router = useRouter();
+  const [draft, setDraft] = useState("");
   const courseCount = data.courses.length;
   const firstCourse = data.courses[0];
 
@@ -73,37 +83,81 @@ export default function StudentHome({ eyebrow, data, onJoinCourse }: Props) {
     return `${courses}. ${plural(data.recentLecturesTotal, "lecture", "lectures")} you can revisit.`;
   }
 
-  // The door to the product's whole point. With one course it opens that
-  // course; with several it opens the list; with none it asks for a code.
+  function askGlobal(question: string) {
+    const q = question.trim();
+    router.push(q ? `/ask?q=${encodeURIComponent(q)}` : "/ask");
+  }
+
+  function onAskSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    askGlobal(draft);
+  }
+
+  // STUDENT ASK -- the whole-student scope, as the page's one focal surface.
+  // The composer is real: typing here carries the question to /ask, where the
+  // global conversation is created by that first question. With no courses
+  // there is nothing recorded to answer from, so the door stays "join first".
   const askHero = (
-    <div className="glass-hero flex flex-col gap-5 rounded-2xl p-6 sm:flex-row sm:items-center sm:justify-between sm:p-7">
-      <div className="min-w-0">
-        <p className="eyebrow-mono">ask classmind</p>
-        <h2 className="font-display mt-1.5 text-[1.55rem] leading-snug font-medium tracking-[-0.01em] text-ink">
-          Ask your lectures anything.
-        </h2>
-        <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-soft">
-          &ldquo;What was assigned?&rdquo; &middot; &ldquo;What did I miss on Tuesday?&rdquo; &mdash;
-          every answer is traced to the second it was spoken in class.
-        </p>
+    <div className="glass-hero rounded-2xl p-6 sm:p-7">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <p className="eyebrow-mono">ask classmind</p>
+          <h2 className="font-display mt-1.5 text-[1.55rem] leading-snug font-medium tracking-[-0.01em] text-ink">
+            Your academic context, in one place.
+          </h2>
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-soft">
+            Ask across every subject you&rsquo;re in &mdash; every answer is grounded in what was
+            actually recorded, and says which subject it came from.
+          </p>
+        </div>
+        {!firstCourse ? (
+          <div className="shrink-0">
+            <Button tone="primary" size="lg" onClick={onJoinCourse}>
+              <KeyIcon size={17} />
+              Join a course
+            </Button>
+          </div>
+        ) : null}
       </div>
-      <div className="shrink-0">
-        {firstCourse ? (
-          <ButtonLink
-            tone="primary"
-            size="lg"
-            href={courseCount === 1 ? `/courses/${firstCourse.id}` : "#courses"}
-          >
-            <SearchIcon size={17} />
-            {courseCount === 1 ? `Ask ${firstCourse.code}` : "Open a course to ask"}
-          </ButtonLink>
-        ) : (
-          <Button tone="primary" size="lg" onClick={onJoinCourse}>
-            <KeyIcon size={17} />
-            Join a course
-          </Button>
-        )}
-      </div>
+
+      {firstCourse ? (
+        <>
+          <form onSubmit={onAskSubmit} className="mt-5 flex items-center gap-3">
+            <label htmlFor="student-ask" className="sr-only">Ask about your academics</label>
+            <input
+              id="student-ask"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Ask about anything across your subjects"
+              autoComplete="off"
+              className={cx(
+                "min-w-0 flex-1 rounded-xl border border-line bg-surface-sunken/70 px-4 py-3",
+                "text-[15px] leading-normal text-ink transition-colors",
+                "placeholder:text-ink-faint hover:border-ink-faint/60 focus:border-accent focus:outline-none",
+              )}
+            />
+            <Button type="submit" tone={draft.trim() ? "primary" : "secondary"} size="lg">
+              <SearchIcon size={16} />
+              Ask
+            </Button>
+          </form>
+          <div className="mt-3.5 flex flex-wrap gap-2">
+            {GLOBAL_PROMPTS.map((prompt) => (
+              <button
+                key={prompt}
+                type="button"
+                onClick={() => askGlobal(prompt)}
+                className={cx(
+                  "rounded-full border border-line px-3 py-1.5 text-[12px] text-ink-soft",
+                  "transition-colors hover:border-ink-faint/60 hover:text-ink",
+                )}
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
+        </>
+      ) : null}
     </div>
   );
 
