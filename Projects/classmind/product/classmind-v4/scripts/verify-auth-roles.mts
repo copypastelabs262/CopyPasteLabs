@@ -122,7 +122,7 @@ try {
 
   console.log("\n--- E: missing/invalid signal must NOT silently become faculty ---");
   const e = await createUser("e", { full_name: "Verify Roleless E" });
-  const eFirst = await ensureProfile(e, null);
+  const eFirst = await ensureProfile(admin, e, null);
   check(eFirst.role === null && !eFirst.created, "no signal -> no role, no row -- the account is sent to choose", eFirst);
   check((await profileRow(e.id)) === null, "no profiles row was invented");
 
