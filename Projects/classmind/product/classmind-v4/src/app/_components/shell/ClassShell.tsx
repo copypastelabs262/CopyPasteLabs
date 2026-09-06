@@ -22,10 +22,6 @@ import { ClassDataProvider, useClassData } from "./ClassContext";
 // the lecture detail page — which is what keeps "where am I" answered even
 // three levels deep.
 
-interface RailCourse {
-  id: string; code: string; title: string; term: string | null;
-}
-
 // Ask is the class's landing (the base route), so it leads and owns the empty
 // slug. The old "Home" tab was removed in Phase 2 — it only re-listed what the
 // Assignments and Lectures tabs already show.
