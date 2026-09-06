@@ -280,6 +280,11 @@ export async function GET() {
     const lectureTitleById = new Map(lectures.map((l) => [l.id, l.title]));
     const recentConversations = recentConvos.conversations
       .filter((c) => c.courseId !== null && courseById.has(c.courseId))
+      // A lecture-scoped thread is only ADVERTISED while its lecture may be
+      // shown to this student -- same rule as recentLectures above. Linking a
+      // student into a quarantined or unpublished lecture is a 403 dressed as
+      // an invitation.
+      .filter((c) => c.lectureId === null || visibleById.get(c.lectureId) === true)
       .map((c) => {
         const entry = courseById.get(c.courseId!)!;
         return {
