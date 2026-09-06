@@ -113,7 +113,11 @@ export default function AppNav({
         <MenuIcon size={20} />
       </button>
 
-      {open ? (
+      {/* Portalled to <body> so the header's backdrop-filter (a containing block
+          for fixed positioning) can't clip the full-height overlay. `open` is
+          only ever true after a client click, so document.body exists here. */}
+      {open
+        ? createPortal(
         <div className="fixed inset-0 z-50">
           {/* Backdrop: a click dismisses; it dims the page so the drawer reads
               as a layer, not part of the content. */}
