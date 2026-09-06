@@ -404,6 +404,21 @@ body {
   animation: cm-fade 180ms ease-out both;
 }
 
+/* The navigation drawer slides in from the left edge. Under reduced motion the
+   global rule below collapses it to an instant appearance. */
+@keyframes cm-drawer-in {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.motion-drawer-in {
+  animation: cm-drawer-in 240ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
 /* The active pipeline stage breathes; everything settled holds still. Under
    reduced motion it collapses to a steady lit state via the global rule. */
 @keyframes cm-breathe {
