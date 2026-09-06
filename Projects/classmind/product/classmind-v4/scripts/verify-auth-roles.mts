@@ -110,7 +110,7 @@ try {
   const b = await createUser("b", { full_name: "Verify Faculty B" });
   const bFirst = await ensureProfile(admin, b, "faculty");
   check(bFirst.role === "faculty" && bFirst.created, "first sign-in with pending faculty creates a faculty profile", bFirst);
-  const bAgain = await ensureProfile(b, null);
+  const bAgain = await ensureProfile(admin, b, null);
   check(bAgain.role === "faculty" && !bAgain.created, "re-sign-in with no signal keeps faculty", bAgain);
 
   console.log("\n--- Email-confirmation detour: role recorded in user_metadata at sign-up ---");
