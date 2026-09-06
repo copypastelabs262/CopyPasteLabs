@@ -81,7 +81,9 @@ const ping = await fetch(BASE).catch(() => null);
 if (!ping?.ok) { console.error(`Dev server not reachable at ${BASE}.`); process.exit(1); }
 
 const student = await signIn("student.test@classmind.local");
-const stranger = await signIn("faculty.test@classmind.local"); // NOT enrolled in Test1 as owner of it either
+// Enrolled in the SAME course but owns none of the student's threads -- the
+// point is to reach the OWNERSHIP check, not to bounce off the course gate.
+const stranger = await signIn("faculty.test@classmind.local");
 
 section("Availability");
 const list0 = await api(student, `/api/courses/${COURSE}/conversations?lectureId=${LECTURE}`);
