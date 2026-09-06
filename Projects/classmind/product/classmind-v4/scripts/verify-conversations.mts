@@ -42,11 +42,28 @@ async function signIn(email: string): Promise<string> {
   return data.session.access_token;
 }
 
+// The response shapes this script actually touches -- loose, but never `any`.
+interface ApiBody {
+  state?: string;
+  note?: string;
+  error?: string;
+  route?: string;
+  meter?: string;
+  usage?: { promptTokens?: number | null } | null;
+  conversations?: { id: string; title: string; lastMessageAt?: string }[];
+  conversation?: { id: string | null; title?: string | null; state?: string } | null;
+  messages?: {
+    role: string;
+    content: string;
+    payload?: { route?: string; sources?: unknown[] } | null;
+  }[];
+}
+
 async function api(
   token: string,
   path: string,
   init?: { method?: string; body?: unknown },
-): Promise<{ status: number; json: Record<string, any> }> {
+): Promise<{ status: number; json: ApiBody }> {
   const res = await fetch(`${BASE}${path}`, {
     method: init?.method ?? (init?.body !== undefined ? "POST" : "GET"),
     headers: {
@@ -55,8 +72,8 @@ async function api(
     },
     body: init?.body !== undefined ? JSON.stringify(init.body) : undefined,
   });
-  let json: Record<string, any> = {};
-  try { json = await res.json(); } catch { /* status-only checks */ }
+  let json: ApiBody = {};
+  try { json = (await res.json()) as ApiBody; } catch { /* status-only checks */ }
   return { status: res.status, json };
 }
 
