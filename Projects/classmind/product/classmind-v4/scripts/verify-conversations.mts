@@ -49,7 +49,9 @@ interface ApiBody {
   error?: string;
   route?: string;
   meter?: string;
+  answer?: string;
   usage?: { promptTokens?: number | null } | null;
+  sources?: { courseId?: string; lectureId?: string; lectureTitle?: string }[];
   conversations?: { id: string; title: string; lastMessageAt?: string }[];
   conversation?: { id: string | null; title?: string | null; state?: string } | null;
   messages?: {
