@@ -110,27 +110,7 @@ function SignInForm() {
 
         <form onSubmit={submit} className="mt-6 space-y-4">
           {mode === "signup" ? (
-            <>
-              <Field label="Full name" value={fullName} onChange={setFullName} required />
-              <div>
-                <label className="eyebrow-mono block">I am a</label>
-                <div className="mt-1.5 flex gap-2">
-                  {(["faculty", "student"] as const).map((r) => (
-                    <button
-                      key={r} type="button" onClick={() => setRole(r)}
-                      className={
-                        "flex-1 rounded-xl border px-3 py-2 text-sm capitalize transition-colors " +
-                        (role === r
-                          ? "border-accent/50 bg-accent-soft font-medium text-accent"
-                          : "border-line text-ink-soft hover:text-ink")
-                      }
-                    >
-                      {r}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </>
+            <Field label="Full name" value={fullName} onChange={setFullName} required />
           ) : null}
 
           <Field label="Email" type="email" value={email} onChange={setEmail} required />
