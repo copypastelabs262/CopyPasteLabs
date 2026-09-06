@@ -267,17 +267,26 @@ export function AnswerView({
   answer,
   nav,
   scope,
+  collapsibleSources = false,
 }: {
   answer: Answer;
   nav: EvidenceNav;
   scope: "lecture" | "course";
+  /** Conversation surfaces set this: in a multi-turn thread, a full sources
+   *  block under EVERY answer turns the conversation into a wall of cards, so
+   *  the evidence sits one disclosure away instead. Citations still work — a
+   *  clicked [n] expands the sources first, then travels to its card. */
+  collapsibleSources?: boolean;
 }) {
   // Which source is briefly lit up after a citation was clicked. Held here
   // rather than on each source so only one can be highlighted at a time.
   const [flashed, setFlashed] = useState<number | null>(null);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
   const flashTimer = useRef<number | null>(null);
   const sourceEls = useRef(new Map<number, HTMLLIElement>());
   const domId = useId();
+
+  const showSources = !collapsibleSources || sourcesOpen;
 
   useEffect(
     () => () => {
@@ -286,7 +295,7 @@ export function AnswerView({
     [],
   );
 
-  function goToSource(ref: number) {
+  function travelToSource(ref: number) {
     const el = sourceEls.current.get(ref);
     if (!el) return;
     // Focus first, scroll second: a keyboard or screen-reader user has to be
@@ -300,6 +309,16 @@ export function AnswerView({
     setFlashed(ref);
     if (flashTimer.current !== null) window.clearTimeout(flashTimer.current);
     flashTimer.current = window.setTimeout(() => setFlashed(null), 1800);
+  }
+
+  function goToSource(ref: number) {
+    if (collapsibleSources && !sourcesOpen) {
+      // Open first; travel a beat later, once the cards exist to scroll to.
+      setSourcesOpen(true);
+      window.setTimeout(() => travelToSource(ref), 90);
+      return;
+    }
+    travelToSource(ref);
   }
 
   // Nothing has been reconstructed for this course or lecture yet, so there is
