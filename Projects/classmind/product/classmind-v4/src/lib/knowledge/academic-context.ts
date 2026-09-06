@@ -105,35 +105,17 @@ export async function loadAcademicContext(
       lectureId: ref.lectureId,
       forStudent: !ref.isOwner,
     });
-    return { scope: "lecture", units, courseNames: new Map() };
+    return { scope: "lecture", units, courseNames: new Map(), subjectsOmitted: 0 };
   }
 
   if (ref.scope === "course") {
     const units = await readKnowledge({ courseId: ref.courseId, forStudent: !ref.isOwner });
-    return { scope: "course", units, courseNames: new Map() };
+    return { scope: "course", units, courseNames: new Map(), subjectsOmitted: 0 };
   }
 
   // ---- global: the student's whole accessible academic world ---------------
-  const [ownedResult, enrolledResult] = await Promise.all([
-    svc.from("courses").select("id, code, title").eq("owner_id", ref.userId),
-    svc.from("enrollments").select("course_id").eq("user_id", ref.userId),
-  ]);
-  const owned = (ownedResult.data ?? []) as { id: string; code: string; title: string }[];
-  const ownedIds = new Set(owned.map((c) => c.id));
-  const enrolledIds = [
-    ...new Set((enrolledResult.data ?? []).map((r) => r.course_id as string)),
-  ].filter((id) => !ownedIds.has(id));
-
-  const enrolled = enrolledIds.length
-    ? (((
-        await svc.from("courses").select("id, code, title").in("id", enrolledIds)
-      ).data ?? []) as { id: string; code: string; title: string }[])
-    : [];
-
-  const memberships = [
-    ...owned.map((c) => ({ ...c, isOwner: true })),
-    ...enrolled.map((c) => ({ ...c, isOwner: false })),
-  ].slice(0, GLOBAL_COURSE_CAP);
+  const all = await listCourseMemberships(svc, ref.userId);
+  const memberships = all.slice(0, GLOBAL_COURSE_CAP);
 
   const courseNames = new Map(memberships.map((c) => [c.id, `${c.code} · ${c.title}`]));
 
