@@ -89,7 +89,7 @@ function rowToMessage(r: Record<string, unknown>): StoredMessage {
 export async function listConversations(
   svc: SupabaseClient,
   ownerId: string,
-  where: { courseId?: string; lectureId?: string; limit?: number },
+  where: { courseId?: string; lectureId?: string; global?: boolean; limit?: number },
 ): Promise<{ state: StoreState; note: string | null; conversations: ConversationRow[] }> {
   let q = svc
     .from("conversations")
@@ -97,7 +97,10 @@ export async function listConversations(
     .eq("owner_id", ownerId)
     .order("last_message_at", { ascending: false })
     .limit(where.limit ?? 20);
-  if (where.lectureId) {
+  if (where.global) {
+    // The home surface's threads, and only those -- scopes never bleed.
+    q = q.eq("scope", "global");
+  } else if (where.lectureId) {
     // Course AND lecture: the URL's course is the surface the caller was
     // authorised for, and a lecture id from another course must find nothing
     // here rather than list threads the surface cannot continue.
