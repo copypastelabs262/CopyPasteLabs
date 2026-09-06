@@ -485,16 +485,67 @@ export default function LectureClient({
         </Card>
       ) : null}
 
-      {/* --- Key content ---------------------------------------------------
-          The knowledge panel renders this. It owns its own layout and its own
-          empty and loading states; this page's job is to give it a clean slot
-          at the top of the reading order and then stay out of it. */}
+      {/* --- Needs your attention -------------------------------------------
+          Owner work stays ABOVE the conversation: reviewing what students will
+          see is the lecturer's first job on this page. Renders NOTHING when
+          nothing is pending -- an empty review box is a standing accusation
+          that the lecturer is behind on work they do not actually have. */}
+      {isOwner && !isProblem ? (
+        <ActionableReview units={units} onSeek={seek} onReviewed={refresh} />
+      ) : null}
+
+      {/* --- The conversation ------------------------------------------------
+          THE surface. Multi-turn, scoped to this lecture, composer pinned to
+          the bottom; every citation in an answer seeks the on-page player
+          through `nav` instead of navigating away. When the player is engaged
+          it pins under the composer, so the composer lifts by its height. */}
+      {!isProblem && !noAudioYet ? (
+        <AskWorkspace
+          lectureId={lectureId}
+          nav={nav}
+          bottomInset={engaged ? (slotHeight ?? 76) + 26 : 0}
+          intro={{
+            title: "Learn this lecture",
+            description:
+              "Ask for an explanation, an example, or the whole thing step by step. Every answer is grounded in what the lecturer actually said — cited down to the second, so you can hear it for yourself.",
+          }}
+          suggestions={[
+            "What was taught in this lecture?",
+            "Explain the main concept simply",
+            "What assignment was given?",
+            "Give me an example",
+          ]}
+        />
+      ) : null}
+
+      {/* --- What was taught -------------------------------------------------
+          The stored knowledge, browsable behind one disclosure. The summary
+          line always says how much is here; opening it is a choice, so the
+          conversation above keeps the room. */}
       {!isProblem && !noAudioYet ? (
         <Section
-          title="Key content"
-          description="What this lecture covered. Every line can be checked against the recording."
+          title="What was taught"
+          description="The knowledge extracted from this lecture. Every line can be checked against the recording."
+          action={
+            unitsLoading || unitsError || units.length === 0 ? null : (
+              <Button
+                tone="ghost"
+                size="sm"
+                onClick={() => setKnowledgeOpen((o) => !o)}
+                aria-expanded={knowledgeOpen}
+              >
+                {knowledgeOpen ? "Hide" : `Browse ${units.length} item${units.length === 1 ? "" : "s"}`}
+                <ChevronDownIcon
+                  size={15}
+                  className={cx("transition-transform", knowledgeOpen && "rotate-180")}
+                />
+              </Button>
+            )
+          }
         >
-          <LectureKnowledge units={units} loading={unitsLoading} error={unitsError} nav={nav} />
+          {unitsLoading || unitsError || knowledgeOpen || units.length === 0 ? (
+            <LectureKnowledge units={units} loading={unitsLoading} error={unitsError} nav={nav} />
+          ) : null}
           {!isOwner && !unitsLoading && !unitsError && awaitingReview > 0 && (
             <p className="mt-4 text-sm text-ink-soft">
               {awaitingReview === 1
@@ -504,19 +555,6 @@ export default function LectureClient({
           )}
         </Section>
       ) : null}
-
-      {/* --- Needs your attention -------------------------------------------
-          Renders NOTHING when nothing is pending. An empty review box is a
-          standing accusation that the lecturer is behind on work they do not
-          actually have. */}
-      {isOwner && !isProblem ? (
-        <ActionableReview units={units} onSeek={seek} onReviewed={refresh} />
-      ) : null}
-
-      {/* --- Ask ClassMind ---------------------------------------------------
-          Scoped to this lecture, with the player on screen below it, so an
-          answer's citations move the recording rather than navigating away. */}
-      {!isProblem ? <AskPanel courseId={courseId} lectureId={lectureId} onSeek={seek} /> : null}
 
       {/* --- Full lecture ----------------------------------------------------
           Evidence, not content. The player stays mounted whether or not the
