@@ -1,9 +1,12 @@
 import "server-only";
-import { getReasoningProvider, reasoningAvailable } from "@/lib/reasoning";
-import type { ReasoningProvider } from "@/lib/reasoning/types";
-import type { KnowledgeUnit } from "@/lib/knowledge/read";
-import { retrieve, routeAsk, type AskRoute } from "@/lib/knowledge/ask-routing";
-import { classifyAnswerIntent, INTENT_GUIDANCE } from "@/lib/knowledge/answer-intent";
+// Relative imports, not "@/" aliases: this module is exercised offline by
+// scripts/test-answer-intent.mts under plain node, which cannot resolve the
+// alias -- same convention as the reasoning engine.
+import { getReasoningProvider, reasoningAvailable } from "../reasoning/index.ts";
+import type { ReasoningProvider } from "../reasoning/types.ts";
+import type { KnowledgeUnit } from "./read.ts";
+import { retrieve, routeAsk, type AskRoute } from "./ask-routing.ts";
+import { classifyAnswerIntent, INTENT_GUIDANCE } from "./answer-intent.ts";
 
 // LAYER 4 -- grounded answering.
 //
