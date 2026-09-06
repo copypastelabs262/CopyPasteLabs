@@ -36,6 +36,16 @@ baseline lecture (~28K tokens, proves v1.2.0 reproduces `77408ea3` minus the dup
 and Robotics (~6K tokens, proves audience capture on the recording whose transcript
 names the assignees). Then the role-bug fix.
 
+**Evening — migration applied; Validations A and B both clean; engine READY.** Ledgers
+`84050a79` (baseline: 20/20, 28,804 tokens, duplicate pairs gone, model_raw 22/22,
+verdicts kept) and `886797f6` (Robotics: 7/7, 6,492 tokens, verdict guard skipped the
+re-proposed assignment AND its old teaching twin). Audience capture not yet observed:
+the confirmed Robotics assignment predates the field and the verdict guard (correctly)
+refuses to replace it; the assignees' names are verified present in the transcript, so
+one operator-approved step remains — flip that item to pending + one forced re-run
+(~6.5K tokens). Session Gemini spend: 35,296 tokens (~$0.005); Sarvam 0. Details in the
+session log, Addendum 2.
+
 **Later the same day — the role bug is fixed and verified.** The profiles row is now the
 single source of truth, written only by explicit role-selection events; the pre-OAuth
 selection rides a single-use cookie instead of the allow-list-fragile query param; an
