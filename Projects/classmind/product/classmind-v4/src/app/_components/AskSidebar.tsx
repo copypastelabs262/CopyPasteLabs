@@ -106,6 +106,11 @@ export default function AskSidebar({
 
   return (
     <div className="flex h-full flex-col">
+      {scopeLabel ? (
+        <p className="mb-2.5 px-1 text-[11px] font-medium uppercase tracking-[0.14em] text-ink-faint">
+          <span className="text-ink-soft">Asking</span> · {scopeLabel}
+        </p>
+      ) : null}
       <button
         type="button"
         onClick={() => {
