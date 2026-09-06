@@ -93,8 +93,8 @@ export default function AskChat({ courseId }: { courseId?: string } = {}) {
           </button>
         </div>
 
-        {/* global on /ask; inside a course AskWorkspace reads the course scope
-            from ClassContext, so no `global` and no courseId prop needed here. */}
+        {/* On /ask the pane is global; inside a course it reads the course
+            scope from ClassContext, so it only needs to be told which one. */}
         <AskWorkspace
           global={!isCourse}
           withSidebar
