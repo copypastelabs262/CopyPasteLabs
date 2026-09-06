@@ -176,14 +176,16 @@ async function handleGlobalAsk(input: GlobalAskInput) {
   });
 }
 
-export async function GET(request: Request) {
-  try {
-    const params = new URL(request.url).searchParams;
-    return await handleGlobalAsk({ q: params.get("q") ?? "" });
-  } catch (err) {
-    const { body, status } = errorResponse(err);
-    return NextResponse.json(body, { status });
-  }
+// POST ONLY. A GET that answers questions is a GET that spends money and
+// writes rows on a top-level navigation -- and SameSite=Lax cookies ride
+// along on exactly those, so a crafted cross-site link could bill the
+// reasoning provider against a signed-in student. The client never used GET;
+// nothing legitimate loses anything.
+export function GET() {
+  return NextResponse.json(
+    { error: "Ask with POST." },
+    { status: 405, headers: { Allow: "POST" } },
+  );
 }
 
 export async function POST(request: Request) {
