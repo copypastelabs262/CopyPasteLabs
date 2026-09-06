@@ -52,31 +52,35 @@ export default function AskSidebar({ onNavigate }: { onNavigate?: () => void }) 
   const [convos, setConvos] = useState<Convo[]>([]);
   const [state, setState] = useState<"loading" | "ok" | "unavailable">("loading");
 
-  const load = useCallback(async () => {
-    try {
-      const res = await fetch("/api/ask/conversations");
-      const body = (await res.json().catch(() => null)) as
-        | { state?: string; conversations?: Convo[] }
-        | null;
-      if (!res.ok || !body || body.state !== "ok") {
-        setState("unavailable");
-        return;
-      }
-      setConvos(body.conversations ?? []);
-      setState("ok");
-    } catch {
-      setState("unavailable");
-    }
-  }, []);
-
   useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await fetch("/api/ask/conversations");
+        const body = (await res.json().catch(() => null)) as
+          | { state?: string; conversations?: Convo[] }
+          | null;
+        if (cancelled) return;
+        if (!res.ok || !body || body.state !== "ok") {
+          setState("unavailable");
+          return;
+        }
+        setConvos(body.conversations ?? []);
+        setState("ok");
+      } catch {
+        if (!cancelled) setState("unavailable");
+      }
+    };
     void load();
-    // A question asked in the pane (new thread, or a follow-up that bumps a
+    // A question asked in the pane (a new thread, or a follow-up that bumps a
     // thread to the top) fires this so the list stays current without a reload.
     const onChanged = () => void load();
     window.addEventListener("cm:conversations-changed", onChanged);
-    return () => window.removeEventListener("cm:conversations-changed", onChanged);
-  }, [load]);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("cm:conversations-changed", onChanged);
+    };
+  }, []);
 
   const groups = groupByRecency(convos);
 
