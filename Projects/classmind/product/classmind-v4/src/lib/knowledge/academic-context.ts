@@ -34,12 +34,66 @@ export interface AcademicContext {
   // fact must say which subject it came from); empty otherwise, because a
   // single-course answer already knows where it is.
   courseNames: Map<string, string>;
+  // Subjects that exist but were NOT read because the fan-out cap cut them
+  // off. Zero almost always; when it isn't, the answer layer must say so
+  // rather than present a truncated world as the whole one.
+  subjectsOmitted: number;
 }
 
 // How many courses a single global read will fan out over. A student is in a
 // handful of subjects; a service account is not a student, and an unbounded
 // fan-out is how one request becomes forty queries.
 const GLOBAL_COURSE_CAP = 12;
+
+export interface CourseMembership {
+  id: string;
+  code: string;
+  title: string;
+  isOwner: boolean;
+}
+
+// EVERY course this user can currently access, with their relationship to
+// each — the single definition of "the student's academic world". Used by the
+// global retrieval boundary AND by the conversation read route's access
+// re-check, so the two can never disagree about what is accessible.
+//
+// Enrolled subjects come FIRST, then owned ones, each in a deterministic
+// (oldest-first) order: when a cap is applied downstream, the student life of
+// an account that also owns many courses must survive the cut, and two
+// identical requests must truncate identically.
+export async function listCourseMemberships(
+  svc: SupabaseClient,
+  userId: string,
+): Promise<CourseMembership[]> {
+  const [ownedResult, enrolledResult] = await Promise.all([
+    svc
+      .from("courses")
+      .select("id, code, title")
+      .eq("owner_id", userId)
+      .order("created_at", { ascending: true }),
+    svc.from("enrollments").select("course_id").eq("user_id", userId),
+  ]);
+  const owned = (ownedResult.data ?? []) as { id: string; code: string; title: string }[];
+  const ownedIds = new Set(owned.map((c) => c.id));
+  const enrolledIds = [
+    ...new Set((enrolledResult.data ?? []).map((r) => r.course_id as string)),
+  ].filter((id) => !ownedIds.has(id));
+
+  const enrolled = enrolledIds.length
+    ? (((
+        await svc
+          .from("courses")
+          .select("id, code, title")
+          .in("id", enrolledIds)
+          .order("created_at", { ascending: true })
+      ).data ?? []) as { id: string; code: string; title: string }[])
+    : [];
+
+  return [
+    ...enrolled.map((c) => ({ ...c, isOwner: false })),
+    ...owned.map((c) => ({ ...c, isOwner: true })),
+  ];
+}
 
 export async function loadAcademicContext(
   svc: SupabaseClient,
