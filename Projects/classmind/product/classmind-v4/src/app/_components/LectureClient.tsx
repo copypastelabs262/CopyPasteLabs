@@ -220,17 +220,9 @@ export default function LectureClient({
     return () => { cancelled = true; };
   }, [lectureId, version]);
 
-  // The course this lecture belongs to, for the metadata line and the way back.
-  // Deliberately non-fatal: a lecture page that cannot name its course is worse
-  // for having refused to render.
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`/api/courses/${courseId}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((b) => { if (!cancelled && b?.course) setCourse(b.course as CourseHead); })
-      .catch(() => undefined);
-    return () => { cancelled = true; };
-  }, [courseId]);
+  // (The course's name is no longer fetched here: the class shell directly
+  // above this page already displays it, and repeating it was the recorded
+  // double-header problem.)
 
   useEffect(() => {
     let cancelled = false;
