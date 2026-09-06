@@ -1,6 +1,8 @@
 -- PERSISTENT CONVERSATIONS.
 --
--- WRITTEN 2026-09-06. NOT APPLIED. Apply deliberately.
+-- WRITTEN 2026-09-06. APPLIED by the operator 2026-09-06 (verified live:
+-- verify:conversations passes the full contract, 48/48). The note below
+-- documents the fail-safe the code keeps if ever run against an unmigrated db.
 -- Until it is applied the code degrades rather than breaks: the ask route
 -- answers exactly as before and reports `conversation: "unavailable"`, the UI
 -- falls back to the ephemeral in-page conversation, and nothing is lost except
