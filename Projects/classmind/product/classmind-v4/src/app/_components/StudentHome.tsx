@@ -4,43 +4,23 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CARRIED_QUESTION_KEY } from "./ask-carry";
-import {
-  Button,
-  ButtonLink,
-  Card,
-  EmptyState,
-  Page,
-  PageHeader,
-  Section,
-  StatusPill,
-  cx,
-  termLabel,
-} from "@/app/_components/ui";
-import { AssignmentIcon, BookIcon, ChevronRightIcon, KeyIcon, SearchIcon } from "@/app/_components/ui/icons";
-import { kindLabel } from "./KnowledgeUnit";
-import {
-  agoLabel,
-  type OverviewCourse,
-  type RecentConversation,
-  type StudentOverview,
-  type TodoItem,
-} from "./CoursesClient";
+import { Button, Card, EmptyState, Page, Section, cx } from "@/app/_components/ui";
+import { ChevronRightIcon, KeyIcon, SearchIcon } from "@/app/_components/ui/icons";
+import { agoLabel, type RecentConversation, type StudentOverview } from "./CoursesClient";
 
-// The student's home.
+// THE STUDENT HOME — Ask-first (Phase 2).
 //
-// A student's real question does not fit inside one course. It is "what do I
-// owe, and what did I miss" — so the screen's one luminous surface is the
-// product's promise made usable: a real composer that asks ACROSS every
-// subject the student is in. Typing here carries the question into the global
-// Ask flow (/ask → /api/ask, scope 'global') — the same retrieval brain as
-// lecture and subject ask, widened, never a second system. The cost guard is
-// intact: nothing is asked on visit or refresh, only on an explicit submit
-// (the question rides a consumed-once sessionStorage key, not the URL).
+// Opening ClassMind is opening a conversation with your academic self, so the
+// home is a greeting and one large place to ask — not a dashboard. What used to
+// be here (a to-do feed, a courses grid, a "recently added" list) either lives
+// in its own destination now (My Classes, a course's Assignments tab) or is
+// answered BY asking ("Do I have anything to do?"). The only thing kept beside
+// the composer is a short list of recent conversations, because continuing a
+// thought is the one thing a returning student most wants to do next.
 //
-// NOTHING teacher-facing may appear on this screen. No status notes, no
-// unreviewed content, no review affordances. The single thing a student is
-// told about unreviewed work is a NUMBER, and the wording makes clear whose
-// job it is: waiting for the lecturer, not for them.
+// The composer carries its question into the global Ask flow through a
+// consumed-once sessionStorage key (never the URL), so nothing is asked — and
+// no money spent — on a page load or a crafted link. Preserved from Phase 1.
 
 interface Props {
   eyebrow: string;
@@ -48,50 +28,21 @@ interface Props {
   onJoinCourse: () => void;
 }
 
-function plural(n: number, one: string, many: string): string {
-  return `${n} ${n === 1 ? one : many}`;
-}
-
-// The honesty sentence, in one place because it is said in three. "Nothing to
-// do" and "your lecturer has not looked yet" are different facts and a student
-// acts differently on each.
-function awaitingSentence(count: number, hasWork: boolean): string | null {
-  if (!count) return null;
-  const items = plural(count, "item is", "items are");
-  return hasWork
-    ? `${items} still waiting for your lecturer to confirm. You will see them here when they do.`
-    : `${items} waiting for your lecturer to confirm. They will appear here once confirmed.`;
-}
-
-// What the home hero suggests. Concise, real questions the global scope can
-// actually answer -- not marketing copy.
-const GLOBAL_PROMPTS = [
+const PROMPTS = [
   "Do I have anything to do?",
   "What is due next?",
-  "What should I work on?",
+  "What should I study first?",
+  "Summarise my last lecture",
 ];
 
 export default function StudentHome({ eyebrow, data, onJoinCourse }: Props) {
   const router = useRouter();
   const [draft, setDraft] = useState("");
-  const courseCount = data.courses.length;
-  const firstCourse = data.courses[0];
-
-  function subtitle(): string {
-    if (!courseCount) return "A join code from your teacher is all it takes.";
-    const courses = plural(courseCount, "course", "courses");
-    if (data.todoTotal) {
-      return `${plural(data.todoTotal, "thing", "things")} to do across ${courses}.`;
-    }
-    return `${courses}. ${plural(data.recentLecturesTotal, "lecture", "lectures")} you can revisit.`;
-  }
+  const hasCourses = data.courses.length > 0;
+  const recent = data.recentConversations ?? [];
 
   function askGlobal(question: string) {
     const q = question.trim();
-    // The question rides sessionStorage, not the URL: /ask consumes the key
-    // once on mount, so no crafted link can make the page ask (= spend) on
-    // load, and a refresh over there never re-asks. If storage is refused the
-    // page still opens and the student re-types — annoying, never costly.
     if (q) {
       try {
         sessionStorage.setItem(CARRIED_QUESTION_KEY, q);
@@ -102,371 +53,135 @@ export default function StudentHome({ eyebrow, data, onJoinCourse }: Props) {
     router.push("/ask");
   }
 
-  function onAskSubmit(event: FormEvent<HTMLFormElement>) {
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     askGlobal(draft);
   }
 
-  // STUDENT / GLOBAL ASK -- the home page's focal surface. A real search-shaped
-  // composer: a leading magnifier so it reads as "ask/search", an always-solid
-  // primary Ask affordance (never greyed into invisibility), and a scope cue
-  // that says out loud this reaches every subject. Submitting carries the
-  // question into the existing global Ask flow. With no courses there is
-  // nothing recorded to answer from, so the surface offers "join first".
-  const askHero = (
-    <div className="glass-hero rounded-2xl p-6 sm:p-7">
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center gap-2">
-          <p className="eyebrow-mono">ask classmind</p>
-          <span className="rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[11px] font-medium tracking-wide text-accent">
-            All subjects
-          </span>
-        </div>
-        <h2 className="font-display text-[1.55rem] leading-snug font-medium tracking-[-0.01em] text-ink">
-          Ask across all your classes.
-        </h2>
-        <p className="max-w-xl text-sm leading-relaxed text-ink-soft">
-          One place for every subject you&rsquo;re in &mdash; assignments, deadlines, what a
-          lecture covered. Every answer is grounded in what was actually recorded, and says
-          which subject it came from.
-        </p>
-      </div>
-
-      {firstCourse ? (
-        <>
-          <form onSubmit={onAskSubmit} className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <label htmlFor="student-ask" className="sr-only">Ask across all your subjects</label>
-            <div className="relative min-w-0 flex-1">
-              <SearchIcon
-                size={18}
-                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-faint"
-              />
-              <input
-                id="student-ask"
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                placeholder="Ask anything across your subjects…"
-                autoComplete="off"
-                className={cx(
-                  "w-full rounded-xl border border-line bg-surface-sunken/80 py-3.5 pl-11 pr-4",
-                  "text-[15px] leading-normal text-ink transition-colors",
-                  "placeholder:text-ink-faint hover:border-ink-faint/60 focus:border-accent focus:outline-none",
-                )}
-              />
-            </div>
-            <Button type="submit" tone="primary" size="lg" className="w-full shrink-0 sm:w-auto">
-              <SearchIcon size={16} />
-              Ask
-            </Button>
-          </form>
-          <div className="mt-3.5 flex flex-wrap gap-2">
-            {GLOBAL_PROMPTS.map((prompt) => (
-              <button
-                key={prompt}
-                type="button"
-                onClick={() => askGlobal(prompt)}
-                className={cx(
-                  "rounded-full border border-line px-3 py-1.5 text-[12px] text-ink-soft",
-                  "transition-colors hover:border-ink-faint/60 hover:text-ink",
-                )}
-              >
-                {prompt}
-              </button>
-            ))}
-          </div>
-        </>
-      ) : (
-        <div className="mt-5">
-          <Button tone="primary" size="lg" onClick={onJoinCourse}>
-            <KeyIcon size={17} />
-            Join a course to start asking
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-
-  if (!courseCount) {
-    return (
-      <Page>
-        <PageHeader eyebrow={eyebrow} title="Catch up" subtitle={subtitle()} />
-        {askHero}
-        <EmptyState
-          icon={<KeyIcon size={18} />}
-          title="You are not in a course yet."
-          description="Your teacher hands out one join code per course. Once you are in, everything they publish shows up here."
-          action={
-            <Button tone="secondary" onClick={onJoinCourse}>
-              Enter a code
-            </Button>
-          }
-        />
-      </Page>
-    );
-  }
-
-  const awaiting = awaitingSentence(data.awaitingReview, data.todo.length > 0);
-
   return (
     <Page>
-      <PageHeader eyebrow={eyebrow} title="Catch up" subtitle={subtitle()} />
+      {/* The greeting + the one thing to do here: ask. This block is the whole
+          top of the page on purpose — nothing competes with it. */}
+      <div className="mx-auto max-w-3xl pt-4 sm:pt-8">
+        <p className="eyebrow-mono">{eyebrow}</p>
+        <h1 className="font-display mt-3 text-[2rem] leading-[1.1] font-medium tracking-[-0.015em] text-ink sm:text-[2.6rem]">
+          What are we working on?
+        </h1>
+        <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-ink-soft">
+          Ask across everything you&rsquo;re learning — assignments, deadlines, what a lecture
+          covered. Every answer is grounded in what was actually recorded.
+        </p>
 
-      {askHero}
+        {hasCourses ? (
+          <>
+            <form onSubmit={onSubmit} className="mt-6">
+              <div className="relative">
+                <SearchIcon
+                  size={20}
+                  className="pointer-events-none absolute left-4.5 top-1/2 -translate-y-1/2 text-ink-faint"
+                />
+                <label htmlFor="home-ask" className="sr-only">
+                  Ask ClassMind anything
+                </label>
+                <input
+                  id="home-ask"
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  placeholder="Ask ClassMind anything…"
+                  autoComplete="off"
+                  className={cx(
+                    "w-full rounded-2xl border border-line bg-surface-raised py-4 pl-13 pr-28",
+                    "text-[16px] leading-normal text-ink shadow-soft transition-colors",
+                    "placeholder:text-ink-faint hover:border-ink-faint/60 focus:border-accent focus:outline-none",
+                  )}
+                />
+                <Button
+                  type="submit"
+                  tone="primary"
+                  size="md"
+                  className="absolute right-2 top-1/2 -translate-y-1/2"
+                >
+                  Ask
+                </Button>
+              </div>
+            </form>
 
-      <div className="grid gap-10 lg:grid-cols-12 lg:gap-8">
-        <div className="min-w-0 space-y-10 lg:col-span-8">
-          <Section
-            title="What you have to do"
-            description={
-              data.todo.length
-                ? "Confirmed by your lecturer, across every course you are in."
-                : undefined
-            }
-          >
-            {data.todo.length ? (
-              <>
-                <ul className="space-y-4">
-                  {data.todo.map((item) => (
-                    <li key={item.id}>
-                      <TodoCard item={item} />
-                    </li>
-                  ))}
-                </ul>
-                {data.todoTotal > data.todo.length ? (
-                  <p className="mt-4 text-[13px] text-ink-faint">
-                    Showing {data.todo.length} of {data.todoTotal}. The rest are inside their
-                    courses.
-                  </p>
-                ) : null}
-                {awaiting ? (
-                  <p className="mt-4 flex items-start gap-2 text-sm leading-relaxed text-ink-soft">
-                    <span
-                      className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-warn"
-                      aria-hidden="true"
-                    />
-                    {awaiting}
-                  </p>
-                ) : null}
-              </>
-            ) : (
-              <EmptyState
-                icon={<AssignmentIcon size={18} />}
-                title="Nothing to do right now."
-                description={
-                  awaiting ??
-                  "Nothing has been assigned in your courses. Anything your lecturer confirms will show up here."
-                }
-                action={
-                  firstCourse ? (
-                    <ButtonLink tone="ghost" size="sm" href={`/courses/${firstCourse.id}`}>
-                      Open {firstCourse.code}
-                      <ChevronRightIcon size={14} />
-                    </ButtonLink>
-                  ) : undefined
-                }
-              />
-            )}
-          </Section>
+            <div className="mt-3.5 flex flex-wrap gap-2">
+              {PROMPTS.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => askGlobal(p)}
+                  className={cx(
+                    "rounded-full border border-line px-3.5 py-1.5 text-[13px] text-ink-soft",
+                    "transition-colors hover:border-ink-faint/60 hover:text-ink",
+                  )}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          // A student with no classes has nothing recorded to ask about, so the
+          // honest first step is joining one — the composer would only answer
+          // "you're not in any classes yet".
+          <div className="mt-6">
+            <EmptyState
+              icon={<KeyIcon size={18} />}
+              title="Join your first class to get started."
+              description="Your teacher hands out one join code per class. Once you're in, ask ClassMind anything about what was taught."
+              action={
+                <Button tone="primary" onClick={onJoinCourse}>
+                  <KeyIcon size={16} />
+                  Enter a join code
+                </Button>
+              }
+            />
+          </div>
+        )}
+      </div>
 
-          {/* --- Pick up where you left off --------------------------------
-              The student's own recent conversations -- the product's memory
-              made visible. Renders ONLY when threads actually exist: an empty
-              promise band would be a dashboard card, and this screen does not
-              do those. */}
-          {data.recentConversations?.length ? (
-            <Section
-              title="Pick up where you left off"
-              description="Your conversations are saved. Open one and keep going."
-            >
-              <Card padded={false}>
-                <ul className="divide-y divide-line">
-                  {data.recentConversations.map((thread) => (
-                    <li key={thread.id}>
-                      <ConversationRow thread={thread} />
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            </Section>
-          ) : null}
-
-          {data.recentLectures.length ? (
-            <Section title="Recently added" description="Lectures you can catch up on.">
-              <Card padded={false}>
-                <ul className="divide-y divide-line">
-                  {data.recentLectures.map((lecture) => (
-                    <li key={lecture.id}>
-                      <Link
-                        href={`/courses/${lecture.courseId}/lectures/${lecture.id}`}
-                        className="row-hover flex items-center gap-4 p-4 sm:p-5"
-                      >
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[15px] font-medium text-ink">
-                            {lecture.title}
-                          </span>
-                          <span className="mt-1 block truncate text-[13px] text-ink-faint">
-                            {lecture.courseCode} &middot; added {agoLabel(lecture.createdAt)}
-                          </span>
-                        </span>
-                        <ChevronRightIcon size={18} className="shrink-0 text-ink-faint" />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-              {data.recentLecturesTotal > data.recentLectures.length ? (
-                <p className="mt-3 text-[13px] text-ink-faint">
-                  Showing {data.recentLectures.length} of {data.recentLecturesTotal}.
-                </p>
-              ) : null}
-            </Section>
-          ) : (
-            <Section title="Recently added">
-              <EmptyState
-                icon={<BookIcon size={18} />}
-                title="No lectures published yet."
-                description="When your lecturer publishes one, it appears here and you can revisit it in full."
-              />
-            </Section>
-          )}
-        </div>
-
-        <div className="min-w-0 lg:col-span-4">
-          <Section
-            id="courses"
-            title="Your courses"
-            action={
-              <Button size="sm" tone="ghost" onClick={onJoinCourse}>
-                <KeyIcon size={15} />
-                Join
-              </Button>
-            }
-          >
+      {/* Continue where you left off — the only secondary content, and only
+          when there is genuinely something to continue. */}
+      {hasCourses && recent.length > 0 ? (
+        <div className="mx-auto mt-14 max-w-3xl">
+          <Section title="Recent conversations" description="Pick up a thread where you left off.">
             <Card padded={false}>
               <ul className="divide-y divide-line">
-                {data.courses.map((course) => (
-                  <li key={course.id}>
-                    <StudentCourseRow course={course} />
+                {recent.slice(0, 4).map((thread) => (
+                  <li key={thread.id}>
+                    <ConversationRow thread={thread} />
                   </li>
                 ))}
               </ul>
             </Card>
           </Section>
         </div>
-      </div>
+      ) : null}
     </Page>
   );
 }
 
-// One obligation, whole. The steps and the "not specified" list are on the
-// card rather than one click away, because they are the difference between
-// knowing an assignment exists and knowing what it asks for — and because
-// `unspecified` is the field that stops a student inferring a deadline that
-// was never given.
-function TodoCard({ item }: { item: TodoItem }) {
-  return (
-    <Card>
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        {/* Amber means "this one is about time". If every kind were amber the
-            colour would stop meaning anything. */}
-        <StatusPill tone={item.kind === "deadline" ? "warn" : "neutral"}>
-          {kindLabel(item.kind)}
-        </StatusPill>
-        <span className="truncate text-[13px] text-ink-faint">{item.courseCode}</span>
-      </div>
-
-      <h3 className="font-display mt-3.5 text-[19px] leading-snug font-medium tracking-[-0.008em] text-balance text-ink sm:text-[21px]">
-        {item.title}
-      </h3>
-
-      {item.summary ? (
-        <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-ink-soft">{item.summary}</p>
-      ) : null}
-
-      {item.steps.length ? (
-        <ol className="mt-4 max-w-2xl space-y-2 text-[15px] leading-relaxed text-ink">
-          {item.steps.map((step, index) => (
-            <li key={index} className="flex gap-3">
-              <span className="chip-mono mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center !p-0 text-[11px] font-medium text-ink-soft">
-                {index + 1}
-              </span>
-              <span className="min-w-0">{step}</span>
-            </li>
-          ))}
-        </ol>
-      ) : null}
-
-      {/* Stated positively and never dropped: what the lecturer did NOT say is
-          information, and silence about it reads as "there is no deadline". */}
-      {item.unspecified.length ? (
-        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-ink-faint">
-          {/* Items arrive as sentences ("The deadline for the assignment.");
-              strip their final periods so the joined line reads as ONE
-              sentence instead of stuttering ".," at every comma. */}
-          Not stated in the lecture:{" "}
-          {item.unspecified.map((u) => u.replace(/\.+\s*$/, "")).join(", ")}.
-        </p>
-      ) : null}
-
-      <div className="mt-5 border-t border-line pt-4">
-        <Link
-          href={`/courses/${item.courseId}/lectures/${item.lectureId}`}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-warn hover:underline"
-        >
-          Hear where this was said
-          <ChevronRightIcon size={15} />
-        </Link>
-        <p className="mt-1.5 text-[13px] text-ink-faint">
-          {item.lectureTitle}
-          {item.lectureAt ? ` · ${agoLabel(item.lectureAt)}` : null}
-        </p>
-      </div>
-    </Card>
-  );
-}
-
 // One saved conversation, linking straight back into its own surface with the
-// thread pre-opened (?c=): a lecture thread reopens on that lecture's page, a
-// course thread on the course's Ask tab.
+// thread pre-opened (?c=): a global thread reopens on /ask, a lecture thread on
+// that lecture's page, a course thread on the course's Ask surface.
 function ConversationRow({ thread }: { thread: RecentConversation }) {
   const href =
     thread.scope === "global" || thread.courseId === null
       ? `/ask?c=${thread.id}`
       : thread.scope === "lecture" && thread.lectureId
         ? `/courses/${thread.courseId}/lectures/${thread.lectureId}?c=${thread.id}`
-        : `/courses/${thread.courseId}/ask?c=${thread.id}`;
+        : `/courses/${thread.courseId}?c=${thread.id}`;
   const where = [thread.courseCode, thread.lectureTitle].filter(Boolean).join(" · ");
   return (
     <Link href={href} className="row-hover flex items-center gap-4 p-4 sm:p-5">
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[15px] font-medium text-ink">{thread.title}</span>
         <span className="mt-1 block truncate text-[13px] text-ink-faint">
-          {where} &middot; {agoLabel(thread.lastMessageAt)}
+          {where ? `${where} · ` : ""}
+          {agoLabel(thread.lastMessageAt)}
         </span>
-      </span>
-      <ChevronRightIcon size={18} className="shrink-0 text-ink-faint" />
-    </Link>
-  );
-}
-
-function StudentCourseRow({ course }: { course: OverviewCourse }) {
-  const meta = [termLabel(course.term), plural(course.lectureCount, "lecture", "lectures")]
-    .filter((part): part is string => Boolean(part))
-    .join(" · ");
-
-  return (
-    <Link
-      href={`/courses/${course.id}`}
-      className="row-hover flex items-center gap-4 p-4 sm:p-5"
-    >
-      <span className="min-w-0 flex-1">
-        <span className="line-clamp-2 block text-[15px] text-ink">
-          <span className="font-medium">{course.code}</span>
-          <span className="text-ink-soft"> {course.title}</span>
-        </span>
-        {meta ? (
-          <span className="mt-1 block truncate text-[13px] text-ink-faint">{meta}</span>
-        ) : null}
       </span>
       <ChevronRightIcon size={18} className="shrink-0 text-ink-faint" />
     </Link>
