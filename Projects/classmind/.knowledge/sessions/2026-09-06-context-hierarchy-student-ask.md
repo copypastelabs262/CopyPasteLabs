@@ -119,6 +119,37 @@ Sarvam: 0. Every other check in the milestone was free by construction.
 2. Google OAuth click-throughs (carried, still open): allowlist
    `http://localhost:3500/**` in Supabase Auth, one Google signup per role.
 
+## Addendum (same day) — home Ask composer was present but not legible
+
+Operator reported they could not see the Ask bar on Home. Investigation
+(a Playwright geometry probe at all three viewports, since Chrome automation
+was off) showed the composer WAS in the DOM, visible and above the fold — the
+milestone docs were right that it existed — but two real legibility defects
+made it read as a decorative banner, not a search bar:
+
+1. **The Ask button was `secondary` tone (glass, `background: transparent`)
+   until the field had text** — computed `bg rgba(0,0,0,0)`. No visible submit
+   affordance at rest. Now always `primary` (solid accent), so the button is
+   the screen's obvious action from first paint.
+2. **On mobile the input was crushed to ~185px** because the button sat inline
+   in the same flex row. The form now stacks (`flex-col sm:flex-row`); the
+   input is full-width (~292px on a 390px screen) with a full-width Ask button
+   beneath.
+
+Also: a leading magnifier inside the field so it reads as search, an "All
+subjects" accent pill as the scope cue, an action-shaped heading ("Ask across
+all your classes."), and the stale header comment ("that panel is a DOOR, not
+a form — asking happens inside a course") corrected — it has been a real
+global composer since this milestone.
+
+No behavior changed: the flow probe confirmed a Home submit reaches `/api/ask`
+**exactly once**, the question is consumed once (sessionStorage cleared), a
+refresh does **not** re-ask, the response `usage` is null ($0 direct route, no
+Gemini), and the subject/lecture ask composers are untouched. tsc/eslint/build
+clean; test:ask/answer/conversations 79/69/27. So the milestone docs' claim
+that "the home hero is a real composer" was accurate but incomplete — it
+worked, it just wasn't legible as one; corrected here.
+
 ## Not done, on purpose
 
 The Adaptive Answer Experience milestone was explicitly out of scope and was
