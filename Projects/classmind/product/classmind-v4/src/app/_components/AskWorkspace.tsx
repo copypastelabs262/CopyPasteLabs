@@ -103,17 +103,22 @@ export default function AskWorkspace({
   suggestions,
   bottomInset = 0,
   withSidebar = false,
+  resumeLatest = false,
 }: {
   /** The STUDENT scope: the whole accessible academic world, from /ask. The
    *  server enumerates the boundary from the session; this flag only picks
    *  the endpoints and the wording. */
   global?: boolean;
-  /** The chat-first workspace (global /ask): an AskSidebar drives the active
-   *  conversation through the URL (?c=), so this pane hides its own Recent/New
-   *  bar, reacts to ?c= changes to switch or start fresh, and opens to an empty
-   *  new chat rather than auto-resuming the most recent thread. Course and
-   *  lecture Ask keep their embedded, mount-only behavior (withSidebar=false). */
+  /** A sidebar (a rail on /ask and the course tab, a drawer on the lecture)
+   *  drives the active conversation through the URL (?c=), so this pane hides
+   *  its own Recent/New bar and reacts to ?c= changes to switch or start fresh.
+   *  Without it (the legacy embedded surfaces) the Recent/New bar is shown. */
   withSidebar?: boolean;
+  /** With a sidebar, whether opening the surface RESUMES the most recent thread
+   *  (the lecture: a narrow, continuous context) or opens an empty new chat
+   *  (global/course: broad surfaces where a new topic is the usual next move).
+   *  Only meaningful alongside `withSidebar`; ?c= always wins over both. */
+  resumeLatest?: boolean;
   /** Present on the lecture page: scopes every ask to this lecture. */
   lectureId?: string;
   /** Present on the lecture page: carries onSeek so citations move the player. */
