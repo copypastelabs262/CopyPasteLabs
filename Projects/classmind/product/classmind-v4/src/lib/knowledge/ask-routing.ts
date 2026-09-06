@@ -79,6 +79,16 @@ export function classifyForDirect(question: string, hits: KnowledgeUnit[]): Dire
   // Two question marks is two questions; the model gets both.
   if ((q.match(/\?/g) ?? []).length > 1) return null;
 
+  // "Which lecture covered X?" is a LOOKUP OF WHERE, not a syllabus request:
+  // the honest answer names the lecture, and only the model (reading the
+  // per-unit lecture labels) can do that. A topics dump that merely contains
+  // the syllabus is a lazy non-answer -- the 2026-09-06 scope eval caught it.
+  if (/\bwhich\s+lectures?\b/i.test(q)) return null;
+  // Comparative deadline questions ("which one is due first?") need the model
+  // to actually COMPARE the recorded timing facts; re-listing the assignments
+  // answers a different question than the one asked.
+  if (/\b(first|next|soonest|earliest|last)\b/i.test(q) && /\bdue\b/i.test(q)) return null;
+
   const mentionsWork = WORK_NOUN.test(q);
   const actionableInPlay = mentionsWork || hits.some((u) => u.category === "actionable");
 

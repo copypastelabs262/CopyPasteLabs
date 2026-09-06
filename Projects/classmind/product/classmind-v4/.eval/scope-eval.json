@@ -1,0 +1,66 @@
+{
+  "at": "2026-09-06T11:43:17.382Z",
+  "totals": {
+    "calls": 1,
+    "prompt": 1396,
+    "completion": 139
+  },
+  "turns": [
+    {
+      "label": "G1-workload",
+      "path": "/api/ask",
+      "question": "What do I need to work on?",
+      "route": "model",
+      "usage": {
+        "promptTokens": 1396,
+        "completionTokens": 139
+      },
+      "latency": 2150,
+      "conversation": "bbd051cb-95e0-452d-ae94-71e9906a021b",
+      "answer": "The knowledge units provided do not list any assignments, upcoming tests, or specific items you need to work on. \n\nWhat is stored instead is the lecture record covering core cloud computing concepts, including **control software** [1], physical **resource categories** [2], **dynamic memory allocation** [3], **virtual storage provisioning** [4], and data movement techniques like **cache tiering** and **dynamic VM load balancing** [5]. \n\nIf you want to focus your study time based on these topics, I recommend starting with **dynamic memory allocation** [3] and **cache tiering** [5], as they involve specific optimization mechanisms that are great to master first.",
+      "sourceCourses": [
+        "5ab749fb-d4fd-42fc-85ba-b9de82fe1dcf"
+      ]
+    },
+    {
+      "label": "G2-followup",
+      "path": "/api/ask",
+      "question": "Which one is due first?",
+      "route": "direct",
+      "usage": null,
+      "latency": 572,
+      "conversation": "bbd051cb-95e0-452d-ae94-71e9906a021b",
+      "answer": "2 assignments/tasks are recorded:\n### Test1 · Robotics & Automation\n[1] Transformation Assignment — Complete the derivation of Transformation, two coordinate transformation matrix step by step, write it five times, and submit it next week.\n### Test2 · Cloud Computing\n[2] Research Paper and Project Implementation — Students must find a current research paper topic, implement it, and deploy the resulting project to the cloud.",
+      "sourceCourses": [
+        "6a8484f7-be19-4044-b725-8d66efdfaa4a",
+        "5ab749fb-d4fd-42fc-85ba-b9de82fe1dcf"
+      ]
+    },
+    {
+      "label": "G3-isolation",
+      "path": "/api/ask",
+      "question": "Which lecture covered G.711?",
+      "route": "direct",
+      "usage": null,
+      "latency": 505,
+      "conversation": "9b2e71ff-9dfa-421f-adc3-0078294b1497",
+      "answer": "The stored lecture knowledge covers:\nTest1 · Robotics & Automation — Robotics and Automation trial: [1] Transformation Matrix · [2] Derivation of Transformation\nTest2 · Cloud Computing — WhatsApp: [3] Control Layer · [4] Key Functions of the Control Layer · [5] Control Software · [6] Element Manager versus Unified Manager · [7] Unified Manager Features and Capabilities · [8] Key Phases in Provisioning\n…and 16 more under the Lectures tab.",
+      "sourceCourses": [
+        "6a8484f7-be19-4044-b725-8d66efdfaa4a",
+        "5ab749fb-d4fd-42fc-85ba-b9de82fe1dcf"
+      ]
+    },
+    {
+      "label": "S1-subject-wide",
+      "path": "/api/courses/5ab749fb-d4fd-42fc-85ba-b9de82fe1dcf/ask",
+      "question": "Which lecture covered cache scaling?",
+      "route": "direct",
+      "usage": null,
+      "latency": 359,
+      "answer": "The stored lecture knowledge covers:\nWhatsApp: [1] Control Layer · [2] Key Functions of the Control Layer · [3] Control Software · [4] Element Manager versus Unified Manager · [5] Unified Manager Features and Capabilities · [6] Key Phases in Provisioning · [7] Resource Categories and Components · [8] Resource Pool Management\n…and 14 more under the Lectures tab.",
+      "sourceCourses": [
+        "5ab749fb-d4fd-42fc-85ba-b9de82fe1dcf"
+      ]
+    }
+  ]
+}
