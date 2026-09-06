@@ -103,10 +103,12 @@ every step short. Do not dump everything at once; the sequence IS the teaching.
 After the final step, one sentence tying the steps back into the whole.`,
 
   compare: `SHAPE: a comparison the student can hold onto. One sentence on what
-each thing is, then the differences that actually matter, organised by the few
-dimensions that distinguish them (a compact list or table-like structure is
-fine). Say when you'd use one over the other if the units or sound reasoning
-support it. Do not manufacture differences the material doesn't support.`,
+each thing is, then the differences that actually matter. Compare ONLY on
+dimensions where the material says something about BOTH sides -- if it is
+silent on one side, drop that dimension entirely; a gap in the notes is never
+a property of the concept. Never state the same difference twice in different
+words: two real differences beat four padded ones. Close with when you'd
+reach for each, if the material or sound reasoning supports it.`,
 
   why: `SHAPE: answer the "why" directly -- purpose, motivation, or cause,
 whichever the question is really asking. Name the problem that exists without
