@@ -98,6 +98,14 @@ export interface DirectAnswer {
   usedUnits: KnowledgeUnit[];
 }
 
+// Cross-subject attribution for GLOBAL asks: courseId -> "CODE · Title".
+// When present, listings group by subject so "what assignments do I have?"
+// reads as a per-subject overview instead of a heap -- still $0, still
+// composed purely from stored fields.
+export interface DirectAttribution {
+  courseNames?: Map<string, string>;
+}
+
 // How many units a direct listing will cite before pointing at the tabs
 // instead. A wall of sources is the lecture page, not an answer.
 const LIST_CAP = 8;
