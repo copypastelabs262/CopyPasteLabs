@@ -101,7 +101,7 @@ for (const item of QUESTIONS) {
     provider: usage?.provider ?? null, model: usage?.model ?? null,
     promptTokens: usage?.promptTokens ?? null, completionTokens: usage?.completionTokens ?? null,
     latencyMs: wall, degraded: body.degraded ?? null,
-    historySent: history.length > 0,
+    historySent,
     answerChars: answer.length,
     answer,
   });
