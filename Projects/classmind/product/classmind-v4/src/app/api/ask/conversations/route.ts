@@ -1,14 +1,16 @@
 import { NextResponse } from "next/server";
-import { requireUser, errorResponse } from "@/lib/auth";
+import { requireUser, requireRole, errorResponse } from "@/lib/auth";
 import { serviceClient } from "@/lib/supabase/service";
 import { listConversations } from "@/lib/knowledge/conversations";
 
 // The caller's own GLOBAL conversations -- the home surface's threads, and
 // only those. Lecture and subject threads live under their courses; scopes
-// never bleed into each other's listings.
+// never bleed into each other's listings. Role-shaped like /api/ask itself:
+// the two halves of one surface refuse a role-less account identically.
 export async function GET() {
   try {
     const user = await requireUser();
+    requireRole(user);
     const listed = await listConversations(serviceClient(), user.id, { global: true });
     return NextResponse.json({
       state: listed.state,
