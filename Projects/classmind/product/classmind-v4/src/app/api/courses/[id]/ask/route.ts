@@ -133,7 +133,12 @@ async function handleAsk(courseId: string, input: AskInput) {
   // scripts/test-replay-gate.mts asserts. Filtering the SOURCES afterwards
   // would be the wrong shape: the model would already have read the unit.
   const units = await readKnowledge({ courseId, lectureId, forStudent: !isOwner });
-  const result = await answerFromKnowledge(units, q, { history: input.history });
+  // Stored history is the truth when a conversation is in play; client history
+  // is only the ephemeral fallback shape. Both are conversational CONTEXT --
+  // retrieval above is the academic grounding, and neither replaces the other.
+  const result = await answerFromKnowledge(units, q, {
+    history: storedHistory ?? input.history,
+  });
 
   // Metered before it is returned, $0 routes included -- "which questions
   // cost nothing" is half of what the meter is for. Awaited (one insert),
