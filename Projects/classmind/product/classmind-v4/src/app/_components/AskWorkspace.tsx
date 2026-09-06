@@ -95,12 +95,17 @@ function messagesToTurns(messages: StoredMessage[]): Turn[] {
 }
 
 export default function AskWorkspace({
+  global = false,
   lectureId,
   nav: navOverride,
   intro,
   suggestions,
   bottomInset = 0,
 }: {
+  /** The STUDENT scope: the whole accessible academic world, from /ask. The
+   *  server enumerates the boundary from the session; this flag only picks
+   *  the endpoints and the wording. */
+  global?: boolean;
   /** Present on the lecture page: scopes every ask to this lecture. */
   lectureId?: string;
   /** Present on the lecture page: carries onSeek so citations move the player. */
@@ -111,10 +116,22 @@ export default function AskWorkspace({
    *  so the composer sits above it instead of underneath it. */
   bottomInset?: number;
 } = {}) {
-  const { courseId } = useClassData();
+  // Inside the class shell the provider names the class; on /ask there is no
+  // shell and no class — the global boundary is the server's to enumerate.
+  const classData = useClassDataMaybe();
+  const courseId = global ? null : (classData?.courseId ?? null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedId = searchParams.get("c");
+  // A question carried in from another surface (the home hero): asked once,
+  // as a FRESH thread — the student typed something new, not a continuation.
+  const carriedQuestion = requestedId ? null : searchParams.get("q");
+  const autoAsked = useRef(false);
+
+  const askEndpoint = global ? "/api/ask" : `/api/courses/${courseId}/ask`;
+  const listEndpoint = global
+    ? "/api/ask/conversations"
+    : `/api/courses/${courseId}/conversations${lectureId ? `?lectureId=${encodeURIComponent(lectureId)}` : ""}`;
 
   const [turns, setTurns] = useState<Turn[]>([]);
   const [draft, setDraft] = useState("");
