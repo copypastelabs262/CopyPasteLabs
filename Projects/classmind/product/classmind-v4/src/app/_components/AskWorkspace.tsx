@@ -278,6 +278,9 @@ export default function AskWorkspace({
   async function ask(question: string) {
     const text = question.trim();
     if (!text || asking) return;
+    // A class surface without its provider is a wiring bug; refuse quietly
+    // rather than fetch /api/courses/null/ask.
+    if (!global && !courseId) return;
     const id = nextId.current++;
     const persistent = storeState === "ok";
     // Ephemeral fallback only: the visible exchange rides along, exactly the
