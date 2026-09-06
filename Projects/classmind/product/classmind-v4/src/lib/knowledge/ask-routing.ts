@@ -119,7 +119,9 @@ export function composeDirectAnswer(
   intent: DirectIntent,
   units: KnowledgeUnit[],
   hits: KnowledgeUnit[],
+  attribution?: DirectAttribution,
 ): DirectAnswer | null {
+  const courseNames = attribution?.courseNames;
   switch (intent) {
     case "assignments": {
       // Listed from ALL visible units, not the term-matched hits: "any
@@ -140,6 +142,26 @@ export function composeDirectAnswer(
         work.length === 1
           ? "One assignment is recorded:"
           : `${work.length} assignments/tasks are recorded:`;
+      // GLOBAL: grouped by subject, so the answer reads as an overview of the
+      // student's academic world. Each subject's recorded work under its own
+      // heading; a subject with nothing recorded is simply absent -- absence
+      // of a heading is honest, inventing "nothing due!" is not.
+      if (courseNames) {
+        const bySubject = new Map<string, string[]>();
+        cited.forEach((u, i) => {
+          const key = courseNames.get(u.courseId) ?? "Another subject";
+          if (!bySubject.has(key)) bySubject.set(key, []);
+          bySubject.get(key)!.push(line(u, i + 1));
+        });
+        return {
+          answer: [
+            head,
+            ...[...bySubject.entries()].flatMap(([subject, lines]) => [`### ${subject}`, ...lines]),
+            ...(rest > 0 ? [`…and ${rest} more inside their subjects.`] : []),
+          ].join("\n"),
+          usedUnits: cited,
+        };
+      }
       return {
         answer: [
           head,
