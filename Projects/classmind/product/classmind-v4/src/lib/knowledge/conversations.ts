@@ -206,17 +206,17 @@ export async function appendExchange(
     content: answer.content,
     payload: answer.payload,
   });
-  if (answerError) return { state: "unavailable", note: answerError.message };
+  if (answerError) return { state: "unavailable", note: answerError.message, title };
 
   const patch: Record<string, unknown> = { last_message_at: new Date().toISOString() };
-  if (conversation.title === DEFAULT_TITLE) patch.title = deriveConversationTitle(question);
+  if (title !== conversation.title) patch.title = title;
   const { error: touchError } = await svc
     .from("conversations")
     .update(patch)
     .eq("id", conversation.id)
     .eq("owner_id", ownerId);
-  if (touchError) return { state: "unavailable", note: touchError.message };
-  return { state: "ok", note: null };
+  if (touchError) return { state: "unavailable", note: touchError.message, title };
+  return { state: "ok", note: null, title };
 }
 
 export async function deleteConversation(
