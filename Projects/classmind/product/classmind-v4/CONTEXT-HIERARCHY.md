@@ -120,9 +120,9 @@ affected either way.
 - `test:ask` (79) — routing vetoes, grouped direct attribution, retrieval pins.
 - `test:answer` (69) — scope labels in the grounding, SUBJECTS line,
   truncation caveat, FACTS-vs-RECOMMENDATIONS contract.
-- `verify:conversations` (47, live, $0 by construction) — all three
+- `verify:conversations` (48, live, $0 by construction) — all three
   boundaries visible in sources, global listing/persist/resume/follow-up,
   scope-borrowing 404s both directions, stranger 404s, GET-405,
-  un-enrollment source withholding, meter honesty, cleanup.
+  un-enrollment source withholding, global meter recording, cleanup.
 - Paid eval (`.eval/scope-eval.json`) — one deliberate pass + one retry after
   fixes; 5 model calls, 8,510 tokens total for the milestone.
