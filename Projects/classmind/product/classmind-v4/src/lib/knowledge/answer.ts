@@ -130,6 +130,17 @@ const mmss = (ms: number): string => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
 
+// Where an answer is allowed to look, and therefore what each unit must be
+// LABELLED with. A lecture-scoped answer needs no labels (everything is this
+// lecture); a subject-scoped answer names the lecture each fact came from
+// ("which lecture covered X" is a real question); a global answer names the
+// subject AND the lecture, because a cross-subject fact without its subject
+// is a fact from nowhere.
+export interface AnswerContext {
+  scope: "lecture" | "course" | "global";
+  courseNames?: Map<string, string>;
+}
+
 // At most this many units reach the prompt; retrieval already ranks them.
 const MAX_UNITS = 8;
 // The lecturer's own words, per unit. Two spans is grounding; ten is a
