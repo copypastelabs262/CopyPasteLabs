@@ -65,6 +65,10 @@ export default function TeacherHome({
 }: Props) {
   const courseCount = data.courses.length;
   const attentionCount = data.reviewQueueTotal + data.blockedTotal;
+  // Owned (taught) vs enrolled-as-a-student: two relationships the rail keeps
+  // in separate groups rather than one list. Presentation only.
+  const owned = data.courses.filter((c) => c.isOwner);
+  const enrolled = data.courses.filter((c) => !c.isOwner);
 
   // A lecture in the attention block must not reappear below it. The same
   // fact twice at the same weight is how a reader stops trusting sections to
