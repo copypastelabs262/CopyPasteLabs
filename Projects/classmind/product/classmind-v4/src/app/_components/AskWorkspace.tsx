@@ -140,12 +140,19 @@ export default function AskWorkspace({
   const chips = suggestions ?? SUGGESTIONS;
 
   return (
-    // The column owns the full remaining viewport so the composer's sticky
-    // bottom edge has something to stick to on short conversations too.
-    <div className="flex min-h-[62vh] flex-col">
+    // The column claims enough viewport for the composer's sticky bottom edge
+    // to mean something -- the full tab on the course Ask page, a calmer share
+    // on the lecture page, where other sections live below. The empty state
+    // centers in that room instead of leaving a hollow gap above the composer,
+    // and everything keeps clearance so nothing renders UNDER the sticky bar
+    // at first paint.
+    <div className={cx("flex flex-col", lectureId ? "min-h-[44vh]" : "min-h-[62vh]")}>
       {/* aria-live so a screen reader hears the answer arrive without having
           to re-walk the page; polite, because the student just asked for it. */}
-      <div className="flex-1" aria-live="polite">
+      <div
+        className={cx("flex-1 pb-6", turns.length === 0 && "flex flex-col justify-center")}
+        aria-live="polite"
+      >
         {turns.length === 0 ? (
           <Intro
             onAsk={(q) => void ask(q)}
