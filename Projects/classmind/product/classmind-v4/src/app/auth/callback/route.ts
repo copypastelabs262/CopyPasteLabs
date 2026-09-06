@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { authClient } from "@/lib/supabase/server";
+import { serviceClient } from "@/lib/supabase/service";
 import { ensureProfile } from "@/lib/profile";
 import { parseRole, PENDING_ROLE_COOKIE } from "@/lib/profile-role";
 import { safeNext } from "@/lib/safe-next";
