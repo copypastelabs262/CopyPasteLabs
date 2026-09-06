@@ -638,6 +638,14 @@ export default function LectureClient({
       </Section>
       ) : null}
 
+      {/* --- Move through the course ---------------------------------------
+          A student works through a course in order; this is the one step that
+          would otherwise send them back to the list and in again. Chronological
+          (the direction the course was taught), among only the lectures they
+          can actually open, self-hiding at the ends and when there is nowhere
+          to go. */}
+      <LecturePager courseId={courseId} lectureId={lectureId} />
+
       {/* --- Removing a mistake --------------------------------------------- */}
       {isOwner ? (
         <div className="border-t border-line pt-8">
@@ -650,6 +658,57 @@ export default function LectureClient({
         </div>
       ) : null}
     </Page>
+  );
+}
+
+// PREVIOUS / NEXT, from the list the shell already holds -- no fetch of its own.
+// The course payload lists lectures newest-first; a course is TAUGHT oldest-
+// first, so chronological order is reversed here and "Next" is the lecture
+// recorded after this one. The list in context is already scoped to the course
+// and, for a student, already filtered to what they may open, so stepping
+// through it never lands on a lecture they cannot see. Each side is labelled
+// with its destination, so "Next" is never a mystery.
+function LecturePager({ courseId, lectureId }: { courseId: string; lectureId: string }) {
+  const cls = useClassDataMaybe();
+  if (!cls || cls.loading) return null;
+  const chrono = [...cls.lectures].reverse();
+  const idx = chrono.findIndex((l) => l.id === lectureId);
+  if (idx === -1) return null;
+  const prev = idx > 0 ? chrono[idx - 1] : null;
+  const next = idx < chrono.length - 1 ? chrono[idx + 1] : null;
+  if (!prev && !next) return null;
+
+  const side =
+    "group flex flex-col gap-1 rounded-xl border border-line px-4 py-3 transition-colors hover:border-ink-faint/60";
+  return (
+    <nav aria-label="Lectures in this course" className="mt-2 border-t border-line pt-8">
+      <div className="grid gap-3 sm:grid-cols-2">
+        {prev ? (
+          <Link href={`/courses/${courseId}/lectures/${prev.id}`} className={side}>
+            <span className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-faint">
+              ← Previous
+            </span>
+            <span className="truncate text-sm text-ink-soft transition-colors group-hover:text-ink">
+              {prev.title}
+            </span>
+          </Link>
+        ) : (
+          <span aria-hidden="true" />
+        )}
+        {next ? (
+          <Link href={`/courses/${courseId}/lectures/${next.id}`} className={cx(side, "sm:text-right")}>
+            <span className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-faint">
+              Next →
+            </span>
+            <span className="truncate text-sm text-ink-soft transition-colors group-hover:text-ink">
+              {next.title}
+            </span>
+          </Link>
+        ) : (
+          <span aria-hidden="true" />
+        )}
+      </div>
+    </nav>
   );
 }
 
