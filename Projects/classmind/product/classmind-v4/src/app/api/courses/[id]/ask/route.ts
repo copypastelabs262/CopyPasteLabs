@@ -263,7 +263,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    let body: { question?: unknown; lectureId?: unknown; history?: unknown } = {};
+    let body: {
+      question?: unknown;
+      lectureId?: unknown;
+      history?: unknown;
+      conversationId?: unknown;
+      persist?: unknown;
+    } = {};
     try { body = await request.json(); } catch { /* handled by the blank-q check */ }
     // History is validated structurally here and capped hard in answer.ts --
     // it is client-supplied conversation CONTEXT, never trusted instructions.
@@ -277,6 +283,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       q: typeof body.question === "string" ? body.question : "",
       lectureId: typeof body.lectureId === "string" ? body.lectureId : undefined,
       history,
+      conversationId: typeof body.conversationId === "string" ? body.conversationId : undefined,
+      persist: body.persist === true,
     });
   } catch (err) {
     const { body, status } = errorResponse(err);
