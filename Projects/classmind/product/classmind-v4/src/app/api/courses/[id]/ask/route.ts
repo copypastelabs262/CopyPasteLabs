@@ -5,6 +5,7 @@ import { serviceClient } from "@/lib/supabase/service";
 import { answerFromKnowledge, type AskTurn } from "@/lib/knowledge/answer";
 import { recordAskRun } from "@/lib/knowledge/ask-meter";
 import {
+  contextMatches,
   messagesToHistory,
   planConversationContext,
 } from "@/lib/knowledge/conversation-model";
