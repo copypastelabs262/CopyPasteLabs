@@ -8,6 +8,10 @@ import CoursesClient from "@/app/_components/CoursesClient";
 export default async function CoursesPage() {
   const user = await currentUser();
   if (!user) redirect("/signin");
+  // An account that never chose a role has nothing to render here -- faculty
+  // and student see different screens, and guessing which is the exact bug
+  // this redirect closes. The chooser sends them straight back.
+  if (!user.role) redirect("/choose-role");
 
   // Only the three fields the screen actually renders or branches on. Passing
   // the whole SessionUser would put the account id into the HTML of every page
