@@ -7,6 +7,37 @@ Entries are snapshots of what was true when written and are never rewritten. Whe
 resolves something an earlier one recorded as blocked, the earlier line gets a dated marker
 pointing forward — it does not get edited away.
 
+## 2026-09-06 (VI) — Phase 1 & 2 closure: leftovers audited and closed
+
+Swept the codebase, migrations, roadmap and session logs for Phase 1/2 leftovers and
+closed the legitimate ones. **DONE this pass:** confirmed via live DB that the global-meter
+migration `20260906180000` — and in fact every Phase-0/1 migration (`20260903100000`,
+`20260906090000`, `20260906150000`, `20260830160000`, and even the design-phase
+`20260830140000`) — is **APPLIED**; corrected the now-false "NOT APPLIED" banners on the four
+in active use and the stale HUMAN-ONLY "apply migration" lines in CONVERSATIONS.md and
+roadmap.md (they were making DONE work read as pending). Fixed the faculty **course grouping**:
+the teaching home's "Your courses" rail now groups **Teaching** vs **Enrolled as a student**
+instead of one mixed list — presentation only, no membership/permission change.
+
+**HUMAN ACTION REQUIRED (unchanged, carried):** the Google OAuth click-throughs — add
+`http://localhost:3500/**` (and the production domain) to the Supabase Auth redirect allowlist,
+then sign up once via Google as Student and once as Faculty (faculty needs the institution
+code). The codebase is verified ready: the Google path uses the same server-side gate proven
+by `verify:faculty-gate` (16/16) on the email/password path; a new Google user with no role is
+routed to `/choose-role`, an existing one straight to `/courses`.
+
+**DEFERRED (intentional, not incomplete):** durable cross-instance rate limiting (the faculty
+code keeps a documented best-effort in-instance throttle); route-level `loading.tsx` (client
+skeletons are intentional); the hardening backlog (course-ask GET cross-site refusal, bound
+`readKnowledge`, per-user ask rate limit); thread rename/delete UI, streaming; the design-phase
+audio-identity/background-reconstruction features; and the pre-launch consent/data-protection
+position. **FUTURE PHASE:** the persistent chat system (Phase 3).
+
+This closure sits on the two prior local commits — **Phase 1** (`e80be01`: server-side faculty
+gate that fixed the Student→Faculty default from the 2026-09-02 backlog, truthful lecture
+states, owned-only faculty lecture scope, upload routing) and **Phase 2** (`87f8723`: the app
+shell + drawer nav, Ask-first home, My Classes, Profile, course-landing-is-Ask). Nothing pushed.
+
 ## 2026-09-06 (IV) — Context Hierarchy + Student Ask V1: one architecture, three boundaries
 
 **Done, 8,510 Gemini tokens (~₹0.12), 0 Sarvam.** Architecture doc:
