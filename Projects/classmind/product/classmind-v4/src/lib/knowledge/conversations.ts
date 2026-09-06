@@ -217,7 +217,7 @@ export async function appendExchange(
     content: answer.content,
     payload: answer.payload,
   });
-  if (answerError) return { state: "unavailable", note: answerError.message, title };
+  if (answerError) return { state: "unavailable", note: degradeNote(answerError), title };
 
   const patch: Record<string, unknown> = { last_message_at: new Date().toISOString() };
   if (title !== conversation.title) patch.title = title;
