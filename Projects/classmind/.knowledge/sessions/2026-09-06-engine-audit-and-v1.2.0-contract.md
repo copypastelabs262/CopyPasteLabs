@@ -171,8 +171,46 @@ human verdict and spends money, so it is the operator's call, not a side effect.
 (19 actionable windows across A+B, 0 failures) but no actionable item has been stored
 fresh under v1.2.0 yet. The optional Robotics step above is the observation.
 
-**Session spend (final): Gemini 35,296 tokens** (29,723 prompt + 5,573 completion,
+**Session spend (after A+B): Gemini 35,296 tokens** (29,723 prompt + 5,573 completion,
 `gemini-3.5-flash-lite`, two runs, ≈ $0.005). **Sarvam: 0 calls**, ~90 credits
 untouched. Two $0 direct-route asks metered as health checks. Engine verdict: READY —
 within the named limits (no semantic segmentation/embeddings, 36-minute request-path
 ceiling, term-overlap retrieval).
+
+## Addendum 3 (same day): audience verified END-TO-END — the extraction-engine proof
+
+Operator approved the surgical completion step. Executed exactly as scoped:
+
+1. Recorded the confirmed assignment `d07f214d` in full (also in the committed
+   snapshot), then flipped ONLY its status confirmed→pending (one row, one column,
+   guarded update). The 2026-09-02 verdict is thereby deliberately re-opened — the
+   fresh item goes back to the review queue for a new verdict.
+2. One forced re-extraction (ledger `748c39af`): 7/7 windows, 0 retries, **5,270 +
+   1,023 = 6,293 tokens**, 38.2 s, `forced=true`, old ledger rows untouched.
+3. **The chain holds, every link observed**: Gemini returned
+   `audience: "Shyam, Shiv aur dusra ye Darshan"` (verbatim in `model_raw`) → stored in
+   `knowledge_items.audience` on the fresh assignment `96749c92` (status pending) →
+   served by readKnowledge → retrieved → **owner Ask "Who is the assignment for?" →
+   route direct, provider null, tokens null, $0**, answer ends "— for: Shyam, Shiv aur
+   dusra ye Darshan", no gap wording. The wording is the lecturer's own (transcript:
+   "Okay, so, Shyam, ye Shiv aur dusra ye Darshan") — not normalized, not invented.
+4. Duplicate check: exactly ONE assignment item; old row replaced, not duplicated.
+   Student Ask correctly routes to model with an honest gap while the item is pending
+   (students never see unconfirmed actionable knowledge) — that call billed 440+45
+   tokens and is metered; the audience answer reaches students the moment the operator
+   re-confirms the item.
+5. **For the re-review**: the fresh reading gained the audience but this pass worded
+   the rest slightly differently — title "Derivation of Transformation Assignment",
+   three steps instead of four (lost "write it five times"), and the deadline landed in
+   `unspecified` although the lecturer said "Next week". The old confirmed wording is
+   preserved in `.knowledge/baselines/2026-09-06-gemini-1.1.0-knowledge-baseline-
+   87a4a143.json` and in this log — worth restoring those details via edit-on-confirm.
+   Same-model variance between runs, caught exactly where the product design says it
+   should be: in the review queue, before students see it.
+
+**v1.2.0 audience contract: GENUINELY VERIFIED END-TO-END.**
+
+**Final session spend: Gemini 42,074 tokens** (A 28,804 + B 6,492 + forced C 6,293 +
+one student model-ask 485) ≈ **$0.006**. **Sarvam: 0 calls.** Free tests re-run after:
+ask 70/70, reconstruction 63/63, auth 25/25. No code changed in this step — DB state
+only; working tree clean.
