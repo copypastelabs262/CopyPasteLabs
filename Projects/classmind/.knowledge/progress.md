@@ -7,6 +7,36 @@ Entries are snapshots of what was true when written and are never rewritten. Whe
 resolves something an earlier one recorded as blocked, the earlier line gets a dated marker
 pointing forward — it does not get edited away.
 
+## 2026-09-06 (III) — Persistent Conversations V1: the product grows a memory
+
+**Done, 0 Gemini tokens** (every live verification rides direct $0 routes by
+construction). Architecture doc: `product/classmind-v4/CONVERSATIONS.md`; session log
+[`sessions/2026-09-06-persistent-conversations-v1.md`](sessions/2026-09-06-persistent-conversations-v1.md).
+
+Conversations are now real: stored (`conversations` + `conversation_messages`,
+migration `20260906150000` — WRITTEN, NOT APPLIED), owned (ownership in every query on
+top of RLS-with-zero-policies; cross-user reads/continues/deletes are identical 404s),
+resumable (?c= deep links, most-recent auto-resume, refresh/navigation-proof), and
+scoped ('lecture'/'course' live, 'global' representable — the Global Ask foundation:
+one scope model, the same canonical knowledge, no second layer). Threads are created
+by their first question, never a page visit; titles derive deterministically; the
+server's stored thread is the model's conversational context while retrieval keeps
+grounding every question; assistant messages persist their provenance (route +
+sources) so resumed threads render exactly what was shown — and stored sources are
+re-gated on read, so quarantine/replay verdicts are never bypassed by old threads.
+Student home gained "Pick up where you left off" (real threads only, visibility-
+filtered, no fake analytics).
+
+An adversarial security review found no cross-user hole and six hardening items —
+all fixed same-session (course-access recheck + source re-gating on resume,
+overview visibility filter, listing course pin, UUID validation with safe error
+notes, wrong-lecture 409 instead of silent correction, client latch/URL-encoding).
+**510 offline checks green** (483 + 27 new), tsc/eslint/build clean, degraded live
+contract 4/4. Autosave re-confirmed LOCAL-ONLY (32 unpushed checkpoints; nothing
+published this milestone). **HUMAN-ONLY next: apply `20260906150000`, then
+`verify:conversations` (full contract, $0) and one small paid multi-turn eval; the
+Google OAuth click-throughs also still stand.**
+
 ## 2026-09-06 (later) — Answers that teach, the chat-first lecture page, and deliberate publishing
 
 **Done, ~32K Gemini tokens (~₹0.5), 0 Sarvam.** Full record in
