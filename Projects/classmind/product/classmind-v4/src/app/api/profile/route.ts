@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import { requireUser, errorResponse } from "@/lib/auth";
 import { serviceClient } from "@/lib/supabase/service";
 import { parseRole } from "@/lib/profile-role";
+import {
+  verifyFacultyCode,
+  facultyCodeConfigured,
+  facultyAttemptBlocked,
+  recordFacultyFailure,
+  clearFacultyAttempts,
+} from "@/lib/faculty-code";
 
 // Creates the caller's own profile row, or updates their name. Never takes a
 // user id from the request body -- it uses the session, so one account cannot
