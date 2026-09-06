@@ -4,6 +4,16 @@ import { readKnowledge } from "@/lib/knowledge/read";
 import { serviceClient } from "@/lib/supabase/service";
 import { answerFromKnowledge, type AskTurn } from "@/lib/knowledge/answer";
 import { recordAskRun } from "@/lib/knowledge/ask-meter";
+import {
+  messagesToHistory,
+  planConversationContext,
+} from "@/lib/knowledge/conversation-model";
+import {
+  appendExchange,
+  createConversation,
+  getConversation,
+  type ConversationRow,
+} from "@/lib/knowledge/conversations";
 
 // LAYER 4 -- a student asks a question of the course's memory.
 //
