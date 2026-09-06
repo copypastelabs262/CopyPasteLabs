@@ -86,7 +86,7 @@ ephemeral contract and its footnote says answers aren't being saved.
 
 ## Deliberately deferred
 
-- Global conversations UI/route (foundation only, above).
+- ~~Global conversations UI/route~~ — built the same day (CONTEXT-HIERARCHY.md).
 - Renaming threads; deleting from the UI (API exists; a destructive control
   needs its own confirm pass).
 - Per-user conversation quotas / rate limiting (product-wide concern, not a
