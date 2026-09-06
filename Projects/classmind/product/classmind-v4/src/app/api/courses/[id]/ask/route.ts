@@ -62,6 +62,14 @@ async function handleAsk(courseId: string, input: AskInput) {
 
   const q = input.q.trim();
   if (!q) return NextResponse.json({ error: "Ask a question." }, { status: 400 });
+  // A question is a question, not a document. The cap bounds the prompt AND
+  // the stored student message; the meter separately caps its own copy at 500.
+  if (q.length > 4_000) {
+    return NextResponse.json(
+      { error: "That question is too long. Ask it in a shorter form." },
+      { status: 400 },
+    );
+  }
 
   // ---- The stored conversation, when one is named --------------------------
   //
