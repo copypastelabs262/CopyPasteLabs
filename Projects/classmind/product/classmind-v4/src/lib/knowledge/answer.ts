@@ -166,7 +166,11 @@ function renderHistory(turns: AskTurn[]): string {
 export async function answerFromKnowledge(
   units: KnowledgeUnit[],
   question: string,
-  opts?: { history?: AskTurn[] },
+  // `injectedProvider` exists for the same reason reconstructLecture's does:
+  // without it, none of this layer's properties -- intent shaping the prompt,
+  // history reaching the model, a failure degrading to the listing -- can be
+  // checked without spending money. Production passes nothing.
+  opts?: { history?: AskTurn[]; injectedProvider?: ReasoningProvider },
 ): Promise<GroundedAnswer> {
   const started = Date.now();
   const done = (a: Omit<GroundedAnswer, "durationMs">): GroundedAnswer => ({
