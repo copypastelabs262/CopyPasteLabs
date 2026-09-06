@@ -42,7 +42,9 @@ export function UserMenu({
 }: {
   email: string | null;
   fullName: string | null;
-  role: "faculty" | "student";
+  // Null while the account has not chosen a role yet (mid-onboarding, headed
+  // to /choose-role) -- the menu still has to render on that page.
+  role: "faculty" | "student" | null;
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
