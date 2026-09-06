@@ -137,7 +137,6 @@ export default function LectureClient({
   const jumpTo = tParam === null || tParam === "" ? null : Number(tParam);
 
   const [lecture, setLecture] = useState<Lecture | null>(null);
-  const [course, setCourse] = useState<CourseHead | null>(null);
   const [segments, setSegments] = useState<TranscriptSegment[]>([]);
   const [rawFallback, setRawFallback] = useState<unknown>(null);
   // Layer-1 detections are no longer a review surface, and no longer a line on
