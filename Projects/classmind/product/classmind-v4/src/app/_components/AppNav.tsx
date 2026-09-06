@@ -53,12 +53,6 @@ export default function AppNav({
     return pathname === item.href || pathname.startsWith(`${item.href}/`);
   };
 
-  // Close on route change so a tap in the drawer doesn't leave it hanging open
-  // over the page it just navigated to.
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
-
   // Escape closes and returns focus; a focus trap keeps Tab inside the open
   // drawer; the body doesn't scroll behind it. All three only exist while open.
   useEffect(() => {
