@@ -482,6 +482,29 @@ console.log("\n--- AUTHORIZATION: the shape of the route sources ---");
   check(/MAX_SUMMARY/.test(review) && /status: 400/.test(review), "oversized edits are refused at the write path");
 }
 {
+  // The raw provider response is the whole verbatim transcript plus provider
+  // metadata. Its gate was `transcript === null` with no isOwner term, so any
+  // transcript this codebase could not normalize handed all of it to an
+  // enrolled student.
+  const lecture = source("src/app/api/lectures/[id]/route.ts");
+  check(
+    /isOwner && transcript === null \? lecture\.raw_transcription_response/.test(lecture),
+    "the raw provider response is owner-only, not merely normalization-gated",
+  );
+}
+{
+  // ?error= is rendered on the sign-in page and set from an unauthenticated
+  // query parameter. React escapes it (no XSS), but unbounded attacker text on
+  // your own sign-in page is a phishing surface.
+  const cb = source("src/app/auth/callback/route.ts");
+  check(/MAX_ERROR_CHARS/.test(cb), "the reflected sign-in error is length-bounded");
+  check(
+    /replace\(\/\[\\r\\n\]\+\/g/.test(cb),
+    "the reflected sign-in error is collapsed to one line",
+  );
+  check(/HOSTNAME\.test\(forwardedHost\)/.test(cb), "x-forwarded-host must look like a host");
+}
+{
   const core = source("src/lib/rate-limit-core.ts");
   check(
     !/import .* from/.test(core),

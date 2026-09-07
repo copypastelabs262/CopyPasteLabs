@@ -131,10 +131,25 @@ export async function GET(_r: Request, { params }: { params: Promise<{ id: strin
         completedAt: lecture.completed_at, recordedOn: lecture.recorded_on,
       },
       isOwner, audioUrl, transcript,
-      // Surfaced only when normalization failed, so an unrecognised provider
-      // shape is visible rather than rendering as an empty transcript.
+      // OWNER ONLY (2026-09-07, security audit). Surfaced when normalization
+      // failed, so an unrecognised provider shape is visible rather than
+      // rendering as an empty transcript.
+      //
+      // The gate used to be `transcript === null` alone, with no isOwner term.
+      // That is a diagnostic for whoever has to fix the provider shape -- the
+      // lecturer or the operator -- but the condition it fires on is not rare
+      // or hostile-only: any transcript this codebase cannot normalize hands
+      // the ENTIRE raw provider response to an enrolled student, which is the
+      // full verbatim transcript plus the provider's own metadata (job ids,
+      // model identifiers, timing, diarization internals).
+      //
+      // The route header two hundred lines above already states the rule this
+      // line broke: "This is the ONLY route that serves a transcript, the raw
+      // provider response and a signed audio URL, so it is the route where a
+      // replayed lecture leaks the most." Everything else in the payload is
+      // gated on isOwner or on the student gate; this one field was not.
       rawTranscriptionResponse:
-        transcript === null ? lecture.raw_transcription_response : null,
+        isOwner && transcript === null ? lecture.raw_transcription_response : null,
       candidates, reviews,
       // Non-zero means an older extraction version produced rows that are not
       // being shown. Surfaced rather than silently dropped.

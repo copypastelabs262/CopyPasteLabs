@@ -34,9 +34,25 @@ function requestOrigin(request: NextRequest): string {
   return `${proto}://${forwardedHost}`;
 }
 
+// The sign-in page renders whatever lands in ?error=, and this function is what
+// puts it there -- from `error_description`, a query parameter on an
+// unauthenticated endpoint that anyone can set to anything.
+//
+// React escapes it, so this is not XSS: SignInForm interpolates it as a text
+// child (`{error}`), never as markup or an attribute, and I verified there is no
+// dangerouslySetInnerHTML anywhere in the tree. What it IS is an unbounded
+// attacker-controlled string on the product's own sign-in page, reachable by a
+// link -- which is a phishing surface ("Your session expired. Email
+// support@..."), and, unbounded, a way to make that page render megabytes.
+//
+// Bounded and single-lined (2026-09-07, security audit). Provider errors are
+// short sentences; nothing legitimate is lost.
+const MAX_ERROR_CHARS = 300;
+
 function bounceToSignIn(origin: string, message: string): NextResponse {
   const signIn = new URL("/signin", origin);
-  signIn.searchParams.set("error", message);
+  const safe = message.replace(/[\r\n]+/g, " ").trim().slice(0, MAX_ERROR_CHARS);
+  signIn.searchParams.set("error", safe || "Sign-in did not complete. Please try again.");
   return NextResponse.redirect(signIn);
 }
 

@@ -305,7 +305,23 @@ Honest list. None of these is a known cross-user data leak.
    at all. Several migration files are also headed "NOT APPLIED" while the live
    project demonstrably has those tables, so the files cannot be trusted as a
    record of what is deployed.
-9. **Nothing here has been verified against an authenticated live session.**
+9. **Every build writes live API keys into `.next/cache` in cleartext.**
+   Turbopack's persistent cache stores the environment values it resolved, and
+   it does so again on every build -- deleting the cache is housekeeping, not a
+   fix. `.next` is git-ignored, so this is NOT published; what remains is that
+   `.env.local` was deliberately kept out of the repo while the same values sit
+   in an artefact nobody thinks of as secret. Zipping the project, uploading a
+   CI artifact, or enabling a shared/remote build cache carries live Sarvam and
+   Gemini keys off the machine. Treat `.next` as secret-bearing.
+   `npm run verify:build-secrets` reports it, and asserts the thing that must
+   never happen: no server secret in `.next/static` (the client bundle).
+10. **`announcement` and `guidance` still publish to students without review.**
+   The gate now fails closed on an *unrecognised* kind, which was the security
+   defect, and `exam_scope` is now gated. These two remain ungated because that
+   matches the original product intent (a professor cannot review thirty items
+   per lecture). If an "announcement" can move an exam date, revisit it -- that
+   is a product call about review burden.
+11. **Nothing here has been verified against an authenticated live session.**
    Every finding and every fix was established by reading code, by offline tests,
    by live *unauthenticated* requests to a local production build, and by a
    read-only check of the live storage configuration (`npm run verify:storage`,
@@ -317,10 +333,11 @@ Honest list. None of these is a known cross-user data leak.
 ## 8. Running the checks
 
 ```
-npm run test:security     # 179 offline security regressions. Free.
+npm run test:security     # 193 offline security regressions. Free.
 npm run test:auth         # role-selection contract
 npm run test:faculty      # the faculty gate
 npm run verify:storage    # live, read-only, free: is the lecture bucket private?
+npm run verify:build-secrets  # free: is a server secret in the client bundle?
 npx tsc --noEmit && npx eslint src/
 ```
 
