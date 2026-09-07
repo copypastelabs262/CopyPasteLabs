@@ -400,13 +400,28 @@ console.log("\n--- AUTHORIZATION: the shape of the route sources ---");
   ];
   for (const [file, bucket] of paid) {
     const s = source(file);
-    check(
-      s.includes("enforceMemoryLimit"),
-      `${file} enforces a rate limit`,
+    check(s.includes("enforceMemoryLimit"), `${file} enforces a rate limit`);
+    check(s.includes(`LIMITS.${bucket}`), `${file} uses the ${bucket} budget`);
+    // PRESENCE IS NOT ORDERING. The two checks above pass identically if the
+    // limiter were called AFTER the provider, which is the only thing that
+    // actually matters. Assert the limiter precedes the spend.
+    const body = stripComments(s);
+    const limiter = body.indexOf("enforceMemoryLimit");
+    const spend = Math.min(
+      ...[
+        "reconstructLecture(",
+        "provider.submit(",
+        "answerFromKnowledge(",
+        "svc.storage",
+      ]
+        .map((needle) => body.indexOf(needle))
+        .filter((i) => i >= 0)
+        .concat([Number.MAX_SAFE_INTEGER]),
     );
     check(
-      s.includes(`LIMITS.${bucket}`),
-      `${file} uses the ${bucket} budget`,
+      limiter >= 0 && limiter < spend,
+      `${file}: the limiter runs BEFORE the expensive call`,
+      { limiter, spend },
     );
   }
 }
@@ -418,9 +433,21 @@ console.log("\n--- AUTHORIZATION: the shape of the route sources ---");
     /finally\s*\{\s*releaseClaim/.test(extract),
     "the release is in a finally -- a throw must not lock the lecture forever",
   );
+  // The property is "assigned AFTER the acquire", so compare against the
+  // ASSIGNMENT, not against the declaration. The original compared
+  // `acquireClaim(...)` to `const claimKey`, which is true however the
+  // assignment is ordered -- it named a property it did not check.
   check(
-    extract.indexOf("acquireClaim(claimKey") > extract.indexOf("const claimKey"),
+    extract.indexOf("claim = claimKey") > extract.indexOf("acquireClaim(claimKey"),
     "the claim key is assigned only after a successful acquire",
+    {
+      acquire: extract.indexOf("acquireClaim(claimKey"),
+      assign: extract.indexOf("claim = claimKey"),
+    },
+  );
+  check(
+    /CLAIM_TTL_MS/.test(source("src/lib/rate-limit-core.ts")),
+    "the single-flight claim expires, so a platform hard-kill cannot lock a lecture forever",
   );
   check(
     extract.includes("MAX_WINDOWS_PER_PASS"),
@@ -505,6 +532,47 @@ console.log("\n--- AUTHORIZATION: the shape of the route sources ---");
   check(/HOSTNAME\.test\(forwardedHost\)/.test(cb), "x-forwarded-host must look like a host");
 }
 {
+  // NO TEST CREDENTIAL MAY BE A LITERAL IN THIS TREE.
+  //
+  // The password for faculty.test@ and student.test@ was a literal in 17 files
+  // here and ~50 tracked at HEAD in a PUBLIC repo. Both accounts are now absent
+  // from the live project (verified 2026-09-07) -- but six suites RE-CREATE them
+  // on failure (scripts/e2e.mts:105-107 signs in, then admin.createUser), so a
+  // literal here re-arms a published faculty credential on the next test run.
+  // This sweep is what stops the next one being added.
+  const tree: string[] = [];
+  const walk = (dir: string) => {
+    for (const e of readdirSync(new URL(`../${dir}/`, import.meta.url), { withFileTypes: true })) {
+      if (["node_modules", ".next", ".git", ".auth"].includes(e.name)) continue;
+      const rel = `${dir}/${e.name}`;
+      if (e.isDirectory()) walk(rel);
+      else if (/\.(mts|ts|tsx|json|md|sh|mjs)$/.test(e.name)) tree.push(rel);
+    }
+  };
+  for (const top of ["scripts", "design-loop", "src"]) {
+    try { walk(top); } catch { /* absent is fine */ }
+  }
+  // The needle is BUILT, not written. A scanner that contains the string it
+  // searches for reports itself -- which is exactly what happened the first time
+  // this ran, and is the same self-match that made the comment-stripping helper
+  // above necessary.
+  const needle = ["Class", "Mind", "Test!"].join("");
+  const offenders = tree.filter((f) => {
+    try { return source(f).includes(needle); } catch { return false; }
+  });
+  check(offenders.length === 0, "no hardcoded test-account password anywhere in the tree", offenders);
+
+  const helper = source("scripts/_test-credentials.mts");
+  check(
+    /process\.env\.CLASSMIND_TEST_PASSWORD/.test(helper),
+    "the test credential is read from the environment",
+  );
+  check(
+    !/=\s*["'][^"']{6,}["']\s*;?\s*$/m.test(helper.split("export function testPassword")[1] ?? ""),
+    "...with NO fallback default (a default is a published credential again)",
+  );
+}
+{
   const core = source("src/lib/rate-limit-core.ts");
   check(
     !/import .* from/.test(core),
@@ -525,6 +593,34 @@ console.log("\n--- AUTHORIZATION: the shape of the route sources ---");
     /revoke all on all tables in schema public from anon, authenticated/.test(migration),
     "anon/authenticated lose the blanket table grants",
   );
+}
+{
+  // The hardening migration's own defects, found by an independent review of it.
+  // Each of these was a statement that would have succeeded, changed nothing,
+  // and read in the diff exactly like a fix.
+  const m = source("supabase/migrations/20260907120000_security_hardening.sql");
+  check(
+    (m.match(/from public, anon, authenticated/g) ?? []).length === 3,
+    "function EXECUTE is revoked from anon and authenticated, not only from PUBLIC " +
+      "(Supabase's default privileges give them their own direct ACL entry)",
+  );
+  check(
+    /revoke all on functions from anon, authenticated/.test(m),
+    "the default-privileges loop covers FUNCTIONS, not just tables and sequences",
+  );
+  check(
+    !/^revoke all on all tables in schema public/m.test(m),
+    "the table/sequence revokes are inside an exception handler, so a missing " +
+      "role cannot abort the whole migration",
+  );
+  check(/raise exception/.test(m), "the migration asserts its own post-condition");
+  check(
+    (m.match(/set search_path = ''/g) ?? []).length === 3,
+    "search_path is pinned on all three reconstruction functions",
+  );
+  const opens = (m.match(/do \$\$/g) ?? []).length;
+  const closes = (m.match(/end \$\$;/g) ?? []).length;
+  check(opens === closes && opens > 0, "every DO block is closed", { opens, closes });
 }
 {
   // Every table in every migration must have RLS enabled. This is the single

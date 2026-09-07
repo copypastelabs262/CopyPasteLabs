@@ -411,6 +411,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
       const usageKnown = (reconstruction?.callsWithUsage ?? 0) > 0;
       const recorded = await recordRun(runKey, {
+        // requireCourseOwner above already proved this user owns the course, so
+        // the owner and the caller are the same person here.
+        ownerId: user.id,
         outcome,
         complete,
         calls: reconstruction?.calls ?? 0,

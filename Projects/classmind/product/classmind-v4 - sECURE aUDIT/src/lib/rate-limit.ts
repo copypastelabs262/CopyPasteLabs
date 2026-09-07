@@ -177,6 +177,30 @@ export async function billedRunsInWindow(
   try {
     const { serviceClient } = await import("@/lib/supabase/service");
     const svc = serviceClient();
+    const since0 = new Date(now - windowMs).toISOString();
+
+    // PREFERRED: count by owner_id, which migration 20260907130000 adds.
+    //
+    // The fan-out below reconstructs "this user's spend" by listing the courses
+    // they own -- which breaks in two ways the owner_id column does not. It
+    // fails OPEN if the id list grows large enough to break the query, and it
+    // misses entirely once course_id can be null (which is the whole point of
+    // that migration: a ledger row must survive the deletion of the thing it
+    // billed for, and a deleted course used to take its own bill with it).
+    //
+    // Degrades to the old path while the migration is unapplied, in the same
+    // shape as every other optional-column reader in this codebase.
+    const byOwner = await svc
+      .from("processing_runs")
+      .select("id", { count: "exact", head: true })
+      .eq("owner_id", userId)
+      .neq("outcome", "reused")
+      .gte("created_at", since0);
+    if (!byOwner.error) return byOwner.count ?? 0;
+    if (!missingSchema(byOwner.error.message)) {
+      console.error("[rate-limit] owner_id run count failed:", byOwner.error.message);
+    }
+
     const { data: courses, error: courseError } = await svc
       .from("courses")
       .select("id")
@@ -189,7 +213,7 @@ export async function billedRunsInWindow(
       console.error("[rate-limit] owned-course lookup failed:", courseError.message);
       return null;
     }
-    const ids = (courses ?? []).map((c) => c.id as string);
+    const ids = (courses ?? []).map((c) => c.id as string).slice(0, LEDGER_COURSE_FANOUT_CAP);
     if (!ids.length) return 0;
 
     const since = new Date(now - windowMs).toISOString();
@@ -243,6 +267,20 @@ export const GLOBAL_LIMITS = {
   transcriptionsPerHour: 60,
 } as const;
 
+// How many owned courses the ledger reads will fan out over.
+//
+// Both durable counters select every course the user owns and pass the ids to
+// `.in(...)`, which PostgREST sends as a GET query string. Unbounded, a user
+// with a few thousand courses produces a request line long enough to fail --
+// and BOTH counters return null on failure, which every caller treats as ALLOW.
+// So an uncapped fan-out is a deliberate route to disabling the durable quota.
+//
+// The same shape is already capped at 12 in academic-context.ts for the same
+// reason. Higher here because this bounds a cost check rather than a read, and
+// a lecturer with more courses than this should still be counted over most of
+// them; the cap is about keeping the QUERY valid, not about fairness.
+const LEDGER_COURSE_FANOUT_CAP = 200;
+
 /** Deployment-wide billed asks in the window. Null when the meter is unavailable. */
 export async function globalBilledAsks(
   windowMs: number,
@@ -251,10 +289,21 @@ export async function globalBilledAsks(
   try {
     const { serviceClient } = await import("@/lib/supabase/service");
     const since = new Date(now - windowMs).toISOString();
+    // 'model' ONLY, unlike the per-user quota above.
+    //
+    // The per-user quota counts 'degraded' too, deliberately: an attempt is a
+    // cost until proven otherwise, and over-counting your OWN budget is safe.
+    // Applying that to the DEPLOYMENT-WIDE ceiling is not, because answer.ts
+    // returns route:"degraded" when no provider is configured at all and NO
+    // call is made. On a build with the keys absent every ask is a $0 degraded
+    // row -- so thirteen free Google accounts could exhaust a 500-row ceiling
+    // and refuse every ask for every user for an hour, at zero cost to
+    // themselves. A ceiling that an attacker can fill for free is a denial of
+    // service with extra steps.
     const { count, error } = await serviceClient()
       .from("ask_runs")
       .select("id", { count: "exact", head: true })
-      .in("route", ["model", "degraded"])
+      .eq("route", "model")
       .gte("created_at", since);
     if (error) {
       if (!missingSchema(error.message)) {
@@ -324,7 +373,7 @@ export async function transcriptionsInWindow(
       console.error("[rate-limit] transcription ledger: course lookup failed:", courseError.message);
       return null;
     }
-    const ids = (courses ?? []).map((c) => c.id as string);
+    const ids = (courses ?? []).map((c) => c.id as string).slice(0, LEDGER_COURSE_FANOUT_CAP);
     if (!ids.length) return 0;
     const since = new Date(now - windowMs).toISOString();
     const { count, error } = await svc
@@ -356,16 +405,47 @@ export async function enforceTranscriptionQuota(
   }
 }
 
+/** Deployment-wide transcription submissions in the window. */
+export async function globalTranscriptions(
+  windowMs: number,
+  now: number = Date.now(),
+): Promise<number | null> {
+  try {
+    const { serviceClient } = await import("@/lib/supabase/service");
+    const since = new Date(now - windowMs).toISOString();
+    const { count, error } = await serviceClient()
+      .from("lectures")
+      .select("id", { count: "exact", head: true })
+      .neq("status", "pending_upload")
+      .gte("created_at", since);
+    if (error) {
+      if (!missingSchema(error.message)) {
+        console.error("[rate-limit] global transcription ledger unreadable:", error.message);
+      }
+      return null;
+    }
+    return count ?? 0;
+  } catch {
+    return null;
+  }
+}
+
 /** Throws when the DEPLOYMENT has spent past its hourly ceiling. */
 export async function enforceGlobalSpendCeiling(
-  kind: "ask" | "run",
+  kind: "ask" | "run" | "transcription",
   now: number = Date.now(),
 ): Promise<void> {
   const windowMs = 60 * 60 * 1000;
+  // GLOBAL_LIMITS.transcriptionsPerHour was declared here and never read -- a
+  // constant that made the file look like it bounded ASR deployment-wide when
+  // nothing did. ASR is the most expensive path in the product (billed per hour
+  // of audio) and was the only one with no aggregate bound at all.
   const [used, ceiling, what] =
     kind === "ask"
       ? [await globalBilledAsks(windowMs, now), GLOBAL_LIMITS.billedAsksPerHour, "billed question"]
-      : [await globalPaidRuns(windowMs, now), GLOBAL_LIMITS.paidRunsPerHour, "processing"];
+      : kind === "transcription"
+        ? [await globalTranscriptions(windowMs, now), GLOBAL_LIMITS.transcriptionsPerHour, "transcription"]
+        : [await globalPaidRuns(windowMs, now), GLOBAL_LIMITS.paidRunsPerHour, "processing"];
   if (used !== null && used >= (ceiling as number)) {
     console.error(
       `[rate-limit] GLOBAL ${kind.toUpperCase()} CEILING REACHED: ${used}/${ceiling} in the last ` +

@@ -13,6 +13,7 @@
     "setup:db": "node --env-file=.env.local scripts/setup-storage.mts",
     "verify:storage": "node --env-file=.env.local scripts/verify-storage-security.mts",
     "verify:build-secrets": "node scripts/verify-build-secrets.mts",
+    "redteam:auth": "node --env-file=.env.local scripts/redteam-authenticated.mts",
     "test:ask": "node --conditions=react-server scripts/test-ask.mts",
     "test:answer": "node --conditions=react-server scripts/test-answer-intent.mts",
     "test:conversations": "node scripts/test-conversation-model.mts",

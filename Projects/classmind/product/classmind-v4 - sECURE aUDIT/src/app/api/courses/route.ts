@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireUser, requireFaculty, errorResponse, dbFailure } from "@/lib/auth";
+import { enforceMemoryLimit, LIMITS } from "@/lib/rate-limit";
 import { serviceClient } from "@/lib/supabase/service";
 
 // Courses the user owns, plus courses they are enrolled in. One route, because
@@ -67,6 +68,11 @@ export async function POST(request: Request) {
   try {
     const user = await requireUser();
     requireFaculty(user);
+    // Unbounded course creation is a route to disabling the durable spend
+    // quotas: both count by fanning out over the caller's owned courses, and
+    // a large enough set makes that query fail -- which both counters treat as
+    // ALLOW. The fan-out is capped too; this bounds the other end.
+    enforceMemoryLimit("course-create", user.id, LIMITS.courseCreate, "course creation");
     const body = (await request.json()) as {
       code?: string; title?: string; term?: string; transcriptionLanguage?: string;
     };

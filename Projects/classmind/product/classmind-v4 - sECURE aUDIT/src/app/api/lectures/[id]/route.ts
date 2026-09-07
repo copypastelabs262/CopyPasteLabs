@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireUser, requireCourseAccess, requireCourseOwner, errorResponse } from "@/lib/auth";
+import { enforceMemoryLimit, LIMITS } from "@/lib/rate-limit";
 import { serviceClient } from "@/lib/supabase/service";
 import { normalizeRawTranscript } from "@/lib/transcript/normalize";
 import { LECTURE_BUCKET } from "@/lib/storage";
@@ -192,6 +193,19 @@ export async function DELETE(_r: Request, { params }: { params: Promise<{ id: st
     // action where getting the authorization check wrong destroys data rather
     // than leaking it.
     await requireCourseOwner(lecture.course_id as string, user);
+
+    // DELETION IS A COST CONTROL, NOT JUST A DATA ACTION (2026-09-07, closure
+    // pass). processing_runs and ask_runs both reference lectures ON DELETE
+    // CASCADE, so removing a lecture erases the very rows the durable spend
+    // quotas count -- including the deployment-wide ceilings. Unlimited, that
+    // made the "durable, cannot be reset by spreading requests" layer resettable
+    // by an ordinary product action: extract to the limit, delete, repeat.
+    //
+    // Bounding deletion bounds the reset. The proper fix is a ledger that
+    // outlives what it billed for; that needs a migration and is written as
+    // 20260907130000_ledger_durability.sql. This is the half that works today.
+    enforceMemoryLimit("lecture-delete-burst", user.id, LIMITS.deleteBurst, "deletion");
+    enforceMemoryLimit("lecture-delete", user.id, LIMITS.delete, "deletion");
 
     const { data: candidates } = await svc
       .from("extraction_candidates").select("id").eq("lecture_id", id);

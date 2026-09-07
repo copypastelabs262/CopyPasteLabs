@@ -58,10 +58,18 @@ So the audit question for any new code is never "is RLS on?" It is: **name the
 line that proves this caller may touch this row.** If you cannot name it, it is
 not there.
 
-The 2026-09-07 migration (`20260907120000_security_hardening.sql`) revokes the
-blanket `anon`/`authenticated` grants that a stock Supabase project applies to
-`public`, so a future table created without RLS is unreachable rather than
-world-readable. That is a safety net for a mistake, not a change to the model.
+The 2026-09-07 migration (`20260907120000_security_hardening.sql`) would revoke
+the blanket `anon`/`authenticated` grants that a stock Supabase project applies
+to `public`, so a future table created without RLS would be unreachable rather
+than world-readable. **It is not applied**, and there is no documented deploy
+step that applies migrations at all — so today that safety net does not exist.
+
+What DOES hold today, verified live against the real project on 2026-09-07 by
+`npm run redteam:auth`: the anon key and a genuine authenticated user JWT each
+read **zero rows** from all 16 product tables, cannot UPDATE a profile role,
+cannot INSERT a course, get nothing from the `lecture_identity_conflicts` view,
+and get nothing from the reconstruction RPCs. RLS-with-zero-policies is doing
+the work, exactly as designed.
 
 ---
 
@@ -78,8 +86,14 @@ world-readable. That is a safety net for a mistake, not a change to the model.
 
 The role is read from `profiles`, never from the request. A missing profile is
 `role: null` — a real state that routes to `/choose-role`, never a default.
-`profiles.role` has **no** database default as of 2026-09-07; an insert that
-omits it fails loudly rather than creating a faculty account.
+
+`profiles.role` **still carries a database default of `'faculty'`.** Dropping it
+is section 1 of `20260907120000_security_hardening.sql`, which is written and
+**not applied** — so this is PENDING, not done. It is not currently exploitable:
+both writers name the column explicitly (`ensureProfile`, `POST /api/profile`)
+and the audit traced every call site. It is loaded rather than firing. Saying it
+was fixed while the migration sits unapplied would repeat the exact drift this
+audit found three times over — a comment describing an intention as a state.
 
 Session cookies (`src/lib/supabase/cookie-options.ts`): `Secure` in production,
 `SameSite=Lax`, 30-day life. `httpOnly` is **false** and cannot be changed — the
@@ -321,23 +335,31 @@ Honest list. None of these is a known cross-user data leak.
    matches the original product intent (a professor cannot review thirty items
    per lecture). If an "announcement" can move an exam date, revisit it -- that
    is a product call about review burden.
-11. **Nothing here has been verified against an authenticated live session.**
-   Every finding and every fix was established by reading code, by offline tests,
-   by live *unauthenticated* requests to a local production build, and by a
-   read-only check of the live storage configuration (`npm run verify:storage`,
-   which passes). Authenticated end-to-end verification needs Google OAuth,
-   which needs a human.
+11. **The security-hardening migration is not applied**, and cannot be applied
+   from here: this machine has no Docker, no psql and no local Postgres, and the
+   Supabase project is not linked. Applying it needs a human with the SQL editor
+   or a database password. Until then, sections 1-4 of it are intent, not state.
+
+*(The previous entry here -- "nothing has been verified against an authenticated
+live session" -- is closed. `npm run redteam:auth` now creates four throwaway
+accounts through the real API, exercises cross-user isolation, privilege
+escalation, conversation ownership, AI authorization, spend limits, storage and
+live RLS, and deletes everything it made. 139 assertions, 0 failures.)*
 
 ---
 
 ## 8. Running the checks
 
 ```
-npm run test:security     # 193 offline security regressions. Free.
+npm run test:security     # offline security regressions. Free.
 npm run test:auth         # role-selection contract
 npm run test:faculty      # the faculty gate
 npm run verify:storage    # live, read-only, free: is the lecture bucket private?
 npm run verify:build-secrets  # free: is a server secret in the client bundle?
+npm run redteam:auth      # AUTHENTICATED red team. Free, but LIVE: it creates and
+                          # deletes four throwaway accounts in the real project.
+                          # Start the server with the provider keys BLANK first:
+                          #   GEMINI_API_KEY= SARVAM_API_KEY= npx next start -p 3599
 npx tsc --noEmit && npx eslint src/
 ```
 

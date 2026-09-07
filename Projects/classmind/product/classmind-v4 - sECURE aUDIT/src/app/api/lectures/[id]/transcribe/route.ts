@@ -1,7 +1,12 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { requireUser, requireCourseOwner, errorResponse, dbFailure } from "@/lib/auth";
-import { enforceMemoryLimit, enforceTranscriptionQuota, LIMITS } from "@/lib/rate-limit";
+import {
+  enforceMemoryLimit,
+  enforceTranscriptionQuota,
+  enforceGlobalSpendCeiling,
+  LIMITS,
+} from "@/lib/rate-limit";
 import { serviceClient } from "@/lib/supabase/service";
 import { LECTURE_BUCKET } from "@/lib/storage";
 import {
@@ -115,6 +120,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     // to survive scale-out. Counted from `lectures` -- see the note on
     // transcriptionsInWindow for why that table is the ledger ASR never got.
     await enforceTranscriptionQuota(user.id);
+    // ASR is billed per HOUR OF AUDIO -- the largest single-request bill in
+    // the product -- and was the only paid path with no deployment-wide bound.
+    await enforceGlobalSpendCeiling("transcription");
 
     if (lecture.status !== "pending_upload" && lecture.status !== "uploaded") {
       return NextResponse.json({ error: `Lecture is ${lecture.status}; nothing to submit.` }, { status: 409 });

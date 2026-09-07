@@ -42,6 +42,16 @@ export const LIMITS = {
   // 32-bit space. Unlimited guessing at network speed walks into other people's
   // courses; twenty an hour does not.
   enroll: { max: 20, windowMs: 60 * 60 * 1000 } as Limit,
+  // Deleting a lecture cascades away its processing_runs and ask_runs rows, so
+  // deletion resets the durable spend counters. Bounding it bounds the reset.
+  // Generous for real use -- removing a wrong upload is a normal thing to do a
+  // few times in a sitting, not sixty times an hour.
+  delete: { max: 10, windowMs: 60 * 60 * 1000 } as Limit,
+  deleteBurst: { max: 3, windowMs: 60 * 1000 } as Limit,
+  // Both durable ledgers fan out over the caller's owned courses; enough courses
+  // breaks that query, and a broken query fails OPEN. A lecturer creates a
+  // handful of courses a term.
+  courseCreate: { max: 25, windowMs: 60 * 60 * 1000 } as Limit,
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -117,21 +127,41 @@ export function checkMemoryLimit(
 // concurrent starts. Closing it properly needs a claim row with a unique key
 // and a lease, in the shape reconstruction_windows already uses; that is a
 // schema change and is recorded as remaining work rather than half-done here.
-const inFlight = new Set<string>();
+// key -> when it was taken. A TIMESTAMP, not a flag.
+//
+// THE CLAIM MUST EXPIRE (2026-09-07, closure pass). The first version was a
+// Set, released only in the caller's `finally`. That is correct for every path
+// that returns or throws -- and wrong for the one that matters: the extract
+// route declares `maxDuration = 300`, MAX_WINDOWS_TOTAL is calibrated at "~300s,
+// at the limit", so hitting the platform's kill is a NORMAL outcome for a long
+// lecture, not an exotic one. A hard kill does not run `finally`. The claim then
+// survived for the life of the instance and every subsequent extract of that
+// lecture answered 409 forever -- the cost guard turned into an outage on
+// exactly the lectures most likely to need a retry.
+//
+// The lease is longer than maxDuration so it never cuts a live run short, and
+// short enough that a killed run frees the lecture on the next attempt.
+const CLAIM_TTL_MS = 360_000;
 
-export function claimHeld(key: string): boolean {
-  return inFlight.has(key);
+const inFlight = new Map<string, number>();
+
+function live(takenAt: number | undefined, now: number): boolean {
+  return takenAt !== undefined && now - takenAt < CLAIM_TTL_MS;
+}
+
+export function claimHeld(key: string, now: number = Date.now()): boolean {
+  return live(inFlight.get(key), now);
 }
 
 /**
- * Takes an exclusive in-process claim. Returns false if it is already held.
- * ALWAYS pair a true return with releaseClaim in a `finally` -- a failed run
- * that never releases would lock the resource until the instance restarts,
- * turning a cost guard into an outage.
+ * Takes an exclusive in-process claim, or returns false if a LIVE one is held.
+ * A claim older than CLAIM_TTL_MS is treated as abandoned and taken over.
+ * ALWAYS pair a true return with releaseClaim in a `finally`; the TTL is the
+ * backstop for the kill that never reaches one, not a substitute for it.
  */
-export function tryAcquireClaim(key: string): boolean {
-  if (inFlight.has(key)) return false;
-  inFlight.add(key);
+export function tryAcquireClaim(key: string, now: number = Date.now()): boolean {
+  if (live(inFlight.get(key), now)) return false;
+  inFlight.set(key, now);
   return true;
 }
 

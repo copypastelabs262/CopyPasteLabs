@@ -310,6 +310,18 @@ async function handleAsk(courseId: string, input: AskInput) {
   });
 }
 
+// HEAD IS NOT A FREE GET HERE (2026-09-07, closure pass).
+//
+// Next routes HEAD to the GET handler when no HEAD is exported, so
+// `HEAD /api/courses/{id}/ask?q=...` ran the whole answering path -- including
+// the meter and, with a provider configured, the billed call -- and returned no
+// body to show for it. Nothing in this product issues a HEAD to an API route.
+// /api/ask removed its GET entirely for this class of reason; its course-scoped
+// twin keeps GET (scripts depend on it) but need not keep HEAD.
+export function HEAD() {
+  return new Response(null, { status: 405, headers: { Allow: "GET, POST" } });
+}
+
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;

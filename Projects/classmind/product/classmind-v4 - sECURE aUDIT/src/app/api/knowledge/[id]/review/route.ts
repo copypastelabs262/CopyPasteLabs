@@ -30,9 +30,21 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const svc = serviceClient();
 
     const { data: item } = await svc
-      .from("knowledge_items").select("id, course_id, category").eq("id", id).maybeSingle();
+      .from("knowledge_items").select("id, lecture_id, course_id, category").eq("id", id).maybeSingle();
     if (!item) return NextResponse.json({ error: "Knowledge item not found." }, { status: 404 });
-    await requireCourseOwner(item.course_id as string, user);
+    // Resolved through the lecture, not trusted off the item. Same reasoning as
+    // candidates/[id]/review: one writer sets both columns today, and authorizing
+    // against the row you are about to write is a pattern that stops being safe
+    // the moment a second writer appears.
+    const { data: parent } = await svc
+      .from("lectures")
+      .select("course_id")
+      .eq("id", item.lecture_id as string)
+      .maybeSingle();
+    if (!parent || parent.course_id !== item.course_id) {
+      return NextResponse.json({ error: "Knowledge item not found." }, { status: 404 });
+    }
+    await requireCourseOwner(parent.course_id as string, user);
 
     const body = (await request.json()) as {
       action?: string; title?: string; summary?: string; steps?: string[]; note?: string;

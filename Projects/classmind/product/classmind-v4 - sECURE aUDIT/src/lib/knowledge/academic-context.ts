@@ -101,9 +101,23 @@ export async function listCourseMemberships(
       ).data ?? []) as { id: string; code: string; title: string }[])
     : [];
 
+  // A NON-FACULTY OWNER'S COURSES ARE NOT ACCESSIBLE, NOT MERELY READ AS A
+  // STUDENT (corrected 2026-09-07, closure pass).
+  //
+  // The first version downgraded `isOwner` to `isFaculty` and left the course in
+  // the list. That made this function disagree with every route: requireCourseAccess
+  // 403s a student-role owner outright, and GET /api/courses and /api/me/overview
+  // hide the course entirely -- but the GLOBAL ask corpus and a global
+  // conversation's source gate were both built from this list, so the course was
+  // still read and still citable, with the citations linking to pages that refuse.
+  //
+  // Ownership only confers anything when the owner is faculty. A course owned by
+  // a student-role account is a leftover of the pre-fix POST /api/courses hole,
+  // and the answer everywhere else is "you cannot open this" -- so it is the
+  // answer here too.
   return [
     ...enrolled.map((c) => ({ ...c, isOwner: false })),
-    ...owned.map((c) => ({ ...c, isOwner: isFaculty })),
+    ...(isFaculty ? owned.map((c) => ({ ...c, isOwner: true })) : []),
   ];
 }
 
