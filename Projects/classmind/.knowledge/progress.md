@@ -7,6 +7,63 @@ Entries are snapshots of what was true when written and are never rewritten. Whe
 resolves something an earlier one recorded as blocked, the earlier line gets a dated marker
 pointing forward — it does not get edited away.
 
+## 2026-09-07 — Security audit, red team and hardening (v4 audit copy)
+
+Autonomous overnight run on the disposable copy `product/classmind-v4 - sECURE aUDIT`;
+the original v4 tree untouched. **Zero spend** — no paid suite run, every live check
+read-only or unauthenticated. Two adversarial multi-agent passes (173 agents across 14
+attack campaigns, then 101 agents re-auditing the first pass's own fixes), with 84 of the
+first run's verification verdicts refuting their own finding.
+
+**The headline defect: the faculty gate protected a label, not a capability.**
+`POST /api/courses` asked only `requireUser()`, so any free Google sign-up could create a
+course, become its owner, and thereby satisfy `requireCourseOwner` on every teaching and
+paid route behind it — upload, billable ASR, billable extraction, and both review queues.
+`FACULTY_ACCESS_CODE` gated who holds the label; nothing gated what the label protects, and
+the only thing in the way was a button hidden behind `role === "faculty"` in the UI.
+`requireFaculty` now exists; `requireCourseOwner`/`requireCourseAccess` take the SessionUser
+and assert the role; "isOwner implies faculty" holds on every read path.
+
+**Second: nothing bounded spend.** No rate limit existed anywhere outside the faculty-code
+counter, so one account could loop `?force=1` without limit. Four layers now — in-process
+burst/hourly, a durable per-user quota read back from `ask_runs`/`processing_runs`, a
+deployment-wide ceiling more accounts cannot reset, and a single-flight claim closing the
+reuse-ledger race that made concurrent extracts pay twice. The window ceiling is derived
+from `maxDuration = 300` and the measured per-call time, not a round number.
+
+Also closed: an open redirect (reproduced), prototype keys reaching a content-type header,
+a storage key built from the uploader's filename, unbounded knowledge text entering a billed
+prompt, stored conversations replaying rejected knowledge, `profiles.role` still defaulting
+to `'faculty'`, a review gate failing open on model-invented kinds, the raw provider response
+reaching students on a normalization failure, ten routes leaking driver text, and a perimeter
+with no headers and no cross-site gate. 748 assertions pass across all 12 free suites;
+`verify:storage` confirms the bucket is private.
+
+**The 2026-09-06 (VI) stale-banner finding recurs here** — `20260830140000` still reads
+"NOT APPLIED" in the audit copy while the live DB has its tables. Not cosmetic: a migration
+written from those headers REVOKEs against a function it assumes absent and, being one
+transaction, takes every unrelated statement with it. The new hardening migration is
+conditional for that reason.
+
+**UNVERIFIED:** every authenticated boundary. Cross-user isolation, role escalation and cost
+limits were established from code, offline tests and unauthenticated probes; confirming them
+end to end needs a Google OAuth sign-in.
+
+**HUMAN ACTION — blocking, and it outranks everything above.** `DEPLOY.md` §6 records
+`faculty.test@classmind.local` and `student.test@classmind.local` living in the live Supabase
+project with a shared password hardcoded in **50 files tracked at HEAD in the public repo**.
+One is faculty, and faculty now gates every privileged and billable route. Delete the accounts
+(rotating is insufficient — the credential is permanently in git history) and have the verify
+scripts read it from `.env.local`. Whether those accounts still accept it is UNVERIFIED;
+checking would mean authenticating to a live system with real credentials. Also pending:
+applying `20260907120000_security_hardening.sql` (no documented deploy step applies migrations
+at all), and deciding whether to push — three commits are local, nothing pushed, and only the
+changed security files were committed because `.eval/` and `design-loop/runs/` are
+lecture-derived and the repo is public.
+
+Full write-up: `.knowledge/sessions/2026-09-07-security-audit-and-hardening.md` and
+`product/classmind-v4 - sECURE aUDIT/SECURITY.md`.
+
 ## 2026-09-06 (VI) — Phase 1 & 2 closure: leftovers audited and closed
 
 Swept the codebase, migrations, roadmap and session logs for Phase 1/2 leftovers and

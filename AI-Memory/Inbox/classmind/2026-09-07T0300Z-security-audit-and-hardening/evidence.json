@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "session_id": "2026-09-07T0300Z-security-audit-and-hardening",
+  "project": "classmind",
+  "secondary_projects": [],
+  "generated_by": { "producer": "claude", "tool": "End-Session/1.0.1 (hand-authored)" },
+  "generated_at": "2026-09-07T03:00:00Z",
+  "repository": { "branch": "master", "upstream": "origin/master" },
+  "session_boundary": {
+    "base": "6f26ad3",
+    "head": "b11d749",
+    "base_strategy": "previous_head — the audit copy was untracked at session start; the range holds only the three security commits, which add the changed files of `classmind-v4 - sECURE aUDIT` and nothing else of that tree."
+  },
+  "context_completeness": "full",
+  "duration_known": false,
+  "duration_minutes": null,
+  "duration_source": "unavailable — End-Session prerequisite 0.1 is unmet (scripts/session-start.sh does not write .claude/.session-start), so duration cannot be recovered after the fact. File mtimes span roughly 02:20–08:46 IST.",
+  "working_tree_note": "Autonomous overnight run under a written operator brief with standing authority to implement security fixes. Scope confined to the disposable copy `Projects/classmind/product/classmind-v4 - sECURE aUDIT`; the original classmind-v4 tree was not read or written. ZERO PAID PROVIDER CALLS: no suite on CLAUDE.md's paid list was run, and every live check made was read-only (Supabase bucket metadata, table existence) or unauthenticated (HTTP probes against a local production build on port 3599). The operator's dev server on port 3500 was left untouched. Deliberately NOT committed: the rest of the audit copy, because `.eval/` and `design-loop/runs/` are lecture-derived and the repository is public — that is an operator decision. Nothing was pushed.",
+  "changes_summary": {
+    "created": [
+      "classmind-v4 - sECURE aUDIT/SECURITY.md (threat model, gates, accepted trades, remaining risks, human actions)",
+      "classmind-v4 - sECURE aUDIT/src/lib/rate-limit.ts + rate-limit-core.ts (four-layer spend control; core is import-free so it is offline-testable)",
+      "classmind-v4 - sECURE aUDIT/src/lib/supabase/cookie-options.ts",
+      "classmind-v4 - sECURE aUDIT/supabase/migrations/20260907120000_security_hardening.sql",
+      "classmind-v4 - sECURE aUDIT/scripts/test-security-regression.mts (193 assertions, each a fixed vulnerability)",
+      "classmind-v4 - sECURE aUDIT/scripts/verify-storage-security.mts (live, read-only, free)",
+      "classmind-v4 - sECURE aUDIT/scripts/verify-build-secrets.mts (free)",
+      "AI-Memory/Inbox/classmind/2026-09-07T0300Z-security-audit-and-hardening/"
+    ],
+    "modified": [
+      "src/lib/auth.ts — requireFaculty added; requireCourseOwner/requireCourseAccess take SessionUser and assert role; dbFailure added; profile-read error no longer swallowed",
+      "src/middleware.ts — rewritten: cross-site/same-site/navigation/Accept gate on /api, nonce CSP, frame + referrer + permissions policies, /api matched unconditionally",
+      "src/lib/safe-next.ts — rewritten (open redirect, reproduced before and after)",
+      "src/lib/storage.ts — Object.hasOwn over `in`; strict MIME token; server-shaped object key",
+      "src/lib/faculty-code.ts — global bound across accounts + loud logging",
+      "src/lib/knowledge/{read,store,answer,academic-context}.ts — mandatory scope, fail-closed review gate, prompt field ceilings, role-aware membership",
+      "src/lib/reasoning/reconstruct.ts — window ceiling derived from the 300s request budget",
+      "16 route handlers under src/app/api and src/app/auth/callback",
+      "package.json — test:security, verify:storage, verify:build-secrets"
+    ],
+    "session_docs": [
+      "Projects/classmind/.knowledge/sessions/2026-09-07-security-audit-and-hardening.md",
+      "Projects/classmind/.knowledge/progress.md (entry prepended)"
+    ]
+  },
+  "method": {
+    "adversarial_runs": [
+      "14-campaign attack sweep: 173 agents, 79 raw findings, 2-lens verification (refute + exploit-build), 84 verdicts refuted",
+      "independent re-audit + student-account red team after remediation: 101 agents, written to attack the first pass's own work; found 8 real defects in it"
+    ],
+    "self_verification": "Findings were checked against the code before being acted on. Two were reproduced with a runnable script before and after the fix (safeNext open redirect; prototype keys in the extension map). Several agent findings were refuted by my own reading and are recorded as such."
+  },
+  "verification": {
+    "typescript": "pass",
+    "eslint": "pass",
+    "next_build": "pass",
+    "test_suites": "748 assertions across all 12 free suites, 0 failures (test:security 193, extraction 76, transcript 33, reconstruction 63, knowledge-plan 47, ask 79, answer 69, auth 26, conversations 27, faculty 16, providers 107, lecture-nav 12)",
+    "live_read_only": "verify:storage — lecture bucket private, audio/* only, 50 MB cap",
+    "live_unauthenticated": "every API route 401; cross-site, same-site, navigate, forged Origin and Accept: text/html all 403; 6 security headers on pages, 401s and 403s; CSP nonce unique per response and present on all 12 emitted scripts; no server secret in .next/static",
+    "paid_calls": "none made, none possible in what was run"
+  },
+  "unverified": [
+    "Every authenticated boundary. Cross-user isolation, role escalation and cost limits were established by reading code, by offline tests and by unauthenticated probes. Confirming them end to end needs a Google OAuth sign-in, which needs a human.",
+    "Whether the exposed test accounts still exist or still accept the published password — confirming would mean authenticating to a live system with real credentials."
+  ],
+  "human_action_required": [
+    "Delete faculty.test@classmind.local and student.test@classmind.local in Supabase → Authentication → Users. Their shared password is hardcoded in 50 files tracked at HEAD in a public repository; one is a faculty account, and faculty now gates every teaching and paid route. Rotating is not sufficient — the credential is permanently in git history.",
+    "Apply supabase/migrations/20260907120000_security_hardening.sql. No documented deploy step applies migrations at all.",
+    "Decide whether to push the three security commits; nothing was pushed."
+  ],
+  "diff": {
+    "stored": false,
+    "omitted_reason": "44 files across three commits; the commit messages carry the finding-by-finding narrative.",
+    "regenerate_command": "git log -p 6f26ad3..b11d749"
+  }
+}

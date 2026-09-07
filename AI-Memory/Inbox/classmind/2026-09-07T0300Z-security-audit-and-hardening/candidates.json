@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "session_id": "2026-09-07T0300Z-security-audit-and-hardening",
+  "project": "classmind",
+  "generated_by": "End-Session/1.0.1 (hand-authored)",
+  "generated_at": "2026-09-07T03:00:00Z",
+  "candidates": [
+    {
+      "id": "cand-001",
+      "type": "learning",
+      "title": "Gate the capability where it is exercised, not where the label is assigned",
+      "body": "A role gate placed only at the moment a role is GRANTED protects the label and nothing else. ClassMind gated becoming faculty behind an institutional secret compared in constant time, with a rate limiter, a fail-closed default and a written rationale — and then never checked the role again anywhere. POST /api/courses asked only requireUser(), so any free sign-up could create a course, become its owner, and from that moment satisfy the ownership check on every privileged route behind it: upload, billable transcription, billable extraction, and the review queues the product's core promise depends on. The UI hid the button, which is how it survived review — a hidden control looks like a boundary in every screenshot.\n\nThe test that finds this class: for each privileged capability, name the line that refuses it, and check that line is on the path a REQUEST takes, not on the path a SIGNUP takes. If the only answer is 'the button is not rendered', there is no boundary. The structural fix is to make the capability check a parameter of the ownership helper itself (requireCourseOwner takes the session user and asserts the role) so a caller cannot hold ownership without also having proved the role — an id cannot carry a role, and a helper that has to be told separately is one a caller can forget to tell.",
+      "confidence": "high",
+      "basis": "Found by reading POST /api/courses against CoursesClient's `{isFaculty ? <Button>New class</Button> : null}`, then confirmed by grep: requireRole appeared in exactly 3 routes and none was a faculty check, and `user.role === \"faculty\"` appeared nowhere under src/app/api. Independently confirmed by two of fourteen attack agents and by both verification lenses.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v4 - sECURE aUDIT/src/lib/auth.ts",
+        "Projects/classmind/product/classmind-v4 - sECURE aUDIT/src/app/api/courses/route.ts",
+        "Projects/classmind/product/classmind-v4 - sECURE aUDIT/SECURITY.md"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-002",
+      "type": "mistake",
+      "title": "A confident comment is a hypothesis, and the load-bearing ones drift silently",
+      "body": "In a heavily-commented codebase the comments become the review surface — the next reader checks the prose, not the code. Three separate comments in ClassMind asserted guarantees the code did not have, and each had been true when written:\n\n- profile-role.ts stated that five paths resolving a missing role to 'faculty' were all removed and named 'the schema default' as one of them. The application half landed; the migration still declared `role text not null default 'faculty'`.\n- transcribe/route.ts stated the file extension 'comes from the storage path this server generated, never from the name the uploader typed'. lectureObjectPath copied the uploader's extension into that path verbatim.\n- Three migration files opened with 'NOT APPLIED'. The live database had all of those tables. A migration written from those headers would have failed on a REVOKE against a function it assumed absent — and because a migration is one transaction, taken every unrelated statement down with it.\n\nThe practice: when a comment states a guarantee, verify it in the same pass and treat divergence as a finding in its own right, because the comment is what the next change will be reasoned from. Where the guarantee is cheap to assert mechanically, assert it — a test named after the claim survives the comment.",
+      "confidence": "high",
+      "basis": "All three found during this audit by checking claims against code and against the live database; each became a fix (migration drops the default, lectureObjectPath sanitises, the hardening migration is conditional with a note that the headers are stale).",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v4 - sECURE aUDIT/supabase/migrations/20260907120000_security_hardening.sql",
+        "Projects/classmind/product/classmind-v4 - sECURE aUDIT/src/lib/storage.ts",
+        "Projects/classmind/product/classmind-v4 - sECURE aUDIT/src/lib/profile-role.ts"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-003",
+      "type": "mistake",
+      "title": "A regression test written from one example only knows the shape it already fixed",
+      "body": "After removing raw driver messages from eight routes, I wrote a test asserting none reaches the wire. It matched `error: err.message` — the shape I had just fixed. Two leaks survived it because they were SPLICED INTO A SENTENCE (`error: `...: ${err.message}``), which leaks exactly as much and matches nothing. The second audit found them; the test had been green throughout.\n\nThe general failure: a regression test authored from the instance you fixed encodes that instance, not the property. Write it against the PROPERTY ('no driver text leaves the server') and then enumerate the shapes the property can take — whole value, interpolated, concatenated, nested in an object, rethrown. A grep-shaped test also needs to strip comments before scanning: a codebase that explains its own fixes will quote the very pattern being searched for, and the scan then reports the explanation as the bug (this happened twice here).",
+      "confidence": "high",
+      "basis": "scripts/test-security-regression.mts passed while src/app/api/lectures/[id]/route.ts:190 and :200 still interpolated storageError.message and rowError.message into response prose; a separate check reported `create table public.something` from a migration COMMENT as a table missing RLS.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v4 - sECURE aUDIT/scripts/test-security-regression.mts",
+        "Projects/classmind/product/classmind-v4 - sECURE aUDIT/src/app/api/lectures/[id]/route.ts"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-004",
+      "type": "learning",
+      "title": "Derive a spend ceiling from the request budget, not from a round number",
+      "body": "Bounding a fan-out by a number that feels safe can cost more than not bounding it. ClassMind's reconstruction makes one billed model call per time window, so the call count is linear in audio length and audio length is chosen by the uploader. I capped it at 120 windows per pass — which sounded conservative and was roughly seven times what the route's own `maxDuration = 300` can finish at the measured ~40s per call. A recording under that ceiling but over the time budget pays for every window it manages and is then killed by the platform BEFORE the ledger row is written — so the run is not recorded, is not reusable, and the next attempt pays again from zero. A ceiling that admits runs which cannot complete multiplies the bill instead of bounding it.\n\nThe rule: for any bounded fan-out that spends, derive the bound from the binding resource (wall clock, timeout, memory, quota) and cite the measurement in the constant's comment. The file already contained the measurement — '36 min = 30 calls ≈ 300s, at the limit' — and I did not use it.",
+      "confidence": "high",
+      "basis": "My own MAX_WINDOWS_PER_PASS = 120 was flagged by the independent re-audit, verified against reconstruct.ts's own timing table and extract/route.ts's maxDuration, and replaced with MAX_WINDOWS_TOTAL = 30 plus a route-level 413 before any call is made.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v4 - sECURE aUDIT/src/lib/reasoning/reconstruct.ts",
+        "Projects/classmind/product/classmind-v4 - sECURE aUDIT/src/app/api/lectures/[id]/extract/route.ts"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-005",
+      "type": "learning",
+      "title": "Bundler build caches persist secrets in cleartext, so .env hygiene is not secret hygiene",
+      "body": "Excluding .env.local from version control does not keep its values out of the artefacts a project ships around. Turbopack's persistent cache (.next/cache/**/*.sst) stores the environment values resolved at build time in cleartext, and reproduces them on the next build — deleting the cache is housekeeping, not a fix. Verified by wiping the cache, rebuilding, and finding the live Sarvam and Gemini keys back verbatim.\n\nThe consequence is not publication (.next is normally git-ignored, and the CLIENT bundle was clean, which is the part that must always hold). It is that every ordinary way a project moves — a zip to a collaborator, a CI artifact upload, a Docker layer, a shared or remote build cache, a laptop backup — carries live credentials, while everyone believes the one file they excluded was the whole exposure.\n\nThe practice: treat the build output as secret-bearing, and add a check that greps the build for the .env values and hard-fails only on the client bundle while REPORTING the cache. A check that fails on something unfixable gets muted; one that separates 'must never happen' from 'know this' survives.",
+      "confidence": "high",
+      "basis": "scripts/verify-build-secrets.mts, written this session; confirmed .next/static clean and SARVAM_API_KEY + GEMINI_API_KEY present in .next/cache both before and after a full cache wipe and rebuild. Next.js 16.3.0 / Turbopack.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v4 - sECURE aUDIT/scripts/verify-build-secrets.mts"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-006",
+      "type": "pattern",
+      "title": "Close a request-shape vulnerability class in the perimeter, once, rather than route by route",
+      "body": "When one route is found to accept a dangerous request SHAPE, the durable fix is usually at the perimeter, because the same shape will be reintroduced by the next route nobody thinks about. ClassMind's /api/ask had removed its own GET handler with a written rationale — a GET that answers questions spends money on a top-level navigation, and SameSite=Lax cookies ride along on exactly those. The reasoning was never carried across to /api/courses/[id]/ask, which still answered GET.\n\nFixed in middleware for the whole /api surface instead of in that one route: refuse Sec-Fetch-Mode: navigate, refuse Sec-Fetch-Site cross-site AND same-site (a sibling subdomain also receives Lax cookies), refuse a foreign Origin compared against Host (browser-set; X-Forwarded-Host is forgeable by the same request), and — because every check above assumes a browser new enough to send Sec-Fetch, and one that is not also sends no Origin on a top-level GET — refuse any /api request whose Accept prefers text/html. That last check needs no modern header at all: a navigation asks for HTML, fetch() asks for */*, and nothing that legitimately calls an API wants a document back.\n\nTwo cautions learned here: requests with NO Sec-Fetch headers must stay allowed or every server-to-server script and test breaks; and the matcher must cover /api unconditionally — an extension-based exclusion in a catch-all pattern let /api/lectures/x.mp3 skip the gate and every security header.",
+      "confidence": "high",
+      "basis": "Built and verified live against a production build: navigate, cross-site, same-site, forged Origin and Accept: text/html all return 403 on the paid ask endpoint, while node's fetch and the in-app same-origin fetch reach the route's own auth check and every page still renders.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v4 - sECURE aUDIT/src/middleware.ts",
+        "Projects/classmind/product/classmind-v4 - sECURE aUDIT/SECURITY.md"
+      ],
+      "proposed_scope": "global",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    },
+    {
+      "id": "cand-007",
+      "type": "open_question",
+      "title": "Should a model-labelled 'announcement' reach students without a human verdict?",
+      "body": "ClassMind's review gate decides whether an actionable item needs a lecturer's verdict from `category` and `kind` — both fields the MODEL emits. It was a deny-list ({assignment, deadline, exam_instruction}), so any kind outside it published automatically, including `exam_scope`, which is a real kind in the vocabulary, while `exam_instruction` is not one this codebase emits at all. I inverted it to an allow-list so an unrecognised or invented kind now fails closed, and `exam_scope` is gated.\n\nWhat is unresolved is where the line belongs. `announcement` and `guidance` remain ungated because that matches the original intent — the comment's reasoning is that a professor cannot review thirty items per lecture and that a mislabelled topic wastes a moment while a wrong deadline costs a grade. But an 'announcement' can be 'the exam moved to Friday', which costs a grade too. Gating them raises review burden, which is a product decision about how much faculty time the product may demand, not a security judgement an audit should make alone.\n\nThe deeper version of the question: the model still chooses `category`, so an obligation it labels `teaching` publishes automatically regardless of any kind-level gate. Bounding that means not trusting the label at all.",
+      "confidence": "medium",
+      "basis": "src/lib/knowledge/store.ts initialStatus, read against CATEGORY_OF in src/lib/extraction/types.ts; one verification agent traced an ungated actionable item end to end to a student-rendered surface.",
+      "evidence_refs": [
+        "Projects/classmind/product/classmind-v4 - sECURE aUDIT/src/lib/knowledge/store.ts",
+        "Projects/classmind/product/classmind-v4 - sECURE aUDIT/SECURITY.md"
+      ],
+      "proposed_scope": "project",
+      "proposed_status": "Draft",
+      "possible_duplicates": [],
+      "promoter_notes": ""
+    }
+  ]
+}
