@@ -149,7 +149,17 @@ async function storageStateFor(browser: Browser, role: string): Promise<string |
   const page = await context.newPage();
   await page.goto("/signin", { waitUntil: "networkidle" });
   await page.fill("input[type=email]", account.email);
-  await page.fill("input[type=password]", account.password);
+  // The password is NOT in config.json any more -- it was a working faculty
+  // credential in a file that is not git-ignored. It comes from the
+  // environment now, with no default: see scripts/_test-credentials.mts.
+  const password = account.password || process.env.CLASSMIND_TEST_PASSWORD;
+  if (!password) {
+    throw new Error(
+      "No test-account password. Set CLASSMIND_TEST_PASSWORD in .env.local and run " +
+        "this harness with --env-file=.env.local.",
+    );
+  }
+  await page.fill("input[type=password]", password);
   await page.click("button[type=submit]");
   await page.waitForURL("**/courses", { timeout: 20_000 });
   await context.storageState({ path: statePath });

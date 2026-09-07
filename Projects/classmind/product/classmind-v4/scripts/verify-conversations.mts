@@ -15,6 +15,7 @@
 // exits naming the HUMAN-ONLY step. Run it again after applying.
 
 import { createClient } from "@supabase/supabase-js";
+import { testPassword } from "./_test-credentials.mts";
 
 const BASE = process.env.VERIFY_BASE_URL ?? "http://localhost:3500";
 const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -37,7 +38,7 @@ const section = (t: string) => console.log(`\n--- ${t} ---`);
 
 const anon = () => createClient(URL_, ANON, { auth: { persistSession: false } });
 async function signIn(email: string): Promise<string> {
-  const { data, error } = await anon().auth.signInWithPassword({ email, password: "ClassMindTest!2026" });
+  const { data, error } = await anon().auth.signInWithPassword({ email, password: testPassword() });
   if (error || !data.session) throw new Error(`sign-in failed for ${email}: ${error?.message}`);
   return data.session.access_token;
 }

@@ -7,8 +7,8 @@
     "mobile": { "width": 390, "height": 844 }
   },
   "accounts": {
-    "student": { "email": "student.test@classmind.local", "password": "ClassMindTest!2026" },
-    "faculty": { "email": "faculty.test@classmind.local", "password": "ClassMindTest!2026" }
+    "student": { "email": "student.test@classmind.local", "password": "" },
+    "faculty": { "email": "faculty.test@classmind.local", "password": "" }
   },
   "targets": [
     { "name": "my-classes-faculty", "path": "/courses", "role": "faculty" },

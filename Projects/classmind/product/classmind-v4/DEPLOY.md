@@ -253,7 +253,7 @@ Then check by hand:
 ## 6. Before this is used by anyone real
 
 - [ ] **Delete the test accounts.** `faculty.test@classmind.local` and
-      `student.test@classmind.local` both have the password `ClassMindTest!2026`, which is in this
+      `student.test@classmind.local` both have a password that was published in this repository (now read from `CLASSMIND_TEST_PASSWORD`), which is in this
       repository. Delete them in Supabase → Authentication → Users.
 - [ ] **Delete the test courses.** Sixteen `E2E-*`, `LANG-*`, `UIAUDIT-*`, `UIPOLL-*` and
       `UISTUCK-*` courses exist in the live project from verification runs.

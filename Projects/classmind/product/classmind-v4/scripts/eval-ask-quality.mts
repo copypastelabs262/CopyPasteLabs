@@ -18,6 +18,7 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { mkdirSync, writeFileSync } from "node:fs";
+import { testPassword } from "./_test-credentials.mts";
 
 const BASE = process.env.EVAL_BASE_URL ?? "http://localhost:3500";
 const COURSE = "5ab749fb-d4fd-42fc-85ba-b9de82fe1dcf"; // Cloud Computing (Test2)
@@ -32,7 +33,7 @@ const anon = createClient(
 );
 const { data: s, error: se } = await anon.auth.signInWithPassword({
   email: "student.test@classmind.local",
-  password: "ClassMindTest!2026",
+  password: testPassword(),
 });
 if (se || !s.session) { console.error("student sign-in failed:", se?.message); process.exit(1); }
 const token = s.session.access_token;

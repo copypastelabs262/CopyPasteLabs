@@ -25,13 +25,14 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createClient } from "@supabase/supabase-js";
+import { testPassword } from "./_test-credentials.mts";
 
 const BASE = process.env.E2E_BASE_URL ?? "http://localhost:3100";
 const PROJECT_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-const FACULTY = { email: "faculty.test@classmind.local", password: "ClassMindTest!2026" };
+const FACULTY = { email: "faculty.test@classmind.local", password: testPassword() };
 
 // Lab v0's `audio` bucket, not the product's `lectures` bucket. Uploading the
 // audio that actually produced each fixture means the replayed timestamps line

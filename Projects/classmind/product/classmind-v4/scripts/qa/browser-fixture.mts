@@ -24,13 +24,14 @@
 
 import { createHash } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
+import { testPassword } from "../_test-credentials.mts";
 
 const BASE = process.env.E2E_BASE_URL ?? "http://localhost:3300";
 const PROJECT_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const FACULTY = { email: "faculty.test@classmind.local", password: "ClassMindTest!2026" };
-const STUDENT = { email: "student.test@classmind.local", password: "ClassMindTest!2026" };
+const FACULTY = { email: "faculty.test@classmind.local", password: testPassword() };
+const STUDENT = { email: "student.test@classmind.local", password: testPassword() };
 const LAB_AUDIO_PATH = "ccf15fe1-9f7f-48dc-990a-4e16513fe354/original.mp3";
 const COURSE_CODE = "QA-BROWSER";
 

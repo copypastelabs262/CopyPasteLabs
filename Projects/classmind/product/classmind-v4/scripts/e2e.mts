@@ -24,14 +24,15 @@
 
 import { createHash } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
+import { testPassword } from "./_test-credentials.mts";
 
 const BASE = process.env.E2E_BASE_URL ?? "http://localhost:3100";
 const PROJECT_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-const FACULTY = { email: "faculty.test@classmind.local", password: "ClassMindTest!2026" };
-const STUDENT = { email: "student.test@classmind.local", password: "ClassMindTest!2026" };
+const FACULTY = { email: "faculty.test@classmind.local", password: testPassword() };
+const STUDENT = { email: "student.test@classmind.local", password: testPassword() };
 
 // The lab object whose transcript the fixture provider replays. Uploading the
 // matching audio means the transcript's timestamps line up with what you

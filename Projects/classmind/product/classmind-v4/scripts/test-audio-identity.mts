@@ -32,6 +32,7 @@ import {
   FRESHNESS_TOLERANCE_MS, type AudioIdentity,
 } from "../src/lib/provenance/audio-identity.ts";
 import { providerFilename, replayIsAllowedIn } from "../src/lib/transcription/types.ts";
+import { testPassword } from "./_test-credentials.mts";
 
 let passed = 0;
 let failed = 0;
@@ -574,7 +575,7 @@ async function httpChecks(): Promise<void> {
   const PROJECT_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
   const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-  const FACULTY = { email: "faculty.test@classmind.local", password: "ClassMindTest!2026" };
+  const FACULTY = { email: "faculty.test@classmind.local", password: testPassword() };
   const LAB_AUDIO_PATH = "ccf15fe1-9f7f-48dc-990a-4e16513fe354/original.mp3";
 
   const svc = createClient(PROJECT_URL, SERVICE, { auth: { persistSession: false } });

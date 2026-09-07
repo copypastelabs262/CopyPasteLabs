@@ -26,12 +26,13 @@
 // not applied -- the `meter` field in each response says which).
 
 import { createClient } from "@supabase/supabase-js";
+import { testPassword } from "./_test-credentials.mts";
 
 const BASE = process.env.E2E_BASE_URL ?? "http://localhost:3501";
 const PROJECT_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-const STUDENT = { email: "student.test@classmind.local", password: "ClassMindTest!2026" };
+const STUDENT = { email: "student.test@classmind.local", password: testPassword() };
 
 let passed = 0;
 const failures: string[] = [];
