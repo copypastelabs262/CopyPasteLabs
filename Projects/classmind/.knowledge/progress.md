@@ -65,9 +65,11 @@ been the fourth.
 3. **Decide on `.next/cache`** — it holds live Sarvam and Gemini keys in cleartext and travels
    with any copy of the folder. Rotate only if the folder, a zip, a backup or a shared build
    cache has left this machine.
-4. **Push.** Seven commits are local and nothing is on the remote; Shiv and Darsh have seen none
-   of the security work. `.eval/` and `design-loop/runs/` stay out — they are lecture-derived and
-   the repo is public.
+4. **Push.** `origin/master` sits at `2e792bc` and this machine is **104 commits ahead** — 15
+   substantive plus 89 `Auto-save:` checkpoints. Not three, which is what the 2026-09-07 log said;
+   that count was of that session's own commits, not of the divergence, and the difference is
+   Phase 5 and everything since. Shiv and Darsh have seen none of it. `.eval/` and
+   `design-loop/runs/` stay out — lecture-derived, and the repo is public.
 5. **Delete the audit copy** once the push lands. It is disposable by design, it is now a strict
    duplicate of the tracked tree, and a second copy of the security-critical source is the
    condition under which "which one is real?" becomes a live question.
