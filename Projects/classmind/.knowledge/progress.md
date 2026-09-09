@@ -32,10 +32,14 @@ Deliberately not moved: `scripts/port-credential-fix.mts`, a one-shot tool that 
 matching the audit copy exactly. `tsc` clean, `eslint` clean, production build clean.
 `verify:storage` confirms the bucket is private, audio-only, 50 MB capped. `verify:build-secrets`
 confirms no server secret reaches the client bundle (and re-reports the known Turbopack cache
-caveat, now including `CLASSMIND_TEST_PASSWORD`). **`redteam:auth` — the 145 authenticated
-assertions — was NOT re-run here**; it creates and deletes real accounts in the live project, so
-it needs a yes first. Until it runs, the authenticated boundaries are verified in the copy and
-inherited-by-identical-source in this tree, which is weaker evidence and is recorded as such.
+caveat, now including `CLASSMIND_TEST_PASSWORD`). Then, on the operator's approval,
+**`redteam:auth` ran against this tree — 145 authenticated assertions, 0 failures**, on a
+production build with `GEMINI_API_KEY` and `SARVAM_API_KEY` blanked, so no request could spend.
+Four throwaway accounts were created through the real API and deleted in a `finally`; cleanup
+asserts that no seeded storage object, course or profile survives, and all three passed.
+**911 assertions total.** The authenticated boundaries — cross-user isolation, role escalation,
+resource authorization, RLS under a real user JWT, forged `alg:none` tokens — are now direct
+evidence in the tree that ships, not inherited from the copy.
 
 **Also fixed:** the original tree's `.env.local` still carried the UTF-8 BOM that breaks the
 Supabase CLI's env parser — the 2026-09-07 fix had only been applied in the copy. Stripped. This
@@ -68,8 +72,9 @@ been the fourth.
    duplicate of the tracked tree, and a second copy of the security-critical source is the
    condition under which "which one is real?" becomes a live question.
 
-**Next:** the migrations, then `redteam:auth` against `classmind-v4` to convert the inherited
-authenticated evidence into direct evidence. Neither costs a provider call.
+**Next:** the two migrations — the last thing standing between this tree and a defensible
+deployment, and the only remaining item that code cannot do. After that, decide whether the audit
+copy is deleted, and get everything on the remote.
 
 ## 2026-09-07 — Security audit, red team and hardening (v4 audit copy)
 

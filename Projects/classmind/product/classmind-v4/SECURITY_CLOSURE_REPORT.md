@@ -285,9 +285,11 @@ ASR duration ceiling and the pre-staging bypass are unfixed by choice.
 assertions of which 145 exercise real authenticated boundaries, a reproducible zero-spend red
 team, and an honest register of what is not covered. It is **not** a statement that the deployed
 product is secure. What it now describes is the tracked tree: every fix in this report was ported
-into `Projects/classmind/product/classmind-v4/` on **2026-09-09**, verified there by 766 offline
-assertions, a clean `tsc`/`eslint`/production build, `verify:storage` and `verify:build-secrets`.
-The 145 authenticated assertions have **not** been re-run against the ported tree, and both
-migrations remain unapplied — so §17 items 1, 4 and 5 still stand.
+into `Projects/classmind/product/classmind-v4/` on **2026-09-09** and re-verified there:
+**911 assertions, 0 failures** — 766 offline across the 12 free suites, plus `redteam:auth`'s 145
+authenticated assertions run against a production build of this tree with the provider keys
+blanked, so the authenticated boundaries are direct evidence here and not inherited from the copy.
+`tsc`, `eslint` and the production build are clean; `verify:storage` and `verify:build-secrets`
+pass. Both migrations remain unapplied — so §17 items 1, 4 and 5 still stand.
 
 **Not claimed:** "fully secure", "production ready".
