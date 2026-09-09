@@ -150,3 +150,29 @@ temp/
 # committed lock would look "held" to the next run on a fresh clone.
 # ─────────────────────────────────────────────────────────────
 AI-Memory/Inbox/.lock
+
+# ─────────────────────────────────────────────────────────────
+# Product evaluation output and design-loop runs
+#
+# Added 2026-09-09, after autosave committed 252 files including 109
+# screenshots of the running app and six evaluation JSONs — locally only,
+# and caught before the push, but armed the whole time.
+#
+# The mechanism was already understood: the block above says autosave runs
+# `git add -A` after every edit, and each product tree's own .gitignore
+# repeats it above `fixtures/evaluation/`. These two paths were simply never
+# added to either list, and the 2026-09-07 session avoided the problem by
+# staging selectively — which left the hole open rather than closing it.
+#
+# What they hold: `.eval/` is model answers over real course and lecture
+# content; `design-loop/runs/` is PNG screenshots of the app with that
+# content rendered on screen, 144 MB of it. Both are lecture-derived, and
+# this repository is public. Publishing either is a deliberate act with a
+# consent question attached, not a side effect of saving a file.
+#
+# READMEs stay tracked so the structure and the regeneration command survive,
+# exactly as for lab data above.
+# ─────────────────────────────────────────────────────────────
+**/.eval/
+**/design-loop/runs/
+!**/design-loop/runs/README.md
