@@ -235,18 +235,51 @@ bound can block sign-up for an hour; `httpOnly:false` on the session cookie is s
 
 ## 17. Human actions required
 
-1. **Apply the migrations.** Supabase SQL Editor or `psql`, in order:
-   `20260907120000_security_hardening.sql`, then `20260907130000_ledger_durability.sql`.
-   Pre-flight (read-only, free), which turns two assumptions into facts:
+1. **Apply the migrations.** Supabase SQL Editor or `psql`. `20260907130000_ledger_durability.sql`
+   **was applied on 2026-09-09 and is done.** `20260907120000_security_hardening.sql` aborted on
+   that date, rolled back completely, and was rewritten the same day — see the note below. They
+   are independent of each other, so the order no longer matters.
+   Pre-flight (read-only, free), which turns three assumptions into facts:
    ```sql
    set lock_timeout = '3s';
-   select defaclrole::regrole, defaclobjtype, defaclacl
-     from pg_default_acl where defaclnamespace = 'public'::regnamespace;
+
+   -- (a) Confirms why the first attempt failed. Expect inherits_privs = false
+   --     for supabase_admin: that is the whole diagnosis in one row.
+   select r.rolname,
+          pg_has_role(current_user, r.oid, 'USAGE')  as inherits_privs,
+          pg_has_role(current_user, r.oid, 'MEMBER') as can_set_role
+     from pg_roles r
+    where r.rolname in ('postgres', 'supabase_admin', 'supabase_auth_admin');
+
+   -- (b) NO where clause, deliberately. The version printed here until
+   --     2026-09-09 filtered on `defaclnamespace = 'public'` and therefore
+   --     could not see a GLOBAL default-ACL row (defaclnamespace = 0), which
+   --     applies to `public` too. That is the same blind spot the migration
+   --     itself had.
+   select defaclrole::regrole, defaclnamespace::regnamespace, defaclobjtype, defaclacl
+     from pg_default_acl;
+
+   -- (c) Who owns what in public, and is RLS on. The census the migration
+   --     reports back; seeing it first means no surprises.
+   select c.relname, c.relkind, c.relowner::regrole as owner, c.relrowsecurity,
+          has_table_privilege('anon', c.oid, 'select')          as anon_select,
+          has_table_privilege('authenticated', c.oid, 'select') as auth_select
+     from pg_class c
+    where c.relnamespace = 'public'::regnamespace
+      and c.relkind in ('r','p','v','m','S','f')
+    order by c.relkind, c.relname;
+
    select proname, proacl from pg_proc
     where pronamespace = 'public'::regnamespace and proname like '%reconstruction%';
    ```
-   Both migrations `raise exception` if they did not achieve their goal, so a silent partial
-   application is not possible. Verify after: `npm run test:security`, `npm run redteam:auth`.
+   **The hardening migration no longer aborts over state it cannot change.** It aborts on exactly
+   one condition — a privilege statement it ran, that the server accepted, that did not take
+   effect — and returns everything else as a **result set**, because this project has now proved
+   that `NOTICE` and `WARNING` do not reach the Supabase SQL Editor: the failed 2026-09-09 run
+   must have emitted `default privileges not adjusted for role supabase_admin: …` immediately
+   before it raised, and the operator saw only the exception. Read the returned grid; `ACCEPTED`
+   rows are the deliverable for the part that cannot be fixed. Verify after:
+   `npm run test:security`, `npm run redteam:auth`.
 
 2. ~~**Port the credential fix to the real tree.**~~ **DONE 2026-09-07** (commit `c09ed7c`):
    `scripts/_test-credentials.mts` and the de-literalised files are in
