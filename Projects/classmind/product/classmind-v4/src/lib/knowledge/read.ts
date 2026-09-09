@@ -35,7 +35,10 @@ export interface KnowledgeUnit {
 // What a STUDENT may see. Teaching enters the base automatically ('auto');
 // actionable knowledge is invisible until a human confirms it. Nothing that was
 // rejected, and nothing still pending, ever reaches this list.
-export function visibleToStudents(u: KnowledgeUnit): boolean {
+// Takes only what it reads. Callers that hold a whole unit pass it unchanged;
+// the conversation route, which has a status and an id and no unit, does not
+// have to fabricate one to ask the question.
+export function visibleToStudents(u: Pick<KnowledgeUnit, "status">): boolean {
   return u.status === "auto" || u.status === "confirmed";
 }
 
@@ -143,9 +146,39 @@ export function lectureWithheldReason(row: LectureGateRow): string | null {
   return replayVerdict(row).reason;
 }
 
-interface Options { lectureId?: string; courseId?: string; forStudent: boolean }
+// A SCOPE IS MANDATORY (tightened 2026-09-07, security audit).
+//
+// This used to be `{ lectureId?; courseId?; forStudent }`, so
+// `readKnowledge({ forStudent: true })` type-checked -- and issued a SELECT over
+// knowledge_items with no filter at all, returning every knowledge item in the
+// database across every course and every institution. All six call sites do
+// pass a scope, so nothing was leaking; what was wrong is that the type let a
+// seventh omit one, in the single shared reader behind every student-facing
+// knowledge surface. Making the scope a required union means the compiler
+// refuses the unscoped read instead of the reviewer having to catch it.
+type Options =
+  | { lectureId: string; courseId?: string; forStudent: boolean }
+  | { courseId: string; lectureId?: string; forStudent: boolean };
 
 export async function readKnowledge(opts: Options): Promise<KnowledgeUnit[]> {
+  // THE TYPE IS NOT THE CHECK (2026-09-07, security audit -- second pass).
+  //
+  // Making the scope a required union stops a caller OMITTING it, and stops
+  // nothing else: "" satisfies `lectureId: string`, and the builder below adds
+  // its filters with `if (opts.lectureId)`, which is a truthiness test. An empty
+  // string therefore produced exactly the unfiltered SELECT over every knowledge
+  // item in the database that requiring the scope was meant to prevent -- and an
+  // empty string is what an id read from a URL segment or a JSON body looks like
+  // when it is missing.
+  const lectureId = opts.lectureId?.trim() || null;
+  const courseId = opts.courseId?.trim() || null;
+  if (!lectureId && !courseId) {
+    throw new Error(
+      "readKnowledge requires a lectureId or a courseId. Refusing to read every " +
+        "knowledge item in the database.",
+    );
+  }
+
   const svc = serviceClient();
   const fetchItems = (withAudience: boolean) => {
     let q = svc
@@ -155,8 +188,8 @@ export async function readKnowledge(opts: Options): Promise<KnowledgeUnit[]> {
           ? "id, lecture_id, course_id, category, kind, title, summary, audience, steps, unspecified, status, confidence, created_at"
           : "id, lecture_id, course_id, category, kind, title, summary, steps, unspecified, status, confidence, created_at",
       );
-    if (opts.lectureId) q = q.eq("lecture_id", opts.lectureId);
-    if (opts.courseId) q = q.eq("course_id", opts.courseId);
+    if (lectureId) q = q.eq("lecture_id", lectureId);
+    if (courseId) q = q.eq("course_id", courseId);
     return q.order("created_at", { ascending: true });
   };
   const first = await fetchItems(true);

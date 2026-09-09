@@ -7,6 +7,70 @@ Entries are snapshots of what was true when written and are never rewritten. Whe
 resolves something an earlier one recorded as blocked, the earlier line gets a dated marker
 pointing forward — it does not get edited away.
 
+## 2026-09-09 — The security work reaches the tree that ships
+
+The 2026-09-07 audit fixed a disposable copy. **The deployed tree had none of it** — its own
+closing paragraph said so. This session ported it: 46 files from
+`product/classmind-v4 - sECURE aUDIT/` into `product/classmind-v4/`, the tracked tree.
+
+The port was clean because the two trees had not diverged: the audit copy was a strict
+superset — no file existed only in the original — so this is a file-level copy, not a merge.
+That was true today and gets less true every session the copy sits there, which is the
+argument for doing it now rather than after the next feature.
+
+**What moved.** `requireFaculty` and the role-asserting `requireCourseOwner`/`requireCourseAccess`;
+the four rate-limit layers (`rate-limit.ts`, `rate-limit-core.ts`) and the single-flight claim in
+the reuse ledger; the `safe-next` open-redirect fix; storage-key shaping; the bounded knowledge
+text on the billed path; the middleware perimeter (security headers, CSP nonce, cross-site gate)
+and `supabase/cookie-options.ts`; the driver-text leak fix across ten routes; four new scripts
+(`test-security-regression`, `redteam-authenticated`, `verify-storage-security`,
+`verify-build-secrets`) with their `package.json` entries; `SECURITY.md`,
+`SECURITY_CLOSURE_REPORT.md`, the `DEPLOY.md` §6 update; and both hardening migrations.
+Deliberately not moved: `scripts/port-credential-fix.mts`, a one-shot tool that has already run.
+
+**Verified in the ported tree, zero spend.** All 12 free suites — **766 assertions, 0 failures**,
+matching the audit copy exactly. `tsc` clean, `eslint` clean, production build clean.
+`verify:storage` confirms the bucket is private, audio-only, 50 MB capped. `verify:build-secrets`
+confirms no server secret reaches the client bundle (and re-reports the known Turbopack cache
+caveat, now including `CLASSMIND_TEST_PASSWORD`). **`redteam:auth` — the 145 authenticated
+assertions — was NOT re-run here**; it creates and deletes real accounts in the live project, so
+it needs a yes first. Until it runs, the authenticated boundaries are verified in the copy and
+inherited-by-identical-source in this tree, which is weaker evidence and is recorded as such.
+
+**Also fixed:** the original tree's `.env.local` still carried the UTF-8 BOM that breaks the
+Supabase CLI's env parser — the 2026-09-07 fix had only been applied in the copy. Stripped. This
+mattered today, because applying the migrations is the next human action and the CLI is one way
+to do it.
+
+**Documentation drift corrected rather than carried.** Both ported security documents asserted
+things that the port itself falsified — `SECURITY.md` still opened with "two accounts exist in
+the live project" (deleted and verified absent on 2026-09-07) and the closure report still ended
+with "the deployed product is the original tree, which has none of these fixes." Both now state
+the current position, including what the port does *not* evidence. This is the same
+comment-drift class the audit named three times; leaving it in the copy's own words would have
+been the fourth.
+
+**HUMAN ACTION — unchanged and now the only thing between here and a defensible deployment:**
+
+1. **Apply the two migrations** — `20260907120000_security_hardening.sql`, then
+   `20260907130000_ledger_durability.sql`, in that order, in `classmind-v4`. Read-only pre-flight
+   queries in `SECURITY_CLOSURE_REPORT.md` §17. Until they run, four schema-level controls
+   (including dropping the `profiles.role` default of `'faculty'`) are intent, not state.
+2. **Confirm the production `FACULTY_ACCESS_CODE` differs from the local one.** A check, not a
+   rotation — but faculty now gates every privileged and billable route.
+3. **Decide on `.next/cache`** — it holds live Sarvam and Gemini keys in cleartext and travels
+   with any copy of the folder. Rotate only if the folder, a zip, a backup or a shared build
+   cache has left this machine.
+4. **Push.** Seven commits are local and nothing is on the remote; Shiv and Darsh have seen none
+   of the security work. `.eval/` and `design-loop/runs/` stay out — they are lecture-derived and
+   the repo is public.
+5. **Delete the audit copy** once the push lands. It is disposable by design, it is now a strict
+   duplicate of the tracked tree, and a second copy of the security-critical source is the
+   condition under which "which one is real?" becomes a live question.
+
+**Next:** the migrations, then `redteam:auth` against `classmind-v4` to convert the inherited
+authenticated evidence into direct evidence. Neither costs a provider call.
+
 ## 2026-09-07 — Security audit, red team and hardening (v4 audit copy)
 
 Autonomous overnight run on the disposable copy `product/classmind-v4 - sECURE aUDIT`;

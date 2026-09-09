@@ -278,12 +278,66 @@ function windowFor(
   };
 }
 
+// THE COST CEILING ON A SINGLE RUN (added 2026-09-07, security audit).
+//
+// The window count is a linear function of AUDIO LENGTH, and audio length is
+// chosen by whoever uploads. Nothing bounded it. At a 180s window with a 120s
+// actionable stride and a 180s teaching stride, one extract of a 14-hour
+// recording -- which fits inside the 50 MiB bucket limit at a low mono bitrate,
+// and a 50 MiB upload is explicitly allowed -- plans roughly 420 + 280 = 700
+// billed model calls. The route's own comment budgets for 30.
+//
+// So the ceiling is on WINDOWS, not on file size: it is the quantity that
+// actually converts into money, and it stays correct however the bitrate,
+// container or stride changes.
+//
+// THE NUMBER COMES FROM THE REQUEST BUDGET, not from taste. The first version of
+// this cap used 120 per pass, which was wrong in the expensive direction: at the
+// measured ~40s per call with four in flight, 240 windows is roughly 40 minutes
+// of wall clock against `export const maxDuration = 300` on the extract route.
+// A recording under that ceiling but over the time budget would pay for every
+// window it managed before the platform killed the request -- and recordRun()
+// only writes the ledger AFTER the pass returns, so the run would not be
+// recorded, would not be reusable, and the next attempt would pay again from
+// zero. A cap that admits runs which cannot finish is a cap that multiplies the
+// bill instead of bounding it.
+//
+// The measurements in the block above give the real limit: 36 minutes of audio
+// is 18 + 12 = 30 windows and ~300s, which the comment already calls "at the
+// limit". So 30 TOTAL is the ceiling, and anything above it is refused before a
+// call is made rather than truncated after several.
+//
+// Exceeding it is REPORTED, never silently trimmed. A truncated sweep has not
+// read the whole lecture, so it must not be publishable and must not be cached
+// as a complete reading: pushing a failure is what makes both true, through the
+// paths that already exist (stats.failures -> complete:false -> decideReadiness
+// withholds publication, and findReusableRun only ever reuses complete runs).
+// Silently trimming would publish a partial lecture as a whole one -- the same
+// shape as the confident-empty-result failure this file already guards against.
+// Total across both passes, matched to maxDuration = 300 on the extract route.
+export const MAX_WINDOWS_TOTAL = 30;
+// Per-pass backstop inside the engine, for a caller that reaches
+// reconstructLecture without going through the route's refusal.
+export const MAX_WINDOWS_PER_PASS = 20;
+
 // Window start offsets covering the whole lecture at the given stride. A stride
 // shorter than WINDOW_MS produces overlapping windows.
+//
+// Capped: see MAX_WINDOWS_PER_PASS. The caller is told what was dropped.
 function windowStarts(endMs: number, strideMs: number): number[] {
   const starts: number[] = [];
   for (let from = 0; from < endMs; from += strideMs) starts.push(from);
-  return starts;
+  return starts.length > MAX_WINDOWS_PER_PASS ? starts.slice(0, MAX_WINDOWS_PER_PASS) : starts;
+}
+
+// How many windows a transcript WOULD plan, uncapped. The extract route uses
+// this to refuse an over-long recording BEFORE any call is made -- refusing
+// after the fact still pays for the first 240 windows.
+export function plannedWindows(endMs: number): { actionable: number; teaching: number; total: number } {
+  const count = (stride: number) => (endMs <= 0 ? 0 : Math.ceil(endMs / stride));
+  const actionable = count(ACTIONABLE_STRIDE_MS);
+  const teaching = count(TEACHING_STRIDE_MS);
+  return { actionable, teaching, total: actionable + teaching };
 }
 
 // ---------------------------------------------------------------------------
@@ -754,6 +808,25 @@ export async function reconstructLecture(
     );
   }
 
+  // The window cap, said out loud. A run that could not cover the whole lecture
+  // is a PARTIAL run, and every downstream consumer already knows what to do
+  // with one -- it is not published and it is not cached for reuse.
+  const planned = plannedWindows(end);
+  if (
+    planned.total > MAX_WINDOWS_TOTAL ||
+    planned.actionable > MAX_WINDOWS_PER_PASS ||
+    planned.teaching > MAX_WINDOWS_PER_PASS
+  ) {
+    stats.failures.push(
+      `This recording is longer than one reconstruction pass may read: it plans ` +
+      `${planned.actionable} actionable and ${planned.teaching} teaching windows ` +
+      `(${planned.total} total) against a ceiling of ${MAX_WINDOWS_TOTAL} total and ` +
+      `${MAX_WINDOWS_PER_PASS} per pass. Only the first ${MAX_WINDOWS_PER_PASS} of each were ` +
+      `read, so this lecture has been read in part and is not published. Split the recording ` +
+      `and upload it as separate lectures.`,
+    );
+  }
+
   // --- actionable: full sweep, overlapping windows, cues as a hint ----------
   const actionableCues = candidates.filter((c) => categoryOf(c.kind) === "actionable");
   stats.cueHits = actionableCues.length;
@@ -842,6 +915,7 @@ export const __internals = {
   collapse,
   windowFor,
   windowStarts,
+  plannedWindows,
   locateQuote,
   dedupeByEvidence,
   parseJsonBlock,

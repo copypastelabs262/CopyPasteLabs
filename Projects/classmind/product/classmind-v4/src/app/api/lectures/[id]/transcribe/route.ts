@@ -1,6 +1,12 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
-import { requireUser, requireCourseOwner, errorResponse } from "@/lib/auth";
+import { requireUser, requireCourseOwner, errorResponse, dbFailure } from "@/lib/auth";
+import {
+  enforceMemoryLimit,
+  enforceTranscriptionQuota,
+  enforceGlobalSpendCeiling,
+  LIMITS,
+} from "@/lib/rate-limit";
 import { serviceClient } from "@/lib/supabase/service";
 import { LECTURE_BUCKET } from "@/lib/storage";
 import {
@@ -64,12 +70,12 @@ async function loadLecture(
       noteIdentityColumns(true);
       return { lecture: (data as LectureRow | null) ?? null, columns: true };
     }
-    if (!isMissingSchemaError(error)) throw new Error(error.message);
+    if (!isMissingSchemaError(error)) throw dbFailure("lecture.load", error, "Could not read that lecture. Please try again.");
     noteIdentityColumns(false);
   }
   const { data, error } = await svc
     .from("lectures").select(BASE_COLUMNS).eq("id", id).maybeSingle();
-  if (error) throw new Error(error.message);
+  if (error) throw dbFailure("lecture.load", error, "Could not read that lecture. Please try again.");
   return { lecture: (data as LectureRow | null) ?? null, columns: false };
 }
 
@@ -103,7 +109,20 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const { lecture, columns } = await loadLecture(svc, id);
     if (!lecture) return NextResponse.json({ error: "Lecture not found." }, { status: 404 });
 
-    const course = await requireCourseOwner(lecture.course_id, user.id);
+    const course = await requireCourseOwner(lecture.course_id, user);
+
+    // Billable ASR, priced per hour of audio. Checked here rather than after
+    // the guards below so a loop is refused before it can download 50 MB.
+    enforceMemoryLimit("transcribe-burst", user.id, LIMITS.transcribeBurst, "transcription");
+    enforceMemoryLimit("transcribe", user.id, LIMITS.transcribe, "transcription");
+    // The durable half. The two lines above live in this process and reset on a
+    // cold start; ASR is billed per hour of audio, so the bound that matters has
+    // to survive scale-out. Counted from `lectures` -- see the note on
+    // transcriptionsInWindow for why that table is the ledger ASR never got.
+    await enforceTranscriptionQuota(user.id);
+    // ASR is billed per HOUR OF AUDIO -- the largest single-request bill in
+    // the product -- and was the only paid path with no deployment-wide bound.
+    await enforceGlobalSpendCeiling("transcription");
 
     if (lecture.status !== "pending_upload" && lecture.status !== "uploaded") {
       return NextResponse.json({ error: `Lecture is ${lecture.status}; nothing to submit.` }, { status: 409 });

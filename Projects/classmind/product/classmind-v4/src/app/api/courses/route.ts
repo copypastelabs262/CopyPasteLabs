@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { requireUser, errorResponse } from "@/lib/auth";
+import { requireUser, requireFaculty, errorResponse, dbFailure } from "@/lib/auth";
+import { enforceMemoryLimit, LIMITS } from "@/lib/rate-limit";
 import { serviceClient } from "@/lib/supabase/service";
 
 // Courses the user owns, plus courses they are enrolled in. One route, because
@@ -9,11 +10,21 @@ export async function GET() {
     const user = await requireUser();
     const svc = serviceClient();
 
-    const { data: owned } = await svc
-      .from("courses")
-      .select("id, code, title, term, join_code, transcription_language, created_at")
-      .eq("owner_id", user.id)
-      .order("created_at", { ascending: false });
+    // OWNERSHIP CONFERS THE OWNER VIEW ONLY TO FACULTY (2026-09-07, security
+    // audit -- second pass). requireCourseOwner and requireCourseAccess both
+    // assert this now, so a non-faculty owner cannot open any of these courses;
+    // listing them here anyway would hand that account the join_code -- the
+    // credential that lets anyone enrol -- for a course it cannot otherwise
+    // touch. The list and the gate have to agree, or the UI shows a door that
+    // every route refuses to open.
+    const isFaculty = user.role === "faculty";
+    const { data: owned } = isFaculty
+      ? await svc
+          .from("courses")
+          .select("id, code, title, term, join_code, transcription_language, created_at")
+          .eq("owner_id", user.id)
+          .order("created_at", { ascending: false })
+      : { data: [] as Record<string, unknown>[] };
 
     const { data: rows } = await svc
       .from("enrollments")
@@ -38,9 +49,30 @@ export async function GET() {
   }
 }
 
+// CREATING A COURSE IS A FACULTY ACT, AND THE SERVER IS WHERE THAT IS DECIDED.
+//
+// Fixed 2026-09-07 (security audit). This route asked only requireUser(), so
+// any signed-in student could POST here, become owner_id of a new course, and
+// from that moment satisfy requireCourseOwner on every teaching route:
+// /api/courses/{id}/lectures (signed upload URL), /api/lectures/{id}/transcribe
+// (billable Sarvam ASR), /api/lectures/{id}/extract?force=1 (billable reasoning,
+// per window, ledger bypassed), plus the candidate and knowledge review queues
+// that "no unverified information reaches students" depends on.
+//
+// The gate existed -- FACULTY_ACCESS_CODE, checked in @/lib/faculty-code -- but
+// it only decided who may hold the LABEL. CoursesClient renders the "New class"
+// button behind `role === "faculty"`, which is UX and was the only thing
+// standing between a free Google sign-up and the whole teaching console.
+// A hidden button is not an authorization boundary.
 export async function POST(request: Request) {
   try {
     const user = await requireUser();
+    requireFaculty(user);
+    // Unbounded course creation is a route to disabling the durable spend
+    // quotas: both count by fanning out over the caller's owned courses, and
+    // a large enough set makes that query fail -- which both counters treat as
+    // ALLOW. The fan-out is capped too; this bounds the other end.
+    enforceMemoryLimit("course-create", user.id, LIMITS.courseCreate, "course creation");
     const body = (await request.json()) as {
       code?: string; title?: string; term?: string; transcriptionLanguage?: string;
     };
@@ -65,7 +97,7 @@ export async function POST(request: Request) {
       .select("id, code, title, term, join_code, transcription_language")
       .single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) throw dbFailure("courses.create", error, "Could not create the course. Please try again.");
     return NextResponse.json({ course: data });
   } catch (err) {
     const { body, status } = errorResponse(err);

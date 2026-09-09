@@ -56,9 +56,22 @@ function extensionOf(filename: string): string {
   return dot === -1 ? "" : filename.slice(dot + 1).toLowerCase();
 }
 
+// `Object.hasOwn`, NOT `in` (fixed 2026-09-07, security audit).
+//
+// AUDIO_EXTENSION_MIME is an object literal, so it inherits Object.prototype --
+// and `"constructor" in AUDIO_EXTENSION_MIME` is TRUE. A file named
+// `lecture.constructor` therefore passed as a recognised audio format, and
+// canonicalAudioContentType below then returned `AUDIO_EXTENSION_MIME["constructor"]`,
+// which is the Object CONSTRUCTOR FUNCTION rather than a MIME string. That value
+// went on to be stored in lectures.content_type and sent as an outbound HTTP
+// header. Same for __proto__, toString, valueOf and hasOwnProperty.
+//
+// Not a privilege escalation -- the caller is already the course owner -- but it
+// is a caller-chosen value reaching a header and a database column through a
+// check that was supposed to be a closed vocabulary and was not.
 export function isAllowedAudio(contentType: string, filename: string): boolean {
   if (contentType.trim().toLowerCase().startsWith("audio/")) return true;
-  return extensionOf(filename) in AUDIO_EXTENSION_MIME;
+  return Object.hasOwn(AUDIO_EXTENSION_MIME, extensionOf(filename));
 }
 
 // The type that is stored, sent to the bucket, and handed to the
@@ -72,16 +85,58 @@ export function isAllowedAudio(contentType: string, filename: string): boolean {
 // /start. Every value in AUDIO_EXTENSION_MIME is on Sarvam's allowlist, so
 // when the extension is recognised its mapping wins; the reported type is
 // only trusted when the filename tells us nothing.
+// A MIME type, and only something shaped like one, may leave this function.
+//
+// The stored value is used two ways that both make a loose string dangerous: it
+// is written to lectures.content_type, and it is handed to the transcription
+// provider as an outbound HTTP HEADER VALUE. The old code returned the browser's
+// reported type after `.split(";")[0].trim()`, which strips whitespace only at
+// the ENDS -- so an embedded CR/LF survived, and a reported type carrying one
+// went straight into a request header. undici rejects
+// that at the call, which turns it into an unexplained 500 rather than a real
+// header injection -- but a value that can only fail is a value that should
+// never have been built. One conservative pattern. (2026-09-07, security audit.)
+const MIME_TOKEN = /^audio\/[a-z0-9][a-z0-9!#$&^_.+-]{0,62}$/;
+
 export function canonicalAudioContentType(contentType: string, filename: string): string {
-  const mapped = AUDIO_EXTENSION_MIME[extensionOf(filename)];
-  if (mapped) return mapped;
+  const ext = extensionOf(filename);
+  // hasOwn, not a truthiness test on a bracket read: see isAllowedAudio.
+  if (Object.hasOwn(AUDIO_EXTENSION_MIME, ext)) return AUDIO_EXTENSION_MIME[ext];
   const reported = contentType.trim().toLowerCase().split(";")[0].trim();
-  if (reported.startsWith("audio/")) return EXOTIC_AUDIO_ALIASES[reported] ?? reported;
+  if (MIME_TOKEN.test(reported)) {
+    return Object.hasOwn(EXOTIC_AUDIO_ALIASES, reported)
+      ? EXOTIC_AUDIO_ALIASES[reported]
+      : reported;
+  }
+  // Unrecognised extension AND an unusable reported type. The bucket admits
+  // only audio/*, so the fallback has to be one -- and mp3 is what an unknown
+  // recording most often is.
   return "audio/mpeg";
 }
 
+// THE OBJECT KEY, AND WHY THE EXTENSION IS SANITISED (2026-09-07, security
+// audit).
+//
+// `filename` is whatever the uploader typed -- it arrives as
+// `body.originalFilename` on POST /api/courses/{id}/lectures and is used
+// verbatim by the caller for the row's display name. It used to be used verbatim
+// HERE too: the extension was everything after the last dot, so a file named
+//
+//     lecture.mp3/../../<another lecture id>/original.mp3
+//
+// produced the key `<mine>/original.mp3/../../<theirs>/original.mp3`, and the
+// signed UPLOAD url minted for that key is handed straight back to the client.
+// Whether Supabase Storage collapses the traversal is not the interesting
+// question -- the interesting question is why a caller gets to write the key at
+// all. It does not any more.
+//
+// The extension is now taken from the SAME map that decides what counts as
+// audio, and falls back to "bin" when the name says nothing recognisable. The
+// key is therefore always `<uuid>/original.<one of ~20 known tokens>`, built
+// from a server-generated id and a closed vocabulary, with nothing
+// caller-controlled left in it.
 export function lectureObjectPath(lectureId: string, filename: string): string {
-  const dot = filename.lastIndexOf(".");
-  const ext = dot === -1 ? "bin" : filename.slice(dot + 1);
-  return `${lectureId}/original.${ext}`;
+  const ext = extensionOf(filename);
+  const safe = Object.hasOwn(AUDIO_EXTENSION_MIME, ext) ? ext : "bin";
+  return `${lectureId}/original.${safe}`;
 }

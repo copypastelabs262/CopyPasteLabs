@@ -119,6 +119,10 @@ export async function findReusableRun(key: RunKey): Promise<Lookup> {
 }
 
 export interface RunRecord {
+  // WHO WAS BILLED. Denormalised so the spend record survives the deletion of
+  // the course, the lecture and the account -- see migration 20260907130000.
+  // The route already proved this user owns the course before it got here.
+  ownerId: string;
   outcome: "succeeded" | "partial" | "failed" | "reused";
   complete: boolean;
   // LOGICAL WINDOWS. Not provider traffic -- see `traffic` below, and the
@@ -197,7 +201,16 @@ export async function recordRun(key: RunKey, record: RunRecord): Promise<Recorde
   const insert = (row: Record<string, unknown>) =>
     svc.from("processing_runs").insert(row).select("id").maybeSingle();
 
-  let { data, error } = await insert({ ...base, ...traffic });
+  // owner_id arrives in 20260907130000, the traffic columns in 20260830170000.
+  // Either may be unapplied, so the shape degrades in steps rather than losing
+  // the whole ledger row to a column that is not there yet.
+  const owner = record.ownerId ? { owner_id: record.ownerId } : {};
+
+  let { data, error } = await insert({ ...base, ...traffic, ...owner });
+
+  if (error && /column .* does not exist|42703|schema cache/i.test(error.message) && record.ownerId) {
+    ({ data, error } = await insert({ ...base, ...traffic }));
+  }
 
   // The traffic columns arrive in a LATER migration than the table. Losing the
   // whole ledger because the newer one is not applied yet would be a worse

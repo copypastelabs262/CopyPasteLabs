@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireUser, requireCourseAccess, requireCourseOwner, errorResponse } from "@/lib/auth";
+import { enforceMemoryLimit, LIMITS } from "@/lib/rate-limit";
 import { serviceClient } from "@/lib/supabase/service";
 import { normalizeRawTranscript } from "@/lib/transcript/normalize";
 import { LECTURE_BUCKET } from "@/lib/storage";
@@ -31,7 +32,7 @@ export async function GET(_r: Request, { params }: { params: Promise<{ id: strin
       .maybeSingle();
     if (!lecture) return NextResponse.json({ error: "Lecture not found." }, { status: 404 });
 
-    const { isOwner } = await requireCourseAccess(lecture.course_id as string, user.id);
+    const { isOwner } = await requireCourseAccess(lecture.course_id as string, user);
     if (!isOwner && lecture.status !== "ready") {
       return NextResponse.json({ error: "This lecture is not published yet." }, { status: 403 });
     }
@@ -131,10 +132,25 @@ export async function GET(_r: Request, { params }: { params: Promise<{ id: strin
         completedAt: lecture.completed_at, recordedOn: lecture.recorded_on,
       },
       isOwner, audioUrl, transcript,
-      // Surfaced only when normalization failed, so an unrecognised provider
-      // shape is visible rather than rendering as an empty transcript.
+      // OWNER ONLY (2026-09-07, security audit). Surfaced when normalization
+      // failed, so an unrecognised provider shape is visible rather than
+      // rendering as an empty transcript.
+      //
+      // The gate used to be `transcript === null` alone, with no isOwner term.
+      // That is a diagnostic for whoever has to fix the provider shape -- the
+      // lecturer or the operator -- but the condition it fires on is not rare
+      // or hostile-only: any transcript this codebase cannot normalize hands
+      // the ENTIRE raw provider response to an enrolled student, which is the
+      // full verbatim transcript plus the provider's own metadata (job ids,
+      // model identifiers, timing, diarization internals).
+      //
+      // The route header two hundred lines above already states the rule this
+      // line broke: "This is the ONLY route that serves a transcript, the raw
+      // provider response and a signed audio URL, so it is the route where a
+      // replayed lecture leaks the most." Everything else in the payload is
+      // gated on isOwner or on the student gate; this one field was not.
       rawTranscriptionResponse:
-        transcript === null ? lecture.raw_transcription_response : null,
+        isOwner && transcript === null ? lecture.raw_transcription_response : null,
       candidates, reviews,
       // Non-zero means an older extraction version produced rows that are not
       // being shown. Surfaced rather than silently dropped.
@@ -176,7 +192,20 @@ export async function DELETE(_r: Request, { params }: { params: Promise<{ id: st
     // Owner only, and scoped to THIS lecture's course. Deletion is the one
     // action where getting the authorization check wrong destroys data rather
     // than leaking it.
-    await requireCourseOwner(lecture.course_id as string, user.id);
+    await requireCourseOwner(lecture.course_id as string, user);
+
+    // DELETION IS A COST CONTROL, NOT JUST A DATA ACTION (2026-09-07, closure
+    // pass). processing_runs and ask_runs both reference lectures ON DELETE
+    // CASCADE, so removing a lecture erases the very rows the durable spend
+    // quotas count -- including the deployment-wide ceilings. Unlimited, that
+    // made the "durable, cannot be reset by spreading requests" layer resettable
+    // by an ordinary product action: extract to the limit, delete, repeat.
+    //
+    // Bounding deletion bounds the reset. The proper fix is a ledger that
+    // outlives what it billed for; that needs a migration and is written as
+    // 20260907130000_ledger_durability.sql. This is the half that works today.
+    enforceMemoryLimit("lecture-delete-burst", user.id, LIMITS.deleteBurst, "deletion");
+    enforceMemoryLimit("lecture-delete", user.id, LIMITS.delete, "deletion");
 
     const { data: candidates } = await svc
       .from("extraction_candidates").select("id").eq("lecture_id", id);
@@ -186,18 +215,26 @@ export async function DELETE(_r: Request, { params }: { params: Promise<{ id: st
       .from(LECTURE_BUCKET)
       .remove([lecture.storage_path as string]);
     if (storageError) {
+      // The driver text is logged, not returned. Interpolating it into a
+      // sentence is what hid these two from the first sweep AND from the
+      // regression test that asserts no raw message reaches the wire -- the
+      // test looked for `error: err.message` as a whole value, and a message
+      // spliced into a template does not match that shape. Storage errors name
+      // buckets and object keys, and an object key here is a lecture id.
+      console.error("[lecture.delete] storage remove failed:", storageError.message);
       return NextResponse.json(
-        { error: `Could not delete the audio, so nothing was deleted: ${storageError.message}` },
+        { error: "Could not delete the audio, so nothing was deleted. Please try again." },
         { status: 502 },
       );
     }
 
     const { error: rowError } = await svc.from("lectures").delete().eq("id", id);
     if (rowError) {
+      console.error("[lecture.delete] row delete failed:", rowError.message);
       return NextResponse.json(
         {
           error:
-            `The audio was deleted but the lecture record was not: ${rowError.message}. ` +
+            "The audio was deleted but the lecture record was not. " +
             "Deleting the lecture again will finish the job.",
         },
         { status: 500 },

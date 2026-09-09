@@ -1,10 +1,25 @@
 import { NextResponse } from "next/server";
-import { requireUser, requireCourseOwner, errorResponse } from "@/lib/auth";
+import { requireUser, requireCourseOwner, errorResponse, dbFailure } from "@/lib/auth";
+import {
+  enforceMemoryLimit,
+  enforceBilledRunQuota,
+  enforceGlobalSpendCeiling,
+  acquireClaim,
+  releaseClaim,
+  LIMITS,
+} from "@/lib/rate-limit";
 import { serviceClient } from "@/lib/supabase/service";
 import { normalizeRawTranscript } from "@/lib/transcript/normalize";
 import { validateTranscript } from "@/lib/provenance/transcript-validation";
 import { getExtractionMethod } from "@/lib/extraction";
-import { reconstructLecture, RECONSTRUCTION_METHOD, RECONSTRUCTION_VERSION } from "@/lib/reasoning/reconstruct";
+import {
+  reconstructLecture,
+  plannedWindows,
+  MAX_WINDOWS_TOTAL,
+  MAX_WINDOWS_PER_PASS,
+  RECONSTRUCTION_METHOD,
+  RECONSTRUCTION_VERSION,
+} from "@/lib/reasoning/reconstruct";
 import { storeKnowledge } from "@/lib/knowledge/store";
 import { decideReadiness } from "@/lib/knowledge/plan";
 import { reasoningAvailable, getReasoningProvider, reasoningUnavailableReason } from "@/lib/reasoning";
@@ -39,6 +54,9 @@ export const maxDuration = 300;
 // student: every row lands in extraction_candidates and needs a human verdict
 // before it can appear as course knowledge.
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  // Held across the whole handler and released in `finally`, so a throw
+  // anywhere below cannot leave the lecture permanently claimed.
+  let claim: string | null = null;
   try {
     const { id } = await params;
     const user = await requireUser();
@@ -50,7 +68,34 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       .eq("id", id)
       .maybeSingle();
     if (!lecture) return NextResponse.json({ error: "Lecture not found." }, { status: 404 });
-    await requireCourseOwner(lecture.course_id as string, user.id);
+    await requireCourseOwner(lecture.course_id as string, user);
+
+    // THE SPEND LIMIT. Owning the course authorises the run; it does not
+    // authorise an unbounded NUMBER of runs. `?force=1` below deliberately
+    // bypasses the processing_runs reuse guard, so without this a single
+    // owner could bill one reasoning call per window, per iteration, in a
+    // loop -- the 2026-08-30 failure with a different endpoint on it.
+    // Burst first (a loop lands here), then the hourly budget, then the
+    // durable count of what was actually billed.
+    enforceMemoryLimit("extract-burst", user.id, LIMITS.extractBurst, "processing");
+    enforceMemoryLimit("extract", user.id, LIMITS.extract, "processing");
+    await enforceBilledRunQuota(user.id);
+    // The per-account budget multiplies by the number of accounts an attacker
+    // creates, and sign-up is free. This is the bound that does not.
+    await enforceGlobalSpendCeiling("run");
+
+    // ONE PAID RUN PER LECTURE AT A TIME. findReusableRun/recordRun is a
+    // read-then-write race with nothing between them, so two overlapping
+    // extracts of the same lecture both miss the cache and both pay in full.
+    // The product's own UI can cause it -- a double-clicked button, two tabs --
+    // and an attacker can cause it deliberately.
+    // Assigned only AFTER the acquire succeeds. Assigning first would mean a
+    // request REFUSED because someone else holds the claim still runs the
+    // `finally` below and releases THEIR claim -- turning the guard into its
+    // own bypass.
+    const claimKey = `extract:${id}`;
+    acquireClaim(claimKey, "lecture");
+    claim = claimKey;
 
     if (!lecture.raw_transcription_response) {
       return NextResponse.json({ error: "Lecture has no transcript yet." }, { status: 409 });
@@ -98,6 +143,39 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
           validation,
         },
         { status: 409 },
+      );
+    }
+
+    // ---- THE LENGTH CEILING --------------------------------------------
+    //
+    // Refused HERE, before Layer 1 runs and long before a model is called,
+    // because the point is to spend nothing. reconstructLecture caps its own
+    // windows too, but a cap applied inside the engine still pays for the 240
+    // windows it does read. The uploader chooses the audio length, so the
+    // number of billed calls was a number the uploader chose; this is where
+    // that stops being true.
+    const audioEndMs = transcript.segments.at(-1)?.endMs ?? 0;
+    const planned = plannedWindows(audioEndMs);
+    if (
+      planned.total > MAX_WINDOWS_TOTAL ||
+      planned.actionable > MAX_WINDOWS_PER_PASS ||
+      planned.teaching > MAX_WINDOWS_PER_PASS
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "This recording is too long to reconstruct in one request. It would need " +
+            `${planned.total} model calls, and this route has ${maxDuration}s to make them — ` +
+            `about ${MAX_WINDOWS_TOTAL}. Refusing now rather than paying for the calls that ` +
+            "would fit before the request is killed. Split the recording and upload it as " +
+            "separate lectures.",
+          lectureId: id,
+          plannedWindows: planned,
+          maxWindowsTotal: MAX_WINDOWS_TOTAL,
+          maxWindowsPerPass: MAX_WINDOWS_PER_PASS,
+          maxDurationSeconds: maxDuration,
+        },
+        { status: 413 },
       );
     }
 
@@ -150,7 +228,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
           extraction_method: method.id, extraction_version: method.version,
         })),
       );
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) throw dbFailure("extract.candidates", error, "Could not store the extracted candidates. Please try again.");
     }
 
     // ---- Layer 2 + 3: reconstruct meaning, then store it -------------------
@@ -333,6 +411,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
       const usageKnown = (reconstruction?.callsWithUsage ?? 0) > 0;
       const recorded = await recordRun(runKey, {
+        // requireCourseOwner above already proved this user owns the course, so
+        // the owner and the caller are the same person here.
+        ownerId: user.id,
         outcome,
         complete,
         calls: reconstruction?.calls ?? 0,
@@ -424,5 +505,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   } catch (err) {
     const { body, status } = errorResponse(err);
     return NextResponse.json(body, { status });
+  } finally {
+    releaseClaim(claim);
   }
 }

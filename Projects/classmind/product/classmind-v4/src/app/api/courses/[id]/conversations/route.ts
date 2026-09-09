@@ -18,7 +18,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   try {
     const { id } = await params;
     const user = await requireUser();
-    await requireCourseAccess(id, user.id);
+    await requireCourseAccess(id, user);
 
     const lectureId = new URL(request.url).searchParams.get("lectureId")?.trim() || undefined;
     const listed = await listConversations(serviceClient(), user.id, {

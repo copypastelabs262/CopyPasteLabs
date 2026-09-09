@@ -23,7 +23,7 @@ export async function GET(_r: Request, { params }: { params: Promise<{ id: strin
   try {
     const { id } = await params;
     const user = await requireUser();
-    await requireCourseAccess(id, user.id);
+    await requireCourseAccess(id, user);
     return NextResponse.json({ items: await courseKnowledge(id) });
   } catch (err) {
     const { body, status } = errorResponse(err);

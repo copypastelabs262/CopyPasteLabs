@@ -2,6 +2,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { requireEnv } from "@/lib/env";
+import { sessionCookieOptions } from "./cookie-options";
 
 // Anon-key client bound to the request's cookies. Used ONLY to establish who is
 // signed in; it can read no product data, because every product table denies the
@@ -12,6 +13,9 @@ export async function authClient() {
     requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
     requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
     {
+      // See ./cookie-options.ts: Secure in production, a 30-day life instead of
+      // the library default of 400 days.
+      cookieOptions: sessionCookieOptions(),
       cookies: {
         getAll: () => store.getAll(),
         setAll: (list) => {

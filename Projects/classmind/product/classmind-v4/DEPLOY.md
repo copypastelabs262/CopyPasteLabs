@@ -252,9 +252,17 @@ Then check by hand:
 
 ## 6. Before this is used by anyone real
 
-- [ ] **Delete the test accounts.** `faculty.test@classmind.local` and
-      `student.test@classmind.local` both have a password that was published in this repository (now read from `CLASSMIND_TEST_PASSWORD`), which is in this
-      repository. Delete them in Supabase → Authentication → Users.
+- [x] **Delete the test accounts.** `faculty.test@classmind.local` and
+      `student.test@classmind.local`. **Verified absent from the live project on
+      2026-09-07** (the only remaining accounts are real Google sign-ins).
+      Their shared password used to be a literal in this file and in ~50 files
+      tracked at HEAD in the public repo; it is redacted here and read from
+      `CLASSMIND_TEST_PASSWORD` by every script (see
+      `scripts/_test-credentials.mts`). **It must never be reused** -- it is
+      permanently in public git history across 21 commits and four project
+      versions. Note the suites RE-CREATE these accounts on next run
+      (`scripts/e2e.mts` signs in, and on failure calls `admin.createUser`), so
+      before running any of them set a fresh `CLASSMIND_TEST_PASSWORD`.
 - [ ] **Delete the test courses.** Sixteen `E2E-*`, `LANG-*`, `UIAUDIT-*`, `UIPOLL-*` and
       `UISTUCK-*` courses exist in the live project from verification runs.
 - [ ] **Confirm `SUPABASE_SERVICE_ROLE_KEY` is not prefixed `NEXT_PUBLIC_`** in the Vercel

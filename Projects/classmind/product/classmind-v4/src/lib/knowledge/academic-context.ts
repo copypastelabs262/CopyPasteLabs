@@ -24,7 +24,7 @@ import { readKnowledge, type KnowledgeUnit } from "./read.ts";
 export type AcademicScopeRef =
   | { scope: "lecture"; courseId: string; lectureId: string; isOwner: boolean }
   | { scope: "course"; courseId: string; isOwner: boolean }
-  | { scope: "global"; userId: string };
+  | { scope: "global"; userId: string; isFaculty: boolean };
 
 export interface AcademicContext {
   scope: "lecture" | "course" | "global";
@@ -61,9 +61,21 @@ export interface CourseMembership {
 // (oldest-first) order: when a cap is applied downstream, the student life of
 // an account that also owns many courses must survive the cut, and two
 // identical requests must truncate identically.
+// `isFaculty` decides whether OWNING a course confers the owner view here, and
+// it is required rather than optional so no caller can omit it and silently get
+// the permissive answer (2026-09-07, security audit).
+//
+// The invariant this keeps is "isOwner implies faculty", which requireCourseOwner
+// and requireCourseAccess now enforce on every route. Without it, the GLOBAL ask
+// corpus was the one place the old rule survived: a student-role account that
+// owns a leftover course would read that course with forStudent:false and see
+// its pending, unconfirmed and rejected-adjacent knowledge -- the material the
+// review queue exists to keep from students -- while every per-course route
+// refused them.
 export async function listCourseMemberships(
   svc: SupabaseClient,
   userId: string,
+  isFaculty: boolean,
 ): Promise<CourseMembership[]> {
   const [ownedResult, enrolledResult] = await Promise.all([
     svc
@@ -89,9 +101,23 @@ export async function listCourseMemberships(
       ).data ?? []) as { id: string; code: string; title: string }[])
     : [];
 
+  // A NON-FACULTY OWNER'S COURSES ARE NOT ACCESSIBLE, NOT MERELY READ AS A
+  // STUDENT (corrected 2026-09-07, closure pass).
+  //
+  // The first version downgraded `isOwner` to `isFaculty` and left the course in
+  // the list. That made this function disagree with every route: requireCourseAccess
+  // 403s a student-role owner outright, and GET /api/courses and /api/me/overview
+  // hide the course entirely -- but the GLOBAL ask corpus and a global
+  // conversation's source gate were both built from this list, so the course was
+  // still read and still citable, with the citations linking to pages that refuse.
+  //
+  // Ownership only confers anything when the owner is faculty. A course owned by
+  // a student-role account is a leftover of the pre-fix POST /api/courses hole,
+  // and the answer everywhere else is "you cannot open this" -- so it is the
+  // answer here too.
   return [
     ...enrolled.map((c) => ({ ...c, isOwner: false })),
-    ...owned.map((c) => ({ ...c, isOwner: true })),
+    ...(isFaculty ? owned.map((c) => ({ ...c, isOwner: true })) : []),
   ];
 }
 
@@ -114,7 +140,7 @@ export async function loadAcademicContext(
   }
 
   // ---- global: the student's whole accessible academic world ---------------
-  const all = await listCourseMemberships(svc, ref.userId);
+  const all = await listCourseMemberships(svc, ref.userId, ref.isFaculty);
   const memberships = all.slice(0, GLOBAL_COURSE_CAP);
 
   const courseNames = new Map(memberships.map((c) => [c.id, `${c.code} · ${c.title}`]));

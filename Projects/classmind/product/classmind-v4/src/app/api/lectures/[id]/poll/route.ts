@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireUser, requireCourseOwner, errorResponse } from "@/lib/auth";
+import { requireUser, requireCourseOwner, errorResponse, dbFailure } from "@/lib/auth";
 import { serviceClient } from "@/lib/supabase/service";
 import {
   getTranscriptionProvider, recallReplayRequest, replaySlugOfJobId,
@@ -45,12 +45,12 @@ async function loadLecture(
       noteIdentityColumns(true);
       return { lecture: (data as LectureRow | null) ?? null, columns: true };
     }
-    if (!isMissingSchemaError(error)) throw new Error(error.message);
+    if (!isMissingSchemaError(error)) throw dbFailure("lecture.load", error, "Could not read that lecture. Please try again.");
     noteIdentityColumns(false);
   }
   const { data, error } = await svc
     .from("lectures").select(BASE_COLUMNS).eq("id", id).maybeSingle();
-  if (error) throw new Error(error.message);
+  if (error) throw dbFailure("lecture.load", error, "Could not read that lecture. Please try again.");
   return { lecture: (data as LectureRow | null) ?? null, columns: false };
 }
 
@@ -102,7 +102,7 @@ async function bindAudioIdentity(
       noteIdentityLedger(false);
       return { available: false, boundToLectureId: null, boundSubmittedSha256: null };
     }
-    throw new Error(inserted.error.message);
+    throw dbFailure("lecture.identity", inserted.error, "Could not record the audio identity.");
   }
   noteIdentityLedger(true);
 
@@ -120,7 +120,7 @@ async function bindAudioIdentity(
     .select("submitted_audio_sha256, first_lecture_id")
     .eq("provider_audio_id", providerAudioId)
     .maybeSingle();
-  if (existing.error) throw new Error(existing.error.message);
+  if (existing.error) throw dbFailure("lecture.identity", existing.error, "Could not read the audio identity.");
 
   return {
     available: true,
@@ -137,7 +137,7 @@ export async function POST(_r: Request, { params }: { params: Promise<{ id: stri
 
     const { lecture, columns } = await loadLecture(svc, id);
     if (!lecture) return NextResponse.json({ error: "Lecture not found." }, { status: 404 });
-    await requireCourseOwner(lecture.course_id, user.id);
+    await requireCourseOwner(lecture.course_id, user);
 
     // Terminal already: report, don't re-poll. Keeps the endpoint idempotent.
     if (["transcribed", "ready", "failed", "quarantined"].includes(lecture.status)) {
@@ -308,7 +308,11 @@ export async function POST(_r: Request, { params }: { params: Promise<{ id: stri
       },
     });
 
-    if (written.error) return NextResponse.json({ error: written.error }, { status: 500 });
+    // The driver message goes to the log, not the wire. This route is
+    // owner-only, so the audience is narrow -- but a PostgREST message names
+    // tables, columns and constraints, and there is no reason for any of that
+    // to leave the server just because the reader happens to be trusted.
+    if (written.error) throw dbFailure("poll.write", { message: written.error }, "Could not store the transcription result. Poll again in a moment.");
     if (written.rows === 0) {
       return NextResponse.json(
         { error: "This lecture was re-submitted while its transcript was being retrieved; the stale result was discarded." },

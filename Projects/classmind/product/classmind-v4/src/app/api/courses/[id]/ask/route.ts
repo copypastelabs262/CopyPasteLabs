@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
 import { requireUser, requireCourseAccess, errorResponse } from "@/lib/auth";
+import {
+  enforceMemoryLimit,
+  enforceBilledAskQuota,
+  enforceGlobalSpendCeiling,
+  LIMITS,
+} from "@/lib/rate-limit";
 import { loadAcademicContext } from "@/lib/knowledge/academic-context";
 import { serviceClient } from "@/lib/supabase/service";
 import { answerFromKnowledge, type AskTurn } from "@/lib/knowledge/answer";
@@ -58,7 +64,19 @@ interface AskInput {
 
 async function handleAsk(courseId: string, input: AskInput) {
   const user = await requireUser();
-  const { isOwner } = await requireCourseAccess(courseId, user.id);
+  const { isOwner } = await requireCourseAccess(courseId, user);
+
+  // Every ask is bounded, and the ones that reached a model are bounded
+  // again by what ask_runs says was actually billed. ask-routing.ts answers
+  // many questions for $0, but the client chooses the wording and therefore
+  // chooses the route -- "explain X" is a paid route by construction, so a
+  // loop of them is a loop of paid calls.
+  enforceMemoryLimit("ask-burst", user.id, LIMITS.askBurst, "question");
+  enforceMemoryLimit("ask", user.id, LIMITS.ask, "question");
+  await enforceBilledAskQuota(user.id);
+  // Per-account budgets multiply by the number of accounts; this one does not.
+  await enforceGlobalSpendCeiling("ask");
+
   const svc = serviceClient();
 
   const q = input.q.trim();
@@ -290,6 +308,18 @@ async function handleAsk(courseId: string, input: AskInput) {
         }
       : null,
   });
+}
+
+// HEAD IS NOT A FREE GET HERE (2026-09-07, closure pass).
+//
+// Next routes HEAD to the GET handler when no HEAD is exported, so
+// `HEAD /api/courses/{id}/ask?q=...` ran the whole answering path -- including
+// the meter and, with a provider configured, the billed call -- and returned no
+// body to show for it. Nothing in this product issues a HEAD to an API route.
+// /api/ask removed its GET entirely for this class of reason; its course-scoped
+// twin keeps GET (scripts depend on it) but need not keep HEAD.
+export function HEAD() {
+  return new Response(null, { status: 405, headers: { Allow: "GET, POST" } });
 }
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {

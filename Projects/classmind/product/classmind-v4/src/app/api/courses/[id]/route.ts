@@ -10,7 +10,7 @@ export async function GET(_r: Request, { params }: { params: Promise<{ id: strin
   try {
     const { id } = await params;
     const user = await requireUser();
-    const { course, isOwner } = await requireCourseAccess(id, user.id);
+    const { course, isOwner } = await requireCourseAccess(id, user);
     const svc = serviceClient();
 
     const { data: lectures } = await svc

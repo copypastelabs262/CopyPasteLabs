@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
-import { requireUser, requireCourseOwner, errorResponse } from "@/lib/auth";
+import { requireUser, requireCourseOwner, errorResponse, dbFailure } from "@/lib/auth";
 import { serviceClient } from "@/lib/supabase/service";
 import {
   LECTURE_BUCKET, FILE_SIZE_LIMIT_BYTES, lectureObjectPath,
@@ -26,7 +26,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   try {
     const { id: courseId } = await params;
     const user = await requireUser();
-    await requireCourseOwner(courseId, user.id);
+    await requireCourseOwner(courseId, user);
 
     const body = (await request.json()) as {
       title?: string; originalFilename?: string; fileSizeBytes?: number;
@@ -109,7 +109,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       .from(LECTURE_BUCKET)
       .createSignedUploadUrl(path);
     if (signError || !signed) {
-      return NextResponse.json({ error: signError?.message ?? "Could not create upload URL." }, { status: 500 });
+      throw dbFailure("lectures.signUpload", signError, "Could not prepare the upload. Please try again.");
     }
 
     const row = {
@@ -147,7 +147,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         replayPersistence = "process-memory";
       }
     }
-    if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 });
+    if (insertError) throw dbFailure("lectures.create", insertError, "Could not create the lecture. Please try again.");
 
     return NextResponse.json({
       lectureId,

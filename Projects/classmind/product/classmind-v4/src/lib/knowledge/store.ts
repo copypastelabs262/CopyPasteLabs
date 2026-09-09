@@ -27,10 +27,32 @@ import {
 // the knowledge base directly: a professor cannot review thirty topics after
 // every lecture, and the cost of being wrong is not symmetric -- a mislabelled
 // topic wastes a moment, a wrong deadline costs a grade.
-const GATED_KINDS = new Set(["assignment", "deadline", "exam_instruction"]);
+// FAIL CLOSED ON AN UNRECOGNISED KIND (2026-09-07, security audit).
+//
+// This was a DENY-list: actionable AND kind in {assignment, deadline,
+// exam_instruction} means review, everything else is published to students
+// automatically. Both halves of that come from the MODEL -- `category` and
+// `kind` are fields it emits while reconstructing a transcript -- so an
+// actionable obligation carrying any kind outside those three reached students
+// with no human verdict.
+//
+// That was not hypothetical. `exam_scope` is a real actionable kind (see
+// CATEGORY_OF in ../extraction/types.ts) and was NOT on the deny-list, while
+// `exam_instruction` -- which was -- does not appear in that vocabulary at all.
+// "What is on the exam" therefore auto-published, and it is squarely the case
+// the original comment describes as worth gating: a mislabelled topic wastes a
+// moment, a wrong exam scope costs a grade.
+//
+// Inverted to an ALLOW-list. Everything actionable now needs a verdict unless
+// it is explicitly one of the soft kinds, so a kind nobody anticipated -- an
+// invented one, a renamed one, a typo -- lands in the review queue instead of
+// in front of a student. The reviewer's cost of a false positive is one click;
+// the student's cost of a false negative is a missed deadline.
+const UNGATED_ACTIONABLE_KINDS = new Set(["announcement", "guidance"]);
 
 export function initialStatus(item: ReconstructedItem): "auto" | "pending" {
-  return item.category === "actionable" && GATED_KINDS.has(item.kind) ? "pending" : "auto";
+  if (item.category !== "actionable") return "auto";
+  return UNGATED_ACTIONABLE_KINDS.has(item.kind) ? "auto" : "pending";
 }
 
 export interface StoreResult {

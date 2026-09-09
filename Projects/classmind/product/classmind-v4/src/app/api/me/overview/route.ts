@@ -74,7 +74,11 @@ export async function GET() {
       svc
         .from("courses")
         .select("id, code, title, term, join_code, created_at")
-        .eq("owner_id", user.id)
+        // Owner view for faculty only -- see the note in GET /api/courses. A
+        // non-faculty owner cannot open these courses through any route, so
+        // listing them (with their join codes and owner-shaped counts) would
+        // contradict every gate.
+        .eq("owner_id", user.role === "faculty" ? user.id : "00000000-0000-0000-0000-000000000000")
         .order("created_at", { ascending: false }),
       svc.from("enrollments").select("course_id").eq("user_id", user.id),
     ]);

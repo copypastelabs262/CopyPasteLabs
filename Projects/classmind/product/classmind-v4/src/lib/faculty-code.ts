@@ -47,7 +47,46 @@ const attempts = new Map<string, { count: number; first: number }>();
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_FAILURES = 5;
 
+// THE PER-USER THROTTLE IS NOT A BRUTE-FORCE CONTROL ON ITS OWN (2026-09-07,
+// security audit).
+//
+// It is keyed by the authenticated user id, and a user id is free: Google
+// sign-up is open, so an attacker mints a new account, spends its five guesses,
+// and mints another. Five per account times unlimited accounts is unlimited.
+//
+// That mattered more after this audit than before it. requireFaculty now gates
+// course creation and, through requireCourseOwner, every teaching and paid
+// route behind it -- so FACULTY_ACCESS_CODE went from guarding a label to
+// guarding the whole privileged surface and the spending attached to it. The
+// one gate deserves a bound that does not reset with a new email address.
+//
+// A GLOBAL budget, deliberately generous. An institution onboards its teaching
+// staff in bursts, and a wrong code typed by a real lecturer is common; 100
+// failures an hour across the entire deployment is far above that and far below
+// anything that makes guessing a meaningful strategy against a strong secret.
+//
+// THE COST, STATED: a determined attacker can burn the global budget and block
+// faculty sign-up for up to an hour. That is a real denial of service and it is
+// the accepted trade -- an hour's delay in creating a teaching account is
+// recoverable, and the alternative is leaving the product's only privilege gate
+// with no aggregate bound at all. The refusal is LOUD in the server log
+// precisely so that hour is not silent: an operator seeing it knows the gate is
+// under attack, which is information the previous version never produced.
+const GLOBAL_WINDOW_MS = 60 * 60 * 1000;
+const GLOBAL_MAX_FAILURES = 100;
+let globalFailures: { count: number; first: number } | null = null;
+
+function globalBlocked(now: number): boolean {
+  if (!globalFailures) return false;
+  if (now - globalFailures.first > GLOBAL_WINDOW_MS) {
+    globalFailures = null;
+    return false;
+  }
+  return globalFailures.count >= GLOBAL_MAX_FAILURES;
+}
+
 export function facultyAttemptBlocked(userId: string, now: number): boolean {
+  if (globalBlocked(now)) return true;
   const rec = attempts.get(userId);
   if (!rec) return false;
   if (now - rec.first > WINDOW_MS) {
@@ -57,15 +96,45 @@ export function facultyAttemptBlocked(userId: string, now: number): boolean {
   return rec.count >= MAX_FAILURES;
 }
 
+// EVERY FAILURE IS LOGGED. The previous version recorded failures in memory and
+// printed nothing, so a sustained attack on the product's only privilege gate
+// left no trace anywhere -- the same defect class as the unmetered spend that
+// emptied the Sarvam balance: real, ongoing, and invisible. The user id is
+// logged; the submitted code never is.
 export function recordFacultyFailure(userId: string, now: number): void {
+  if (!globalFailures || now - globalFailures.first > GLOBAL_WINDOW_MS) {
+    globalFailures = { count: 1, first: now };
+  } else {
+    globalFailures.count += 1;
+  }
+
   const rec = attempts.get(userId);
   if (!rec || now - rec.first > WINDOW_MS) {
     attempts.set(userId, { count: 1, first: now });
-    return;
+  } else {
+    rec.count += 1;
   }
-  rec.count += 1;
+
+  const forUser = attempts.get(userId)?.count ?? 1;
+  console.warn(
+    `[faculty-gate] rejected code attempt user=${userId} ` +
+      `user_failures=${forUser}/${MAX_FAILURES} global_failures=${globalFailures.count}/${GLOBAL_MAX_FAILURES}`,
+  );
+  if (globalFailures.count >= GLOBAL_MAX_FAILURES) {
+    console.error(
+      "[faculty-gate] GLOBAL LIMIT REACHED -- faculty sign-up is refused for up to an hour. " +
+        "This is what a brute-force attempt against FACULTY_ACCESS_CODE looks like. Rotate the " +
+        "code if you did not expect this.",
+    );
+  }
 }
 
 export function clearFacultyAttempts(userId: string): void {
   attempts.delete(userId);
+}
+
+// Test seam. The global counter is module state, so a suite that exercises the
+// limit has to be able to put it back.
+export function resetFacultyGlobalThrottle(): void {
+  globalFailures = null;
 }

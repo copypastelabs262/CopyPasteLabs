@@ -25,7 +25,7 @@ export async function GET(_r: Request, { params }: { params: Promise<{ id: strin
   try {
     const { id } = await params;
     const user = await requireUser();
-    const { isOwner } = await requireCourseAccess(id, user.id);
+    const { isOwner } = await requireCourseAccess(id, user);
 
     const units = await readKnowledge({ courseId: id, forStudent: !isOwner });
 

@@ -151,24 +151,70 @@ const MAX_UNITS = 8;
 // transcript dump, which this layer exists to avoid.
 const MAX_QUOTES = 2;
 
+// PER-FIELD CEILINGS (added 2026-09-07, security audit).
+//
+// MAX_UNITS and MAX_QUOTES bound how MANY things reach the prompt. Nothing
+// bounded how BIG each one is, and none of these fields has a length constraint
+// anywhere behind it: knowledge_items.title and .summary are `text`, steps and
+// unspecified are `jsonb` arrays, and both writers -- a model reconstructing a
+// transcript, and a faculty edit at /api/knowledge/{id}/review -- stored
+// whatever they were handed.
+//
+// So prompt size was a value a course owner could choose, and prompt size is
+// billed per token on every question any of their students asks. The write path
+// now refuses oversized edits; this is the same bound applied where it actually
+// costs money, so it also holds for rows written before that check existed and
+// for anything a model produces.
+//
+// Truncation is MARKED, never silent: a model shown a sentence that stops
+// mid-word with no indication will confidently complete it.
+const MAX_TITLE_CHARS = 300;
+const MAX_SUMMARY_CHARS = 1_500;
+const MAX_STEP_CHARS = 400;
+const MAX_STEPS_RENDERED = 12;
+const MAX_UNSPECIFIED_RENDERED = 8;
+const MAX_QUOTE_CHARS = 500;
+const MAX_LABEL_CHARS = 200;
+
+function clip(value: string, max: number): string {
+  const v = String(value ?? "");
+  return v.length <= max ? v : `${v.slice(0, max)}... [truncated]`;
+}
+
 function render(units: KnowledgeUnit[], context?: AnswerContext): string {
   return units
     .map((u, i) => {
       const parts = [
-        `[${i + 1}] (${u.category}/${u.kind}${u.status === "confirmed" ? ", CONFIRMED by lecturer" : ""}) ${u.title}`,
-        `    ${u.summary}`,
+        `[${i + 1}] (${u.category}/${u.kind}${u.status === "confirmed" ? ", CONFIRMED by lecturer" : ""}) ${clip(u.title, MAX_TITLE_CHARS)}`,
+        `    ${clip(u.summary, MAX_SUMMARY_CHARS)}`,
       ];
       if (context?.scope === "course") {
-        parts.push(`    lecture: ${u.lectureTitle}`);
+        parts.push(`    lecture: ${clip(u.lectureTitle, MAX_LABEL_CHARS)}`);
       } else if (context?.scope === "global") {
         const subject = context.courseNames?.get(u.courseId);
-        parts.push(`    from: ${subject ?? "another subject"} — ${u.lectureTitle}`);
+        parts.push(
+          `    from: ${clip(subject ?? "another subject", MAX_LABEL_CHARS)} — ${clip(u.lectureTitle, MAX_LABEL_CHARS)}`,
+        );
       }
-      if (u.audience) parts.push(`    for: ${u.audience}`);
-      if (u.steps.length) parts.push(`    steps: ${u.steps.map((s, n) => `${n + 1}) ${s}`).join("  ")}`);
-      if (u.unspecified.length) parts.push(`    not specified: ${u.unspecified.join("; ")}`);
+      if (u.audience) parts.push(`    for: ${clip(u.audience, MAX_LABEL_CHARS)}`);
+      if (u.steps.length) {
+        parts.push(
+          `    steps: ${u.steps
+            .slice(0, MAX_STEPS_RENDERED)
+            .map((s, n) => `${n + 1}) ${clip(s, MAX_STEP_CHARS)}`)
+            .join("  ")}`,
+        );
+      }
+      if (u.unspecified.length) {
+        parts.push(
+          `    not specified: ${u.unspecified
+            .slice(0, MAX_UNSPECIFIED_RENDERED)
+            .map((g) => clip(g, MAX_STEP_CHARS))
+            .join("; ")}`,
+        );
+      }
       for (const e of u.evidence.slice(0, MAX_QUOTES)) {
-        parts.push(`    lecturer, at ${mmss(e.startMs)}: "${e.quote}"`);
+        parts.push(`    lecturer, at ${mmss(e.startMs)}: "${clip(e.quote, MAX_QUOTE_CHARS)}"`);
       }
       return parts.join("\n");
     })

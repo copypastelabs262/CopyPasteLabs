@@ -17,7 +17,7 @@ export async function GET(_r: Request, { params }: { params: Promise<{ id: strin
       .from("lectures").select("id, course_id, status").eq("id", id).maybeSingle();
     if (!lecture) return NextResponse.json({ error: "Lecture not found." }, { status: 404 });
 
-    const { isOwner } = await requireCourseAccess(lecture.course_id as string, user.id);
+    const { isOwner } = await requireCourseAccess(lecture.course_id as string, user);
     if (!isOwner && lecture.status !== "ready") {
       return NextResponse.json({ error: "This lecture is not published yet." }, { status: 403 });
     }

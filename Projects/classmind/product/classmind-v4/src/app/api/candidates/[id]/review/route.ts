@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireUser, requireCourseOwner, errorResponse } from "@/lib/auth";
+import { requireUser, requireCourseOwner, errorResponse, dbFailure } from "@/lib/auth";
 import { serviceClient } from "@/lib/supabase/service";
 
 const ACTIONS = ["confirm", "edit", "reject"];
@@ -25,13 +25,31 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     const { data: candidate } = await svc
       .from("extraction_candidates")
-      .select("id, course_id, kind, title, detail, due_phrase, due_resolved")
+      .select("id, lecture_id, course_id, kind, title, detail, due_phrase, due_resolved")
       .eq("id", id)
       .maybeSingle();
     if (!candidate) return NextResponse.json({ error: "Candidate not found." }, { status: 404 });
 
     // Only the course owner rules on their own lecture's candidates.
-    await requireCourseOwner(candidate.course_id as string, user.id);
+    // THE LEAF'S course_id IS NOT TRUSTED ON ITS OWN (2026-09-07, closure pass).
+    //
+    // Authorizing against a column carried on the row being written is only safe
+    // while exactly one writer sets it, and sets it from the parent. That is true
+    // today (extract writes lecture_id and course_id together from the lecture),
+    // so this is not a live hole -- it is a hole one future writer away, and the
+    // failure mode is the worst kind: the ownership check would be evaluated
+    // against the ATTACKER's own course and pass.
+    //
+    // Resolved through the lecture instead, and the two must agree.
+    const { data: parent } = await svc
+      .from("lectures")
+      .select("course_id")
+      .eq("id", candidate.lecture_id as string)
+      .maybeSingle();
+    if (!parent || parent.course_id !== candidate.course_id) {
+      return NextResponse.json({ error: "Candidate not found." }, { status: 404 });
+    }
+    await requireCourseOwner(parent.course_id as string, user);
 
     const body = (await request.json()) as {
       action?: string; kind?: string; title?: string; detail?: string;
@@ -65,7 +83,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       note: body.note?.trim() || null,
     }).select("id, action, created_at").single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) throw dbFailure("candidates.review", error, "Could not record that verdict. Please try again.");
     return NextResponse.json({ review: data });
   } catch (err) {
     const { body, status } = errorResponse(err);

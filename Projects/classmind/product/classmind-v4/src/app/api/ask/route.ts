@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
 import { requireUser, requireRole, errorResponse } from "@/lib/auth";
+import {
+  enforceMemoryLimit,
+  enforceBilledAskQuota,
+  enforceGlobalSpendCeiling,
+  LIMITS,
+} from "@/lib/rate-limit";
 import { loadAcademicContext } from "@/lib/knowledge/academic-context";
 import { serviceClient } from "@/lib/supabase/service";
 import { answerFromKnowledge, type AskTurn } from "@/lib/knowledge/answer";
@@ -43,6 +49,16 @@ async function handleGlobalAsk(input: GlobalAskInput) {
   // Role-shaped surface: an account that never chose a role is refused with
   // the way forward named, exactly like the overview.
   requireRole(user);
+
+  // Same budget as the course scope, and the same reason. A global ask fans
+  // retrieval over every subject the student can reach, so it is the more
+  // expensive of the two to answer.
+  enforceMemoryLimit("ask-burst", user.id, LIMITS.askBurst, "question");
+  enforceMemoryLimit("ask", user.id, LIMITS.ask, "question");
+  await enforceBilledAskQuota(user.id);
+  // Per-account budgets multiply by the number of accounts; this one does not.
+  await enforceGlobalSpendCeiling("ask");
+
   const svc = serviceClient();
 
   const q = input.q.trim();
@@ -79,7 +95,13 @@ async function handleGlobalAsk(input: GlobalAskInput) {
 
   // The whole accessible academic world, enumerated from the session user and
   // nothing else.
-  const academic = await loadAcademicContext(svc, { scope: "global", userId: user.id });
+  // isFaculty rides along so the corpus builder can keep the "isOwner implies
+  // faculty" invariant. requireRole above has already refused a null role.
+  const academic = await loadAcademicContext(svc, {
+    scope: "global",
+    userId: user.id,
+    isFaculty: user.role === "faculty",
+  });
   const units = academic.units;
 
   const result = await answerFromKnowledge(units, q, {

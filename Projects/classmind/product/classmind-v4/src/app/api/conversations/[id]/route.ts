@@ -3,7 +3,12 @@ import { requireUser, requireCourseAccess, errorResponse, HttpError } from "@/li
 import { serviceClient } from "@/lib/supabase/service";
 import { deleteConversation, getConversation } from "@/lib/knowledge/conversations";
 import { listCourseMemberships } from "@/lib/knowledge/academic-context";
-import { fetchLectureGateRows, lectureVisibleToStudents } from "@/lib/knowledge/read";
+import {
+  fetchLectureGateRows,
+  lectureVisibleToStudents,
+  visibleToStudents,
+  type KnowledgeUnit,
+} from "@/lib/knowledge/read";
 
 // One stored conversation, whole: its identity and every message in order,
 // with each assistant message's persisted provenance (route, sources) so the
@@ -55,13 +60,17 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     let accessibleCourses = new Set<string>();
     if (got.conversation.courseId) {
       try {
-        ({ isOwner } = await requireCourseAccess(got.conversation.courseId, user.id));
+        ({ isOwner } = await requireCourseAccess(got.conversation.courseId, user));
       } catch (err) {
         if (err instanceof HttpError) return NOT_FOUND;
         throw err;
       }
     } else {
-      const memberships = await listCourseMemberships(serviceClient(), user.id);
+      const memberships = await listCourseMemberships(
+        serviceClient(),
+        user.id,
+        user.role === "faculty",
+      );
       ownedCourses = new Set(memberships.filter((m) => m.isOwner).map((m) => m.id));
       accessibleCourses = new Set(memberships.map((m) => m.id));
     }
@@ -83,19 +92,75 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       : [];
     const gateById = new Map(gateRows.map((row) => [row.id, row]));
 
+    // THE ITEM-LEVEL GATE, RE-APPLIED (added 2026-09-07, security audit).
+    //
+    // The lecture gate above answers "may this reader see anything derived from
+    // that recording". It cannot answer "is this particular item still
+    // publishable", and that is a separate, changing fact: knowledge_items.status
+    // moves. An actionable item is 'pending' until a lecturer rules on it, and a
+    // lecturer can rule 'rejected' -- which is exactly what happens when the
+    // machine proposed a deadline that is wrong.
+    //
+    // readKnowledge withholds a rejected or still-pending item from a student on
+    // every live surface. This route did not: the sources were frozen into the
+    // message when the answer was composed, and only the LECTURE was re-checked
+    // on read. So a student who asked a question while an item was 'pending',
+    // and whose lecturer then rejected it as incorrect, could reopen the thread
+    // and still be shown it -- a withdrawn deadline, served from history, with
+    // its evidence, indefinitely.
+    //
+    // The prose stays, as it already did for the lecture gate: the student saw
+    // it, and rewriting history is not the goal. What stops is the citation.
+    const citedItemIds = [
+      ...new Set(
+        got.messages.flatMap((m) =>
+          (m.payload?.sources ?? [])
+            .map((s) => (s as { id?: unknown }).id)
+            .filter((v): v is string => typeof v === "string"),
+        ),
+      ),
+    ];
+    const itemStatusById = new Map<string, string>();
+    if (citedItemIds.length) {
+      const { data: items } = await serviceClient()
+        .from("knowledge_items")
+        .select("id, status")
+        .in("id", citedItemIds);
+      for (const row of items ?? []) {
+        itemStatusById.set(row.id as string, row.status as string);
+      }
+    }
+
+    // Same rule readKnowledge applies, in the same two shapes: a student sees
+    // only 'auto' and 'confirmed'; an owner sees everything except 'rejected'.
+    // An item that has since been DELETED has no row and is withheld -- absent
+    // is not the same as approved.
+    const itemServable = (s: unknown, readerIsOwner: boolean): boolean => {
+      const id = (s as { id?: unknown }).id;
+      if (typeof id !== "string") return false;
+      const status = itemStatusById.get(id);
+      if (!status) return false;
+      return readerIsOwner
+        ? status !== "rejected"
+        : visibleToStudents({ status: status as KnowledgeUnit["status"] });
+    };
+
     const sourceServable = (s: unknown): boolean => {
       const lid = (s as { lectureId?: unknown }).lectureId;
       if (typeof lid !== "string") return false;
       const row = gateById.get(lid);
       if (!row) return false;
       if (got.conversation.courseId) {
+        if (!itemServable(s, isOwner)) return false;
         return isOwner ? row.status === "ready" : lectureVisibleToStudents(row);
       }
       // Global thread: the source's own course decides, per the reader's
       // CURRENT relationship to it. Unknown or inaccessible course = withheld.
       const cid = (s as { courseId?: unknown }).courseId;
       if (typeof cid !== "string" || !accessibleCourses.has(cid)) return false;
-      return ownedCourses.has(cid) ? row.status === "ready" : lectureVisibleToStudents(row);
+      const readerOwnsIt = ownedCourses.has(cid);
+      if (!itemServable(s, readerOwnsIt)) return false;
+      return readerOwnsIt ? row.status === "ready" : lectureVisibleToStudents(row);
     };
 
     return NextResponse.json({
