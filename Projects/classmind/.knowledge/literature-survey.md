@@ -124,23 +124,27 @@ The capstone guidelines (Annexure A.8, Chapter 2) require a background built fro
 references** with **10+ papers discussed in depth**, in paragraph form in the report and in
 comparative form in the presentation.
 
-**Have:** 8 verified papers — code-switched ASR (3), commitment extraction from speech (2),
-LLM-based extraction (2), educational delivery (1).
+**Have (second pass, 2026-09-11):** **12 verified papers** — code-switched and Indian-language
+ASR (4), commitment extraction from speech (2), LLM-based extraction (2), temporal
+normalisation (2), educational delivery (1), human-in-the-loop review (1). Plus three
+supporting references — Whisper, the AMI corpus, and the DPDP Act 2023 — giving **15
+references**, which meets the A.8 minimum.
 
-**Gap to close for the final report — 7+ more, and these are the right ones:**
+Four of the five gaps identified in the first pass are now closed: temporal normalisation
+([10], [11]), AI4Bharat/Indic resources ([9]), and human-in-the-loop verification ([12]).
 
-- **Temporal expression extraction and normalisation** (the HeidelTime/SUTime lineage, plus
-  recent LLM-based temporal grounding). "Friday 5 PM" → an absolute timestamp is a whole
-  subproblem we currently hand-wave.
-- **Spoken language understanding / intent detection on disfluent speech** — closer to our
-  actual input than written-text IE benchmarks are.
-- **AI4Bharat / IndicNLP resources** — so the Indian-language positioning rests on published
-  work rather than on vendor material.
-- **Two or three on human-in-the-loop verification and annotation quality** — this directly
-  supports the faculty approval gate, and we currently cite nobody for the project's single
-  most important design decision.
-- **One on DPDP Act 2023 / classroom recording consent** — `research/README.md` limitation #3
-  flags this absence, and it is still absent.
+**Still open:**
+
+- **Spoken language understanding / intent detection on disfluent speech.** Still the weakest
+  coverage. Our input is spontaneous speech; almost everything we cite on extraction is
+  benchmarked on written text, and we should close that distance.
+- **DPDP Act 2023 / classroom recording consent.** Searched; **no peer-reviewed treatment of
+  the Act as applied to classroom recording was found** — the available material is law-firm
+  commentary and compliance blogs. The Act itself is therefore cited directly as a statute,
+  which is correct practice, but this remains a genuine hole in the argument rather than a
+  solved item. `research/README.md` limitation #3 stands.
+- **Optional depth:** one or two more on annotation quality / inter-annotator agreement would
+  strengthen the evaluation-design section when the 15-lecture corpus is built.
 
 **Sources to drop:** the competitive-analysis blog posts in
 `research/2026-07-24-research-findings.md` (`softwaresuggest`, `jotme.io`, `umevo.ai`,
