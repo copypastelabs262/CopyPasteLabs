@@ -176,3 +176,11 @@ AI-Memory/Inbox/.lock
 **/.eval/
 **/design-loop/runs/
 !**/design-loop/runs/README.md
+
+# Word/Office lock files
+~$*
+
+# Disposable security-audit copy of v4 — a strict duplicate of product/classmind-v4.
+# progress.md (2026-09-09) records it as disposable; two copies of security-critical
+# source is how "which one is real?" becomes a live question for a reader of this repo.
+Projects/classmind/product/classmind-v4 - sECURE aUDIT/

@@ -4,65 +4,63 @@
 > `Capstone_project_guidelines_2026-27_final.pdf` exactly: front matter, Chapters 1–5,
 > Conclusion and Future Scope, References, Appendices A–D.
 >
-> **Everything in `[SQUARE BRACKETS AND CAPITALS]` must be filled in before submission.**
-> These are facts I do not have — names, roll numbers, the mentor's name, the exact
-> programme and stream. They are marked rather than guessed, because a fabricated roll
-> number on a signed submission is a worse failure than a blank one.
+> **Team and project details are filled in.** Four things remain in `[SQUARE BRACKETS]` and
+> only you can supply them: the three **SAP IDs**, Dr. Bomnale's **designation**, the
+> **Acknowledgement** paragraph, and reference [15]'s volume/page numbers. They are marked
+> rather than guessed — a fabricated SAP ID on a signed submission is worse than a blank one.
 >
-> **Word formatting to apply when this is moved into the template** (A.8, §1–16):
-> Times New Roman throughout; body 12 pt; line spacing 1.5; left margin 1.5″, all others 1″;
-> chapter titles 18 pt bold; section titles 14 pt bold; subsection titles 12 pt bold; figure
-> captions **below** figures at 10 pt; table captions **above** tables at 10 pt; header —
-> project title (left) and academic year (right); footer — page number (right); front-matter
-> page numbers in Roman, Chapter 1 onward in decimal; two hard-bound black-book copies for
-> the final report, mentor-signed.
+> **Generate the Word file** with `build-report-docx.py` (see the command in the folder), then
+> do final layout there. The converter already applies A.8 §1–13 and §18–19: Times New Roman,
+> 12 pt body, 1.5 spacing, 1.5″ left margin, 18/14/12 pt headings, 10 pt table captions,
+> header and footer, Roman front matter and decimal body numbering.
+>
+> **Delete every grey italic note like this one before submitting.**
 
 ---
 
 # Title Page
 
-**[PROJECT TITLE — see note below]**
+**ClassMinds: An AI-Powered Academic Intelligence and Contextual Learning Platform**
 
 Project Report submitted in partial fulfilment
 
 of
 
-**[NAME OF THE PROGRAMME — e.g. B.Tech. / MBA Tech.]**
+**Bachelor of Technology (B.Tech.)**
 
 In
 
-**[NAME OF THE STREAM — e.g. Computer Engineering]**
+**Electronics & Telecommunication Engineering**
 
 by
 
-**[STUDENT 1 NAME (ROLL NO.)]**
-**[STUDENT 2 NAME (ROLL NO.)]**
-**[STUDENT 3 NAME (ROLL NO.)]**
+**Shyam Chavda (D004)**
+**Dharsh Gujar (D010)**
+**Shiv Pujarie (D022)**
 
 Under the supervision of
 
-**[FACULTY MENTOR NAME]**
-*([DESIGNATION], [DEPARTMENT], MPSTME)*
+**Dr. Archana Bomnale**
+*([DESIGNATION — e.g. Assistant Professor], Department of Electronics & Telecommunication Engineering, MPSTME)*
 
 SVKM's NMIMS University (Deemed-to-be University)
 Mukesh Patel School of Technology Management & Engineering (MPSTME)
 Vile Parle (W), Mumbai–56
-**[ACADEMIC YEAR 2026-27]**
+**Academic Year 2026-27**
 
-> **Note on the title.** `project.md` records that "ClassMind" is a declared working name,
-> not final, and that a rename becomes expensive once a college submission carries it. This
-> submission is that moment. Either confirm the name now or use a descriptive title such as
-> *Automatic Extraction of Academic Commitments from Code-Switched Classroom Speech*, with
-> ClassMind named as the system inside. Decide before printing; the title propagates to the
-> certificate, every page header, and the final black book.
+> **Note.** The title is taken from the signed Log Book and is now fixed. It must read
+> identically on the title page, the certificate, and every page header. Note the product is
+> spelled **ClassMinds** — the repository slug `classmind` is an internal identifier and is
+> deliberately not renamed; that difference should not appear anywhere in this report.
 
 ---
 
 # Certificate
 
-This is to certify that the project entitled **"[PROJECT TITLE]"** has been done by
-**[STUDENT NAMES]** under my guidance and supervision, and has been submitted in partial
-fulfilment of the degree of **[PROGRAMME]** in **[STREAM]** of MPSTME, SVKM's NMIMS
+This is to certify that the project entitled **"ClassMinds: An AI-Powered Academic Intelligence and
+Contextual Learning Platform"** has been done by **Shyam Chavda, Dharsh Gujar and Shiv
+Pujarie** under my guidance and supervision, and has been submitted in partial
+fulfilment of the degree of **Bachelor of Technology** in **Electronics & Telecommunication Engineering** of MPSTME, SVKM's NMIMS
 (Deemed-to-be University), Mumbai, India.
 
 \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_    \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
@@ -83,9 +81,9 @@ acknowledgement reads as filler.]
 
 | NAME | ROLL NO. | SAP ID |
 |---|---|---|
-| [STUDENT 1] | [ ] | [ ] |
-| [STUDENT 2] | [ ] | [ ] |
-| [STUDENT 3] | [ ] | [ ] |
+| Shyam Chavda | D004 | [SAP ID] |
+| Dharsh Gujar | D010 | [SAP ID] |
+| Shiv Pujarie | D022 | [SAP ID] |
 
 ---
 
@@ -158,7 +156,8 @@ extraction, educational technology, Hindi–English, large language models, huma
 | 4.2 Extraction output on real lectures | |
 | 4.3 Provider comparison | |
 | 4.4 System verification | |
-| 4.5 What has not yet been measured | |
+| 4.5 Development timeline | |
+| 4.6 What has not yet been measured | |
 | **Chapter 5 — Advantages, Limitations and Applications** | |
 | 5.1 Advantages | |
 | 5.2 Limitations | |
@@ -194,6 +193,7 @@ pagination, not by hand.)*
 | 4.1 | Extraction output on two real lectures | |
 | 4.2 | Provider comparison on an identical transcript | |
 | 4.3 | Automated verification suites | |
+| 4.4 | Development timeline, Weeks 1–7 | |
 
 ## Abbreviations
 
@@ -843,7 +843,31 @@ blanked, so that no request could incur spend. Test accounts were created throug
 and deleted afterwards, with cleanup asserting that no seeded object, course or profile
 survived.
 
-## 4.5 What has not yet been measured
+## 4.5 Development timeline
+
+Table 4.4 records the work actually carried out, week by week, from project initiation to the
+mid-term review. It is presented against the plan submitted at Review 1.
+
+**Table 4.4** Development timeline, Weeks 1–7
+
+| Week | Phase | Work completed |
+|---|---|---|
+| 1 | Problem identification and research | Identified the problem — academic information stated aloud in lectures is missed or forgotten. Surveyed existing lecture-capture, transcription and AI learning tools and established that they transcribe speech without extracting structured academic information. Researched Hindi–English code-switching in classroom speech. Shortlisted Sarvam AI for Indian-language recognition. Defined the initial problem statement and objectives; prepared the synopsis. |
+| 2 | Planning and system architecture | Defined scope, requirements and roadmap. Designed the system architecture and data flow. Planned the capture, storage, transcription and processing workflow. Designed the initial database schema for lectures and transcription jobs. Defined the knowledge, evidence and provenance requirements. Compared technology options and documented the major decisions with their trade-offs. Held architecture reviews before development began. |
+| 3 | Backend and infrastructure | Built the initial application in Next.js and TypeScript. Provisioned Supabase for database and object storage. Designed the asynchronous lecture-processing workflow. Built the audio upload API and storage workflow, using signed URLs for direct browser-to-storage upload so that audio never passes through the application server. Added server-side transcription job handling, storage and database validation. |
+| 4 | Documentation and system review | Audited documentation against what had actually been built and corrected mismatches between planned and implemented architecture. Refined the separation between the Experiment Platform and the Product Platform. Revisited earlier technical decisions and improved the design. Reviewed the knowledge model ahead of AI integration and established a structured development and validation process. |
+| 5 | Transcription pipeline and first deployment | Integrated Sarvam AI speech-to-text (Saarika / Batch API). Completed the Upload → Storage → Transcription → Transcript pipeline with asynchronous processing and status polling. Added provenance tracking recording which model, mode and settings produced each transcript. Built the lecture library and a timestamped transcript viewer. Deployed V1 to Vercel with Google OAuth sign-in and public privacy and terms pages. Tested on real classroom recordings and identified Hinglish language-detection issues. |
+| 6 | Knowledge engine and provider comparison | Extended the system beyond transcription into an academic knowledge engine. Designed lecture segmentation and structured knowledge extraction. Compared reasoning providers on output quality, reliability, token usage and cost, and integrated the Gemini API behind a provider abstraction so the model remains swappable. Implemented evidence-grounded extraction in which every extracted item is backed by a verbatim quote with provenance. Added validation of structured output and evaluated extraction on real transcripts. |
+| 7 | Assistant and product development | Built the Ask assistant with global, course and lecture-level scoping. Implemented grounded answers citing supporting evidence. Built a persistent multi-turn conversation workspace. Implemented cost-aware routing and per-request usage metering so that cheaper lookups bypass the paid model and every paid call is measured. Restructured the product around a class-based layout and refined the course and lecture screens through product and interface walkthroughs. |
+
+Two observations on the timeline. Development proceeded broadly to plan on the engineering
+track, and in two respects ahead of it — deployment was achieved in Week 5 against a plan that
+placed it later, and the provider abstraction introduced in Week 6 was not in the original
+design but has since become the mechanism on which the project's central technique comparison
+depends. The evaluation track, by contrast, has not started, and Section 4.6 states the
+consequences of that directly.
+
+## 4.6 What has not yet been measured
 
 This section is deliberate. The project's central claim is a quantitative one, and it cannot
 yet be made.

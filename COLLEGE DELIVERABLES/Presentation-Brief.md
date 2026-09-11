@@ -2,7 +2,12 @@
 
 **Hand this whole file to Claude Design.** It contains the content, the structure, the
 constraints and the exact tables. It does not contain the design — that is Claude Design's
-job. Anything in `[SQUARE BRACKETS]` is a fact I do not have and you must supply.
+job.
+
+**This file is now complete except for screenshots.** Team details, the title, the mentor and
+the week-by-week progress are all filled in. The only thing Claude Design cannot produce is
+images of your running application; slide 10 is therefore specified as a placeholder frame you
+will drop screenshots into yourself.
 
 ---
 
@@ -47,7 +52,7 @@ Target 14–16 slides. Timings assume 11 minutes.
 
 | # | Slide | Content | Time |
 |---|---|---|---|
-| 1 | Title | Project title, team names + roll numbers, mentor name, department, academic year | — |
+| 1 | Title | See §4.1 below — all details supplied | — |
 | 2 | The problem in one picture | An hour-long lecture waveform with ~15 seconds highlighted: "submit the Chapter 5 analysis by Friday 5 PM". Caption: *the information exists; it is not actionable* | 0:45 |
 | 3 | Why Indian classrooms are different | The code-switched sentence "यह बहुत important concept है जो exam में आएगा" rendered large. One line: off-the-shelf tools are built for monolingual English | 0:45 |
 | 4 | **Literature survey (Rubric A)** | The comparison table — §6 below. Landscape, readable | 2:00 |
@@ -56,13 +61,33 @@ Target 14–16 slides. Timings assume 11 minutes.
 | 7 | **Problem statement (Rubric B)** | The statement in §9, plus 3–4 objectives | 0:45 |
 | 8 | **System design (Rubric C)** | Block diagram, §10. Emphasise the proposed/approved boundary | 1:15 |
 | 9 | **The pipeline (Rubric C)** | The 11-step algorithm compressed to 6 stages, §11 | 0:45 |
-| 10 | **LIVE DEMO (Rubric D)** | Switch to the app. Script in §12 | 3:00 |
+| 10 | **LIVE DEMO (Rubric D)** | Placeholder frames only — Shyam inserts screenshots. Script in §12 | 3:00 |
 | 11 | **Results (Rubric D)** | Tables in §13 — extraction output and provider comparison | 1:00 |
 | 12 | **Verification (Rubric D)** | 911 assertions, 0 failures, §13.3 | 0:30 |
 | 13 | **What we have NOT measured** | §14. Do not skip this — see the note there | 0:45 |
 | 14 | Progress vs. plan | Gantt: planned against actual, §15 | 0:45 |
 | 15 | Individual contribution | Who did what, §16 — explicitly required by the guidelines | 0:30 |
 | 16 | Remaining work | §17, priority-ordered | 0:30 |
+
+## 4.1 Title slide — exact content
+
+> **ClassMinds**
+> *An AI-Powered Academic Intelligence and Contextual Learning Platform*
+>
+> Capstone Project — Mid-Term Review 2
+>
+> **Shyam Chavda** (D004) · **Dharsh Gujar** (D010) · **Shiv Pujarie** (D022)
+>
+> Under the guidance of **Dr. Archana Bomnale**
+>
+> Department of Electronics & Telecommunication Engineering
+> B.Tech. EXTC, Semester VII — Mumbai Campus
+> Mukesh Patel School of Technology Management & Engineering
+> SVKM's NMIMS University (Deemed-to-be University)
+>
+> Academic Year 2026-27
+
+Spelling note: the product is **ClassMinds**, with an s. Keep it consistent on every slide.
 
 ## 5. The one strategic decision in this deck
 
@@ -184,6 +209,11 @@ the system can be checked. This is the kind of trade-off a panel rewards.
 
 ## 12. Live demo script (Rubric D — slide 10)
 
+**Claude Design instruction:** leave slide 10 as **empty captioned placeholder frames** —
+one per step in the table below, each with its caption set but the image area blank. The
+screenshots will be inserted manually. Do not generate mock UI images; a fabricated screenshot
+of software that exists is worse than a blank frame.
+
 **Rehearse this end to end at least twice before the review.**
 
 | Step | Action | Say |
@@ -267,28 +297,67 @@ technical requirements and future extensions to be specified.
 engagement schedule and the project development plan, which was submitted during the 1st
 Review."
 
-Build a Gantt with **two bars per task** — planned and actual. Do not present a fresh plan as
-though the original did not exist; the panel is checking against what you committed to.
+Render as a **7-row Gantt or timeline**, one row per week, with a short phase label and the
+headline outcome. Do not put the full text below on the slide — it is the speaking material.
+On the slide, use the **phase name plus the single bolded outcome**.
 
-`[FILL FROM YOUR REVIEW 1 GANTT CHART. If a task slipped, show it slipped and say why in one
-sentence. A visible, explained slip reads far better than a chart that has been quietly
-rewritten to match reality.]`
+| Week | Phase | Headline outcome for the slide |
+|---|---|---|
+| 1 | Problem identification & research | **Problem, gap and objectives defined**; Sarvam AI shortlisted for Indian-language ASR |
+| 2 | Planning & system architecture | **Architecture, data flow and database schema designed**; technical decisions documented with trade-offs |
+| 3 | Backend & infrastructure | **Next.js + Supabase application built**; direct browser-to-storage upload via signed URLs |
+| 4 | Documentation & system review | **Docs reconciled with what was actually built**; Experiment vs Product Platform separated |
+| 5 | Transcription pipeline & first deployment | **V1 live on Vercel** — full Upload → Storage → Transcription → Transcript pipeline with Google OAuth |
+| 6 | Knowledge engine & provider comparison | **Gemini integrated behind a provider abstraction**; evidence-grounded extraction with verbatim quotes |
+| 7 | Assistant & product development | **Ask assistant with grounded, cited answers**; persistent conversations; cost-aware routing |
 
-Honest framing available to you: *the engineering is ahead of schedule; the evaluation is
-behind.* That is an unusual and defensible position, and it is true.
+**What to say over this slide — two sentences, and they matter:**
+
+> "Against the Review 1 plan we are ahead on engineering — deployment landed in Week 5, and
+> the provider abstraction in Week 6 wasn't in the original design but has become the
+> mechanism our technique comparison depends on. We are behind on evaluation, which has not
+> started. The engineering is ahead of the science, and closing that is our next phase."
+
+That framing is honest, it is true, and it pre-empts the obvious question. A panel responds far
+better to a candidly named gap than to a chart quietly redrawn to look complete.
+
+**If your Review 1 Gantt has specific dates or task names that differ from the phases above,
+use yours** — the panel is checking against what you committed to, not against a fresh plan.
 
 ## 16. Individual contribution (slide 15)
 
-**Explicitly required:** "Individual contribution to be presented."
+**Explicitly required by the guidelines:** "Individual contribution to be presented."
 
-| Member | Area owned | Specific contribution this phase |
-|---|---|---|
-| `[NAME 1]` | `[e.g. pipeline & extraction]` | `[ ]` |
-| `[NAME 2]` | `[e.g. interfaces & review queue]` | `[ ]` |
-| `[NAME 3]` | `[e.g. literature survey & evaluation design]` | `[ ]` |
+Your working model was genuinely collaborative — all three of you worked together throughout,
+in person on campus and over Google Meet otherwise. **Say that, because it is true.** But do
+not stop there, and here is why.
 
-Be specific. "Worked on backend" earns nothing; "implemented the evidence-span locator and the
-discard-on-failure rule" earns attention.
+The guidelines require individual contribution, and the panel will very likely ask each of you
+directly what *you* did. "We all did everything together" is a true answer that sounds evasive
+under questioning, and it gives a panel member no way to award you marks individually. The
+rubric's fortnightly-discussion component is assessed per student.
+
+**The honest resolution is ownership, not division.** You worked jointly, but on any given
+week one of you was closer to a given area — whoever debugged the upload pipeline, whoever
+drove the provider comparison, whoever wrote the synopsis. Name that. It is accurate, and it
+gives each of you something concrete to defend.
+
+**Slide format:**
+
+> **How we worked:** all three members worked jointly throughout — together on campus, and over
+> Google Meet otherwise. Design decisions, debugging and reviews were done as a group rather
+> than split into separate workstreams.
+>
+> **Primary ownership**
+>
+> | Member | Led on |
+> |---|---|
+> | Shyam Chavda (D004) | `[FILL — e.g. transcription pipeline, deployment, provider integration]` |
+> | Dharsh Gujar (D010) | `[FILL — e.g. knowledge engine, extraction validation, database schema]` |
+> | Shiv Pujarie (D022) | `[FILL — e.g. Ask assistant, interface, literature survey]` |
+
+**Agree these three rows between yourselves before the review**, and make sure each person can
+talk for a minute about their row without notes. That is the whole purpose of the slide.
 
 ## 17. Remaining work (slide 16)
 
